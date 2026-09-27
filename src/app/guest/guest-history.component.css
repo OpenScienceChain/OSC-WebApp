@@ -1,0 +1,165 @@
+.container {
+  max-width: 1200px;
+}
+
+code {
+  color: #214969;
+}
+
+.page-headline {
+  font-size: clamp(1.75rem, 2.2vw + 1rem, 2.5rem);
+  font-weight: 700;
+  line-height: 1.25;
+  margin-left: -0.25rem; /* match artifact detail left alignment */
+}
+
+.history-card {
+  border-radius: 16px;
+}
+
+.content-block {
+  max-width: 850px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.history-list {
+  max-width: 850px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.history-toolbar {
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.pager-info {
+  font-size: 0.9rem;
+  color: #6c757d;
+  white-space: nowrap;
+}
+
+.pager-nav .page-link {
+  padding: 0.25rem 0.5rem;
+}
+
+/* Match artifact list pagination styles */
+.custom-pager {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.custom-pager .page-arrow,
+.custom-pager .page-number {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid #ccc;
+  background-color: #fff;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition:
+    background-color 0.3s,
+    color 0.3s;
+}
+
+.custom-pager .page-arrow:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.custom-pager .page-number:hover:not(.active) {
+  background-color: #f0f0f0;
+}
+
+.custom-pager .page-number.active {
+  background-color: #343a40;
+  color: white;
+  border-color: #343a40;
+}
+
+.custom-pager .page-ellipsis {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 0.5rem;
+  font-weight: 600;
+  color: #6c757d;
+}
+
+/* refresh button now uses bootstrap btn btn-outline-primary */
+
+.history-card .card-header {
+  background-color: #7dd3d8;
+  color: #173b43;
+  min-height: 56px; /* Taller header */
+  display: flex;
+  align-items: center;
+}
+
+.section-title {
+  font-weight: 700;
+}
+
+.txid {
+  display: none;
+}
+
+/* Pretty tags for header */
+.tag {
+  display: inline-block;
+  padding: 2px 10px; /* slimmer like tag */
+  border-radius: 12px; /* rounded tag corners */
+  border: 1px solid rgba(0, 0, 0, 0.15); /* subtle border like tags */
+  font-weight: 700;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  font-family: 'Open Sans', sans-serif !important;
+  color: #ffffff;
+  background: transparent;
+  box-shadow: none; /* remove button look */
+}
+
+.badge.tag-current {
+  background: linear-gradient(135deg, #fff4bf 0%, #ffd54f 50%, #ff9f00 100%);
+  color: #2b2b2b; /* black/dark text for better readability */
+}
+
+.badge.tag-update {
+  background: linear-gradient(135deg, #7e96f4 0%, #3d5afe 100%);
+}
+
+.badge.tag-delete {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ff5252 100%);
+}
+
+.badge.tag-initial {
+  background: none;
+  background-color: #10b981; /* flat light green */
+  color: #073f2d;
+}
+
+.permalink {
+  margin-left: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: 700;
+  text-decoration: none;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.permalink:hover {
+  filter: brightness(1.05);
+}

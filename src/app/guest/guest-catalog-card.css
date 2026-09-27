@@ -1,0 +1,116 @@
+:host {
+  min-width: 0;
+  display: block;
+  height: 100%;
+}
+
+.catalog-card {
+  height: 100%;
+  min-height: 290px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--osc-line);
+  border-radius: 6px;
+  background: #ffffff;
+  box-shadow: 0 4px 14px rgba(22, 58, 89, 0.08);
+}
+
+.catalog-card header {
+  min-height: 102px;
+  padding: 18px 20px;
+  border-top: 5px solid var(--osc-teal);
+  border-bottom: 1px solid var(--osc-line);
+  background: #f3f8f8;
+}
+
+.record-type {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--osc-teal-dark);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+h3 {
+  display: -webkit-box;
+  overflow: hidden;
+  margin: 0;
+  color: var(--osc-navy);
+  font-size: 19px;
+  line-height: 1.35;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.card-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 19px 20px;
+}
+
+.description {
+  display: -webkit-box;
+  overflow: hidden;
+  min-height: 68px;
+  margin: 0 0 18px;
+  color: var(--osc-muted);
+  line-height: 1.45;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+dl {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 0 0 20px;
+}
+
+dt {
+  color: #465d69;
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+dd {
+  margin: 2px 0 0;
+  color: var(--osc-ink);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.card-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 15px;
+  border-top: 1px solid #e0e8ec;
+}
+
+.card-actions a {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 11px;
+  border: 1px solid var(--osc-navy);
+  border-radius: 4px;
+  color: var(--osc-navy);
+  font-size: 13px;
+  font-weight: 750;
+  text-decoration: none;
+}
+
+.card-actions a:first-child {
+  background: var(--osc-navy);
+  color: #ffffff;
+}
+
+.card-actions a:hover {
+  background: var(--osc-surface);
+  color: var(--osc-navy);
+}

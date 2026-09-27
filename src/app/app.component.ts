@@ -4,6 +4,7 @@ import { NavigationEnd, Router, RouterModule } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { filter } from 'rxjs/operators';
 import { AuthService } from './auth/auth.service';
+import { getRuntimeConfig } from './config/runtime-config';
 
 @Component({
   selector: 'app-root',
@@ -13,6 +14,7 @@ import { AuthService } from './auth/auth.service';
   styleUrls: ['./app.component.css'],
 })
 export class AppComponent implements OnInit {
+  readonly mockPreview = getRuntimeConfig()?.MOCK_PREVIEW === true;
   isAuthenticated = false;
   showBackButton = false;
   mobileNavigationOpen = false;
@@ -101,11 +103,9 @@ export class AppComponent implements OnInit {
   onContributeClick(type: 'artifact' | 'workflow'): void {
     this.closeNavigation();
     if (!this.isAuthenticated) {
-      this.toastr.info(
-        "We'd love to have your contribution, but first Sign in to continue",
-        'Welcome!',
-      );
-      this.router.navigate(['/auth/sign-in']);
+      this.router.navigate([
+        type === 'workflow' ? '/create-workflow' : '/contribute',
+      ]);
       return;
     }
 

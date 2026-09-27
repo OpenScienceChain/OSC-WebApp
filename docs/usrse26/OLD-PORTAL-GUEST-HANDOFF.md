@@ -1,0 +1,24 @@
+# Unified OSC-IS Portal Handoff
+
+Date: 2026-09-26. Worktree: `OSC-WebApp-old-portal-guest-20260926`. Branch: `feature/usrse26-old-portal-guest-20260926`. Starting WebApp commit: `56429d15cf13694b81851510f7c01f2fbcff6ceb`. The separate, newer UI worktree was preserved; none of its changes were merged into this baseline.
+
+## What Changed
+
+- Preserved the approved landing page, site navigation, record-oriented forms and detail views, and colorful version history. There is one visible portal at the familiar URLs. The old `/demo` browser URLs redirect to those URLs; `/api/v1/demo` remains the separate, bounded Gateway API namespace.
+- Route matching uses the live authenticated state, not a `DEMO_MODE` build/runtime switch. An unsigned visitor browses the public guest projection and can start a 30-minute, organization-scoped session directly on the contribution form. A signed-in user follows the existing product catalog, detail, and guarded contribution routes. Product write guards and JWT-backed API endpoints were not relaxed.
+- Guest contribution computes SHA-256 locally for one permitted file. The request sends only the fingerprint, byte count, extension, and bounded Gateway-supported metadata, never file bytes or the original filename. Guest artifact revisions require ownership and ledger confirmation; title and description remain immutable under the frozen contract. Workflow creation links 1-3 confirmed artifacts owned by the active guest session.
+- Public detail and history display only the Gateway's safe public projection. A transaction is described as confirmed only for `SUCCESS` plus a transaction ID. The local `MOCK_PREVIEW` banner labels synthetic records and explicitly says no Fabric connection.
+- The inherited form styles were made usable at phone width without changing their desktop layout. The linked-artifact chooser has a labeled accessible group.
+
+## Local Verification
+
+- Production Angular build passed. It retains the baseline `crypto-js` CommonJS warning and four skipped third-party CSS selector warnings.
+- Focused ESLint passed for changed TypeScript and the Cypress spec. Focused Karma: 22/22 passed.
+- Cypress against local mock: 5/5 passed. Coverage includes old home to catalog/detail/history, guest session and fingerprint submission, workflow linking, owned metadata revision, signed-in product catalog and guarded form selection, legacy bookmark redirect, axe checks, and phone-width overflow checks. Synthetic data and a test-only JWT are used; this does **not** prove real backend authorization, AWS deployment, or Fabric writes.
+
+## Preview And Remaining Gates
+
+- Leave `http://127.0.0.1:4303/` open for review. It proxies `/api/v1/demo` to the in-memory mock at `127.0.0.1:3001`. The worktree's ignored `src/assets/runtime-config.json` enables only `/api/v1` and the local mock banner; its tracked example is `scripts/demo/runtime-config.preview.json`.
+- The previous 4302 preview and its 3000 mock were stopped by exact listener PID to avoid two visible site versions. Their files/worktree were not deleted. No unrelated Docker container was touched.
+- Before release, run a separate review of API/privacy and auth boundaries, manual keyboard/screen-reader checks, integration against the frozen local Gateway contract, and a synthetic real-Fabric canary if approved. Do not present the in-memory mock's instant confirmation as deployed ledger evidence.
+- Nothing was pushed or deployed. No AWS resources were created or changed.

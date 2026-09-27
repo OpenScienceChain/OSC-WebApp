@@ -1,9 +1,111 @@
 import { Routes } from '@angular/router';
 import { canCreateArtifactGuard } from './guards/role.guard';
 import { authGuard } from './guards/auth.guard';
+import { guestModeMatch } from './guest/guest-mode.match';
 
 // Componente vacío para la ruta raíz
 export const routes: Routes = [
+  { path: 'demo', pathMatch: 'full', redirectTo: 'list-artifacts' },
+  { path: 'demo/contribute', redirectTo: 'contribute' },
+  { path: 'demo/workflows/new', redirectTo: 'create-workflow' },
+  { path: 'demo/artifacts/:id/edit', redirectTo: 'update-artifact/:id' },
+  { path: 'demo/artifacts/:id/history', redirectTo: 'artifacts/:id/history' },
+  { path: 'demo/artifacts/:id', redirectTo: 'artifacts/:id' },
+  { path: 'demo/workflows/:id/history', redirectTo: 'workflows/:id/history' },
+  { path: 'demo/workflows/:id', redirectTo: 'workflows/:id' },
+  {
+    path: 'list-artifacts',
+    canMatch: [guestModeMatch],
+    data: { catalogType: 'artifacts' },
+    loadComponent: () =>
+      import('./guest/guest-start.component').then(
+        (m) => m.GuestStartComponent,
+      ),
+  },
+  {
+    path: 'list-workflows',
+    canMatch: [guestModeMatch],
+    data: { catalogType: 'workflows' },
+    loadComponent: () =>
+      import('./guest/guest-start.component').then(
+        (m) => m.GuestStartComponent,
+      ),
+  },
+  {
+    path: 'contribute',
+    canMatch: [guestModeMatch],
+    loadComponent: () =>
+      import('./guest/guest-artifact-form.component').then(
+        (m) => m.GuestArtifactFormComponent,
+      ),
+  },
+  {
+    path: 'create-workflow',
+    canMatch: [guestModeMatch],
+    loadComponent: () =>
+      import('./guest/guest-workflow-form.component').then(
+        (m) => m.GuestWorkflowFormComponent,
+      ),
+  },
+  {
+    path: 'update-artifact/:id',
+    canMatch: [guestModeMatch],
+    loadComponent: () =>
+      import('./guest/guest-artifact-form.component').then(
+        (m) => m.GuestArtifactFormComponent,
+      ),
+  },
+  {
+    path: 'update-workflow/:id',
+    canMatch: [guestModeMatch],
+    loadComponent: () =>
+      import('./guest/guest-workflow-detail.component').then(
+        (m) => m.GuestWorkflowDetailComponent,
+      ),
+  },
+  {
+    path: 'artifacts/:id/history/:txId',
+    canMatch: [guestModeMatch],
+    data: { recordType: 'artifact' },
+    loadComponent: () =>
+      import('./guest/guest-history.component').then(
+        (m) => m.GuestHistoryComponent,
+      ),
+  },
+  {
+    path: 'artifacts/:id/history',
+    canMatch: [guestModeMatch],
+    data: { recordType: 'artifact' },
+    loadComponent: () =>
+      import('./guest/guest-history.component').then(
+        (m) => m.GuestHistoryComponent,
+      ),
+  },
+  {
+    path: 'artifacts/:id',
+    canMatch: [guestModeMatch],
+    loadComponent: () =>
+      import('./guest/guest-artifact-detail.component').then(
+        (m) => m.GuestArtifactDetailComponent,
+      ),
+  },
+  {
+    path: 'workflows/:id/history',
+    canMatch: [guestModeMatch],
+    data: { recordType: 'workflow' },
+    loadComponent: () =>
+      import('./guest/guest-history.component').then(
+        (m) => m.GuestHistoryComponent,
+      ),
+  },
+  {
+    path: 'workflows/:id',
+    canMatch: [guestModeMatch],
+    loadComponent: () =>
+      import('./guest/guest-workflow-detail.component').then(
+        (m) => m.GuestWorkflowDetailComponent,
+      ),
+  },
   // Root path
   {
     path: '',

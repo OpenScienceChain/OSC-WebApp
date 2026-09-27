@@ -159,6 +159,8 @@
   </nav>
 </header>
 
+<div *ngIf="mockPreview" class="mock-preview-banner" role="status">LOCAL MOCK PREVIEW - synthetic records; no Fabric connection</div>
+
 <div id="main-content" tabindex="-1">
   <router-outlet></router-outlet>
 </div>

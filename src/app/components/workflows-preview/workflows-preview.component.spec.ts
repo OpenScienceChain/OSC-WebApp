@@ -7,6 +7,7 @@ import { Component, Input } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { CommonModule } from '@angular/common';
 import { RouterTestingModule } from '@angular/router/testing';
+import { AuthService } from '../../auth/auth.service';
 
 @Component({
   selector: 'app-workflow-card',
@@ -57,7 +58,10 @@ describe('WorkflowsPreviewComponent', () => {
         WorkflowsPreviewComponent,
         MockWorkflowCardComponent,
       ],
-      providers: [{ provide: WorkflowService, useClass: MockWorkflowService }],
+      providers: [
+        { provide: WorkflowService, useClass: MockWorkflowService },
+        { provide: AuthService, useValue: { isAuthenticated: () => true } },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(WorkflowsPreviewComponent);

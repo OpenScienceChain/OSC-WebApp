@@ -1,0 +1,77 @@
+<main id="main-content" class="create-artifact-container">
+  <header class="header">
+    <h1>{{ isEdit ? 'Update Artifact' : "Add a New Artifact to your Org's Vault!" }}</h1>
+    <div class="header-divider"></div>
+  </header>
+
+  <app-guest-session-panel *ngIf="!demo.session" (started)="onSessionStarted()"></app-guest-session-panel>
+  <p *ngIf="demo.session" class="form-note">Contributing for {{ demo.session.organization }} as {{ demo.session.contributorAlias }}.</p>
+  <p *ngIf="isEdit" class="form-note">Title and description stay fixed. Metadata and the file fingerprint can be revised after ledger confirmation.</p>
+  <p *ngIf="error" class="form-note text-danger" role="alert">{{ error }}</p>
+
+  <form class="artifact-form" (ngSubmit)="submit()">
+    <div class="form-grid">
+      <div class="left-column">
+        <div class="form-group">
+          <label for="title" class="field-label">Title</label>
+          <input id="title" name="title" type="text" class="form-control" [(ngModel)]="title" (ngModelChange)="onChange()" [readOnly]="isEdit" required minlength="3" maxlength="200" />
+        </div>
+        <div class="form-group">
+          <label for="description" class="field-label">Description</label>
+          <textarea id="description" name="description" class="form-control" rows="4" [(ngModel)]="description" (ngModelChange)="onChange()" [readOnly]="isEdit" required minlength="50" maxlength="3000"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="keywords" class="field-label">Key Words</label>
+          <input id="keywords" name="keywords" type="text" class="form-control" [(ngModel)]="keywords" (ngModelChange)="onChange()" placeholder="Enter keywords, separated by commas" />
+        </div>
+        <div class="form-group">
+          <label for="links" class="field-label">Links of interest</label>
+          <input id="links" name="links" type="text" class="form-control" [(ngModel)]="links" (ngModelChange)="onChange()" placeholder="HTTPS URLs, separated by commas" />
+        </div>
+        <div class="form-group last-field">
+          <label for="doi" class="field-label">DOI</label>
+          <input id="doi" name="doi" type="text" class="form-control" [(ngModel)]="dois" (ngModelChange)="onChange()" placeholder="10.1234/abc123" />
+        </div>
+        <div class="form-group" *ngIf="!isEdit">
+          <label for="research-context" class="field-label">Research context</label>
+          <select id="research-context" name="researchContext" class="form-control" [(ngModel)]="researchContext" (ngModelChange)="onChange()"><option value="RESEARCH_DATASET">Research dataset</option><option value="REPRODUCIBLE_ANALYSIS">Reproducible analysis</option><option value="SOFTWARE_RELEASE">Software release</option></select>
+        </div>
+      </div>
+
+      <div class="right-column">
+        <div class="form-group">
+          <span class="field-label" id="funding-label">Funding Agencies</span>
+          <div class="checkbox-group" aria-labelledby="funding-label">
+            <label class="checkbox-label"><input type="checkbox" name="nsf" [(ngModel)]="nsf" (ngModelChange)="onChange()" /> NSF</label>
+            <label class="checkbox-label"><input type="checkbox" name="nih" [(ngModel)]="nih" (ngModelChange)="onChange()" /> NIH</label>
+            <label class="checkbox-label"><input type="checkbox" name="noaa" [(ngModel)]="noaa" (ngModelChange)="onChange()" /> NOAA</label>
+            <label class="checkbox-label"><input type="checkbox" name="nasa" [(ngModel)]="nasa" (ngModelChange)="onChange()" /> NASA</label>
+          </div>
+          <div class="other-agency"><label for="otherAgency">Other:</label><input id="otherAgency" name="otherAgency" type="text" class="form-control" [(ngModel)]="otherAgency" (ngModelChange)="onChange()" placeholder="Separate agencies with commas" /></div>
+        </div>
+        <div class="form-group">
+          <label for="acknowledgment" class="field-label">Acknowledgment</label>
+          <textarea id="acknowledgment" name="acknowledgement" class="form-control" rows="4" [(ngModel)]="acknowledgement" (ngModelChange)="onChange()" maxlength="1000"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="submission_comment" class="field-label">Submission Comment</label>
+          <textarea id="submission_comment" name="submissionComment" class="form-control" rows="3" [(ngModel)]="submissionComment" (ngModelChange)="onChange()" required minlength="20" maxlength="1000"></textarea>
+          <small>Describe this {{ isEdit ? 'revision' : 'submission' }} in at least 20 characters.</small>
+        </div>
+      </div>
+    </div>
+    <div class="file-upload-divider"></div>
+    <section class="file-upload-section" aria-labelledby="file-heading">
+      <div class="drop-zone"><div class="drop-zone-content">
+        <div class="icon-container"><i class="bi bi-file-earmark-arrow-up" aria-hidden="true"></i></div>
+        <h2 id="file-heading">{{ isEdit ? 'Replacement file (optional)' : 'Select a file to register' }}</h2>
+        <p>The file stays in your browser. Only its SHA-256 fingerprint, size, and extension are submitted.</p>
+        <label for="guest-file">Choose one file (10 MiB maximum)</label>
+        <input id="guest-file" type="file" class="form-control" (change)="onFileSelected($event)" accept=".csv,.json,.md,.pdf,.png,.tif,.tiff,.txt,.yaml,.yml" />
+        <p *ngIf="hashing" role="status">Calculating SHA-256...</p>
+        <p *ngIf="fingerprint"><strong>SHA-256:</strong> <code class="text-break">{{ fingerprint }}</code></p>
+      </div></div>
+    </section>
+    <div class="form-navigation"><a class="btn btn-secondary" routerLink="/list-artifacts">Cancel and Go Back</a><button class="btn btn-primary" type="submit" [disabled]="!canSubmit">{{ busy ? 'Submitting...' : isEdit ? 'Submit revision' : 'Submit' }}</button></div>
+  </form>
+</main>

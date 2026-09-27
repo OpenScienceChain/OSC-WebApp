@@ -7,6 +7,7 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { ArtifactsPreviewComponent } from './artifacts-preview.component';
 import { ArtifactService } from '../../artifacts/services/artifact.service';
 import { Artifact } from '../../models/artifact.model';
+import { AuthService } from '../../auth/auth.service';
 
 // Mock ArtifactCardComponent
 @Component({
@@ -60,7 +61,10 @@ describe('ArtifactsPreviewComponent', () => {
         MockArtifactCardComponent,
         RouterTestingModule,
       ],
-      providers: [{ provide: ArtifactService, useValue: mockArtifactService }],
+      providers: [
+        { provide: ArtifactService, useValue: mockArtifactService },
+        { provide: AuthService, useValue: { isAuthenticated: () => true } },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(ArtifactsPreviewComponent);
