@@ -22,3 +22,11 @@ Date: 2026-09-26. Worktree: `OSC-WebApp-old-portal-guest-20260926`. Branch: `fea
 - The previous 4302 preview and its 3000 mock were stopped by exact listener PID to avoid two visible site versions. Their files/worktree were not deleted. No unrelated Docker container was touched.
 - Before release, run a separate review of API/privacy and auth boundaries, manual keyboard/screen-reader checks, integration against the frozen local Gateway contract, and a synthetic real-Fabric canary if approved. Do not present the in-memory mock's instant confirmation as deployed ledger evidence.
 - Nothing was pushed or deployed. No AWS resources were created or changed.
+
+## One-Portal Audit And Correction
+
+The first frozen commit (`b0c0421`) still rendered a simplified guest-only catalog. The follow-up removed that visible divergence: both unsigned and signed-in users now render the original artifact catalog and workflow list components at `/list-artifacts` and `/list-workflows`. Those components select the public guest projection or product API at runtime; the artifact catalog keeps its original search and pagination in both states. The unused guest catalog component and its styles were removed. Guest record forms/details/history retain the approved old-portal layout but necessarily show only fields allowed by the frozen guest contract.
+
+`angular.json` still builds one WebApp into `dist/osc-web-app` from `src/main.ts`; there is no guest build target, guest static origin, or separate release artifact. The mock API script and proxy configuration are local preview tools, not part of that browser bundle. `/demo` browser bookmarks are redirects into the familiar pages, not a second site. `/api/v1/demo` remains the Gateway's internal guest security boundary.
+
+The correction passed a production build, focused ESLint, 31/31 Karma tests (including the original artifact catalog's search/pagination suite and guest source selection), and 5/5 Cypress scenarios against the 4303/3001 mock. Cypress asserted the same artifact search control for guest and signed-in catalog visits. This remains local synthetic UI evidence, not a real Gateway authorization or Fabric test. The 4303 preview should remain available until replaced by the E2E owner's real-stack review.

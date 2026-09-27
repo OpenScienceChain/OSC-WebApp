@@ -43,6 +43,7 @@ export class ArtifactsPreviewComponent implements OnInit {
               title: item.title,
               description: item.description,
               keywords: item.keywords || [],
+              submissionState: item.submissionState,
               submittedAt: item.submittedAt,
               verified: false,
               lastTimeVerified: null,

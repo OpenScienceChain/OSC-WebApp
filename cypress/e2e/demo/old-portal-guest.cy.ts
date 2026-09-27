@@ -36,6 +36,7 @@ describe('old portal guest flow against the local mock', () => {
     );
     cy.contains('a', 'Explore artifacts').click();
     cy.location('pathname').should('equal', '/list-artifacts');
+    cy.get('#artifact-title-search').should('be.visible');
     cy.contains('.catalog-card', 'Coastal sample analysis')
       .contains('a', 'View artifact')
       .click();
@@ -178,6 +179,7 @@ describe('old portal guest flow against the local mock', () => {
     });
     cy.wait('@productArtifacts');
     cy.contains('h2', 'Catalog results').should('be.visible');
+    cy.get('#artifact-title-search').should('be.visible');
     cy.contains('button', 'Sign out').should('be.visible');
     cy.get('a[href="/demo"]').should('not.exist');
     cy.visit('/contribute');

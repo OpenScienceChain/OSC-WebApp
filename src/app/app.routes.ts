@@ -14,24 +14,6 @@ export const routes: Routes = [
   { path: 'demo/workflows/:id/history', redirectTo: 'workflows/:id/history' },
   { path: 'demo/workflows/:id', redirectTo: 'workflows/:id' },
   {
-    path: 'list-artifacts',
-    canMatch: [guestModeMatch],
-    data: { catalogType: 'artifacts' },
-    loadComponent: () =>
-      import('./guest/guest-start.component').then(
-        (m) => m.GuestStartComponent,
-      ),
-  },
-  {
-    path: 'list-workflows',
-    canMatch: [guestModeMatch],
-    data: { catalogType: 'workflows' },
-    loadComponent: () =>
-      import('./guest/guest-start.component').then(
-        (m) => m.GuestStartComponent,
-      ),
-  },
-  {
     path: 'contribute',
     canMatch: [guestModeMatch],
     loadComponent: () =>

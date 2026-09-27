@@ -6,6 +6,8 @@ import { of } from 'rxjs';
 import { ListArtifactComponent } from './list-artifact.component';
 import { ArtifactService } from '../services/artifact.service';
 import { Artifact } from '../../models/artifact.model';
+import { AuthService } from '../../auth/auth.service';
+import { DemoService } from '../../guest/demo.service';
 
 // Helper to create mock artifacts
 const createMockArtifacts = (count: number): Artifact[] => {
@@ -25,17 +27,26 @@ describe('ListArtifactComponent', () => {
   let component: ListArtifactComponent;
   let fixture: ComponentFixture<ListArtifactComponent>;
   let artifactService: ArtifactService;
+  let authService: jasmine.SpyObj<AuthService>;
+  let demoService: jasmine.SpyObj<DemoService>;
 
   const mockArtifacts = createMockArtifacts(20); // Create 20 mock artifacts for testing
 
   beforeEach(async () => {
+    authService = jasmine.createSpyObj('AuthService', ['isAuthenticated']);
+    authService.isAuthenticated.and.returnValue(true);
+    demoService = jasmine.createSpyObj('DemoService', ['listArtifacts']);
     await TestBed.configureTestingModule({
       imports: [
         ListArtifactComponent,
         HttpClientTestingModule,
         RouterTestingModule,
       ],
-      providers: [ArtifactService],
+      providers: [
+        ArtifactService,
+        { provide: AuthService, useValue: authService },
+        { provide: DemoService, useValue: demoService },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(ListArtifactComponent);
@@ -53,6 +64,27 @@ describe('ListArtifactComponent', () => {
     expect(component.allArtifacts.length).toBe(20);
     expect(component.filteredArtifacts.length).toBe(20);
     expect(component.paginatedArtifacts.length).toBe(component.itemsPerPage);
+  });
+
+  it('uses the public guest projection in the same catalog when signed out', () => {
+    authService.isAuthenticated.and.returnValue(false);
+    demoService.listArtifacts.and.returnValue(
+      of([
+        {
+          id: 'guest-1',
+          title: 'Public guest artifact',
+          description: 'Safe public projection',
+          keywords: ['provenance'],
+          submittedAt: new Date().toISOString(),
+          submissionState: 'SUCCESS',
+        } as any,
+      ]),
+    );
+    fixture.detectChanges();
+    expect(demoService.listArtifacts).toHaveBeenCalled();
+    expect(artifactService.getArtifacts).not.toHaveBeenCalled();
+    expect(component.paginatedArtifacts[0].title).toBe('Public guest artifact');
+    expect(component.paginatedArtifacts[0].submissionState).toBe('SUCCESS');
   });
 
   describe('onSearch', () => {

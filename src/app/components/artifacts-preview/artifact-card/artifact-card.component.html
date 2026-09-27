@@ -8,7 +8,12 @@
     <dl>
       <div>
         <dt>Status</dt>
-        <dd>{{ artifact.verified ? 'Verified' : 'Recorded' }}</dd>
+        <dd>
+          {{
+            artifact.submissionState ||
+              (artifact.verified ? 'Verified' : 'Recorded')
+          }}
+        </dd>
       </div>
       <div>
         <dt>Last activity</dt>
