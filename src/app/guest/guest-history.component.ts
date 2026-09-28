@@ -11,12 +11,19 @@ import { DemoService } from './demo.service';
   template: `
     <main id="main-content" class="container py-4">
       <h1 class="page-headline mb-3">
-        {{ type === 'artifact' ? 'Artifact' : 'Workflow' }} history
+        {{ type === 'artifact' ? 'Artifact' : 'Workflow' }}
+        {{ selectedTxId ? 'snapshot' : 'history' }}
       </h1>
       <div class="mb-3 content-block">
         <p *ngIf="recordTitle"><strong>Title:</strong> {{ recordTitle }}</p>
         <p><strong>ID:</strong> {{ id }}</p>
         <div class="mt-2 d-flex gap-2 flex-wrap">
+          <a
+            *ngIf="selectedTxId"
+            class="btn btn-outline-primary"
+            [routerLink]="['/', plural, id, 'history']"
+            >All history</a
+          >
           <button
             class="btn btn-outline-primary"
             type="button"
@@ -38,15 +45,21 @@ import { DemoService } from './demo.service';
       >
         No public history found.
       </div>
-      <div class="history-list" *ngIf="!isLoading && items.length">
+      <div class="history-list" *ngIf="!isLoading && visibleItems.length">
         <div
           class="history-toolbar d-flex justify-content-between align-items-center mb-2"
         >
-          <div class="pager-info">{{ total }} public ledger events</div>
+          <div class="pager-info">
+            {{
+              selectedTxId
+                ? 'Selected ledger event'
+                : total + ' public ledger events'
+            }}
+          </div>
         </div>
         <div
           class="history-card card shadow-sm mb-3"
-          *ngFor="let item of items; let i = index"
+          *ngFor="let item of visibleItems"
         >
           <div
             class="card-header d-flex justify-content-between align-items-center"
@@ -58,6 +71,25 @@ import { DemoService } from './demo.service';
               <span class="badge" [ngClass]="badgeClass(item)">{{
                 badgeLabel(item)
               }}</span>
+              <a
+                *ngIf="
+                  type === 'artifact' &&
+                  !selectedTxId &&
+                  (item.txId || item.transactionId)
+                "
+                class="snapshot-link"
+                [routerLink]="[
+                  '/',
+                  plural,
+                  id,
+                  'history',
+                  item.txId || item.transactionId,
+                ]"
+                [attr.aria-label]="
+                  'View snapshot for revision ' + (item.revision || 'unknown')
+                "
+                >View snapshot</a
+              >
             </div>
           </div>
           <div class="card-body">
@@ -84,7 +116,7 @@ import { DemoService } from './demo.service';
                   }}</code>
                 </p>
                 <p class="mb-1">
-                  <strong>Position:</strong> {{ i + 1 }} of
+                  <strong>Position:</strong> {{ items.indexOf(item) + 1 }} of
                   {{ items.length }} returned
                 </p>
               </div>
@@ -130,6 +162,7 @@ import { DemoService } from './demo.service';
 export class GuestHistoryComponent implements OnInit {
   type: 'artifact' | 'workflow' = 'artifact';
   id = '';
+  selectedTxId = '';
   recordTitle = '';
   items: DemoHistoryItem[] = [];
   total = 0;
@@ -142,6 +175,7 @@ export class GuestHistoryComponent implements OnInit {
   ngOnInit(): void {
     this.type = this.route.snapshot.data['recordType'];
     this.id = this.route.snapshot.paramMap.get('id') || '';
+    this.selectedTxId = this.route.snapshot.paramMap.get('txId') || '';
     this.load();
     const detail: Observable<{ title: string }> =
       this.type === 'artifact'
@@ -151,6 +185,13 @@ export class GuestHistoryComponent implements OnInit {
   }
   get plural(): string {
     return `${this.type}s`;
+  }
+  get visibleItems(): DemoHistoryItem[] {
+    return this.selectedTxId
+      ? this.items.filter(
+          (item) => (item.txId || item.transactionId) === this.selectedTxId,
+        )
+      : this.items;
   }
   load(): void {
     this.isLoading = true;
@@ -163,6 +204,8 @@ export class GuestHistoryComponent implements OnInit {
       next: (history) => {
         this.items = history.items || history.history || [];
         this.total = history.count ?? history.total ?? this.items.length;
+        if (this.selectedTxId && !this.visibleItems.length)
+          this.errorMessage = 'Snapshot not found in public history.';
         this.isLoading = false;
       },
       error: () => {

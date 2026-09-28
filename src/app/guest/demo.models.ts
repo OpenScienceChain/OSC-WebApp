@@ -86,6 +86,16 @@ export interface DemoWorkflowRequest {
   requestId: string;
   artifactIds: string[];
   researchContext: DemoResearchContext;
+  title: string;
+  description: string;
+  submissionComment: string;
+  keywords: string[];
+  githubRepositories: {
+    url: string;
+    description: string;
+    gitHash?: string;
+    contents: { filename: string; hash: string }[];
+  }[];
 }
 
 export interface DemoWorkflow {
@@ -118,6 +128,9 @@ export interface DemoCatalogWorkflow {
   id: string;
   title: string;
   description: string;
+  keywords?: string[];
+  submissionComment?: string;
+  githubRepositories?: { url: string; description: string; gitHash: string }[];
   organization: string;
   organizationSlug: DemoOrganizationSlug;
   contributorAlias: string;

@@ -69,6 +69,13 @@ describe('old portal guest flow against the local mock', () => {
       capture: 'fullPage',
     });
 
+    cy.get('.history-card').eq(1).contains('a', 'View snapshot').click();
+    cy.location('pathname').should('match', /\/history\/[^/]+$/);
+    cy.contains('h1', 'Artifact snapshot').should('be.visible');
+    cy.get('.history-card').should('have.length', 1);
+    cy.contains('a', 'All history').click();
+    cy.get('.history-card').should('have.length', 3);
+
     cy.viewport(390, 844);
     cy.reload();
     cy.get('.history-card').should('have.length', 3);
@@ -89,14 +96,25 @@ describe('old portal guest flow against the local mock', () => {
     cy.contains('button', 'Start session').click();
     cy.contains('Contributing for neuroscience-gateway').should('be.visible');
 
-    cy.get('#title').type('Local synthetic sample');
-    cy.get('#description').type(
-      'A synthetic artifact used to test the original portal guest contribution workflow end to end.',
-    );
+    cy.get('#title').type('AB').blur();
+    cy.get('#title-error').should('contain', 'at least 3 characters');
+    cy.get('#title').clear().type('Local synthetic sample');
+    cy.get('#description').type('Too short').blur();
+    cy.get('#description-error').should('contain', 'at least 50 characters');
+    cy.get('#description')
+      .clear()
+      .type(
+        'A synthetic artifact used to test the original portal guest contribution workflow end to end.',
+      );
     cy.get('#keywords').type('synthetic, provenance');
-    cy.get('#submission_comment').type(
-      'Initial local synthetic contribution for review.',
+    cy.get('#submission_comment').type('short').blur();
+    cy.get('#submission-comment-error').should(
+      'contain',
+      'at least 20 characters',
     );
+    cy.get('#submission_comment')
+      .clear()
+      .type('Initial local synthetic contribution for review.');
     cy.get('#guest-file').selectFile({
       contents: Cypress.Buffer.from('synthetic research bytes'),
       fileName: 'private-original.txt',
@@ -119,13 +137,60 @@ describe('old portal guest flow against the local mock', () => {
       cy.get('button.contribute-button').click();
       cy.contains('[role="menuitem"]', 'Workflow').click();
       cy.location('pathname').should('equal', '/create-workflow');
-      cy.contains('label', 'Local synthetic sample').find('input').check();
+      cy.get('#workflow-title').type('Local synthetic analysis workflow');
+      cy.get('#workflow-description').type(
+        'A reproducible local workflow linking the synthetic sample and its documented analysis steps.',
+      );
+      cy.get('#workflow-keywords').type('synthetic, provenance');
+      cy.get('#workflow-comment').type(
+        'Initial local workflow contribution for review.',
+      );
+      cy.get('#workflow-artifact-search').click();
+      cy.contains('button.dropdown-item', 'Local synthetic sample').click();
+      cy.intercept(
+        'GET',
+        'https://api.github.com/repos/example/research-workflow',
+        {
+          description: 'Synthetic analysis source',
+        },
+      );
+      cy.intercept(
+        'GET',
+        'https://api.github.com/repos/example/research-workflow/commits?per_page=1',
+        [{ sha: 'a'.repeat(40) }],
+      );
+      cy.intercept(
+        'GET',
+        'https://api.github.com/repos/example/research-workflow/contents*',
+        [{ name: 'analysis.py', sha: 'b'.repeat(40), type: 'file' }],
+      ).as('repoContents');
+      cy.contains('button', '+ Add Repository').click();
+      cy.get('#repo-url-0').type(
+        'https://github.com/example/research-workflow',
+      );
+      cy.get('#repo-url-0').blur();
+      cy.get('#repo-description-0').should(
+        'have.value',
+        'Synthetic analysis source',
+      );
+      cy.get('#repo-hash-0').should('have.value', 'a'.repeat(40));
+      cy.wait('@repoContents').its('response.body').should('have.length', 1);
+      cy.get('.content-entry input').first().should('have.value', 'analysis.py');
+      cy.screenshot('restored-workflow-form-desktop', { capture: 'fullPage' });
       cy.intercept('POST', '**/api/v1/demo/workflows').as('createdWorkflow');
       cy.contains('button', 'Submit workflow').click();
-      cy.wait('@createdWorkflow')
-        .its('request.body.artifactIds')
-        .should('deep.equal', [id]);
-      cy.contains('h1', 'Example workflow').should('be.visible');
+      cy.wait('@createdWorkflow').then(({ request }) => {
+        expect(request.body.artifactIds).to.deep.equal([id]);
+        expect(request.body.title).to.equal(
+          'Local synthetic analysis workflow',
+        );
+        expect(request.body.githubRepositories[0].url).to.equal(
+          'https://github.com/example/research-workflow',
+        );
+      });
+      cy.contains('h1', 'Local synthetic analysis workflow').should(
+        'be.visible',
+      );
 
       cy.visit(`/update-artifact/${id}`);
       cy.get('#title').should('have.attr', 'readonly');

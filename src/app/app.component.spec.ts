@@ -179,17 +179,13 @@ describe('AppComponent', () => {
       expect(component.contributeMenuOpen).toBeFalse();
     });
 
-    it('should show info message and navigate to sign-in when not authenticated', () => {
+    it('should navigate unsigned visitors to the bounded contribution form', () => {
       component.isAuthenticated = false;
       spyOn(router, 'navigate');
 
       component.onContributeClick('artifact');
 
-      expect(toastrService.info).toHaveBeenCalledWith(
-        "We'd love to have your contribution, but first Sign in to continue",
-        'Welcome!',
-      );
-      expect(router.navigate).toHaveBeenCalledWith(['/auth/sign-in']);
+      expect(router.navigate).toHaveBeenCalledWith(['/contribute']);
     });
 
     it('should navigate to contribute page when authenticated for artifact', () => {

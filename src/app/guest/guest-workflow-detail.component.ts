@@ -77,6 +77,26 @@ import { DemoService } from './demo.service';
                   <a [routerLink]="['/artifacts', id]">Artifact {{ id }}</a>
                 </li>
               </ul>
+              <div *ngIf="workflow.keywords?.length">
+                <h3>Keywords</h3>
+                <p>{{ workflow.keywords?.join(', ') }}</p>
+              </div>
+              <div *ngIf="workflow.githubRepositories?.length">
+                <h3>GitHub repositories</h3>
+                <ul>
+                  <li *ngFor="let repository of workflow.githubRepositories">
+                    <a
+                      [href]="repository.url"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      >{{ repository.url }}</a
+                    >
+                    <span *ngIf="repository.description">
+                      — {{ repository.description }}</span
+                    >
+                  </li>
+                </ul>
+              </div>
             </section>
             <aside
               class="record-identity"

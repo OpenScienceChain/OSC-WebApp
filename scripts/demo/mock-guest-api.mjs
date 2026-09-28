@@ -179,7 +179,9 @@ createServer(async (request, response) => {
       const body = await bodyFor(request);
       const id = randomUUID();
       const record = {
-        id, title: `Example workflow ${id.slice(0, 8)}`, description: 'A locally mocked workflow linking selected guest artifacts.',
+        id, title: body.title, description: body.description,
+        keywords: body.keywords || [], submissionComment: body.submissionComment,
+        githubRepositories: (body.githubRepositories || []).map(({ url, description, gitHash }) => ({ url, description, gitHash })),
         organization: orgNames[session.organization], organizationSlug: session.organization, contributorAlias: session.contributorAlias,
         researchContext: body.researchContext, artifactIds: body.artifactIds || [], submissionState: 'SUCCESS',
         blockchainTxId: `mock-workflow-${id}`, submittedAt: new Date().toISOString(),

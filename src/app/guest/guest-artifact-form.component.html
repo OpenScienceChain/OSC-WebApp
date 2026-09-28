@@ -14,11 +14,21 @@
       <div class="left-column">
         <div class="form-group">
           <label for="title" class="field-label">Title</label>
-          <input id="title" name="title" type="text" class="form-control" [(ngModel)]="title" (ngModelChange)="onChange()" [readOnly]="isEdit" required minlength="3" maxlength="200" />
+          <input id="title" name="title" type="text" class="form-control" [(ngModel)]="title" #titleModel="ngModel" (ngModelChange)="onChange()" [readOnly]="isEdit" [class.is-invalid]="!isEdit && titleModel.invalid && titleModel.touched" [attr.aria-invalid]="!isEdit && titleModel.invalid && titleModel.touched" [attr.aria-describedby]="!isEdit && titleModel.invalid && titleModel.touched ? 'title-error' : null" required minlength="3" maxlength="200" />
+          <div id="title-error" *ngIf="!isEdit && titleModel.invalid && titleModel.touched" class="error-message" role="alert">
+            <small *ngIf="titleModel.errors?.['required']">Title is required.</small>
+            <small *ngIf="titleModel.errors?.['minlength']">Title must be at least 3 characters long.</small>
+            <small *ngIf="titleModel.errors?.['maxlength']">Title cannot exceed 200 characters.</small>
+          </div>
         </div>
         <div class="form-group">
           <label for="description" class="field-label">Description</label>
-          <textarea id="description" name="description" class="form-control" rows="4" [(ngModel)]="description" (ngModelChange)="onChange()" [readOnly]="isEdit" required minlength="50" maxlength="3000"></textarea>
+          <textarea id="description" name="description" class="form-control" rows="4" [(ngModel)]="description" #descriptionModel="ngModel" (ngModelChange)="onChange()" [readOnly]="isEdit" [class.is-invalid]="!isEdit && descriptionModel.invalid && descriptionModel.touched" [attr.aria-invalid]="!isEdit && descriptionModel.invalid && descriptionModel.touched" [attr.aria-describedby]="!isEdit && descriptionModel.invalid && descriptionModel.touched ? 'description-error' : null" required minlength="50" maxlength="3000"></textarea>
+          <div id="description-error" *ngIf="!isEdit && descriptionModel.invalid && descriptionModel.touched" class="error-message" role="alert">
+            <small *ngIf="descriptionModel.errors?.['required']">Description is required.</small>
+            <small *ngIf="descriptionModel.errors?.['minlength']">Description must be at least 50 characters long.</small>
+            <small *ngIf="descriptionModel.errors?.['maxlength']">Description cannot exceed 3000 characters.</small>
+          </div>
         </div>
         <div class="form-group">
           <label for="keywords" class="field-label">Key Words</label>
@@ -55,8 +65,12 @@
         </div>
         <div class="form-group">
           <label for="submission_comment" class="field-label">Submission Comment</label>
-          <textarea id="submission_comment" name="submissionComment" class="form-control" rows="3" [(ngModel)]="submissionComment" (ngModelChange)="onChange()" required minlength="20" maxlength="1000"></textarea>
-          <small>Describe this {{ isEdit ? 'revision' : 'submission' }} in at least 20 characters.</small>
+          <textarea id="submission_comment" name="submissionComment" class="form-control" rows="3" [(ngModel)]="submissionComment" #commentModel="ngModel" (ngModelChange)="onChange()" [class.is-invalid]="commentModel.invalid && commentModel.touched" [attr.aria-invalid]="commentModel.invalid && commentModel.touched" [attr.aria-describedby]="commentModel.invalid && commentModel.touched ? 'submission-comment-error' : null" required minlength="20" maxlength="1000"></textarea>
+          <div id="submission-comment-error" *ngIf="commentModel.invalid && commentModel.touched" class="error-message" role="alert">
+            <small *ngIf="commentModel.errors?.['required']">Submission comment is required.</small>
+            <small *ngIf="commentModel.errors?.['minlength']">Submission comment must be at least 20 characters long.</small>
+            <small *ngIf="commentModel.errors?.['maxlength']">Submission comment cannot exceed 1000 characters.</small>
+          </div>
         </div>
       </div>
     </div>
