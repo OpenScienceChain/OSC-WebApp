@@ -3,6 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { forkJoin } from 'rxjs';
+import { ToastrService } from 'ngx-toastr';
 import {
   DemoArtifactEditRequest,
   DemoArtifactMetadata,
@@ -63,11 +64,13 @@ export class GuestArtifactFormComponent implements OnInit {
   fingerprint = '';
   sizeBytes = 0;
   extension = '';
+  touched = new Set<string>();
 
   constructor(
     private readonly route: ActivatedRoute,
     private readonly router: Router,
     public readonly demo: DemoService,
+    private readonly toastr: ToastrService,
   ) {
     this.id = route.snapshot.paramMap.get('id') || '';
     this.isEdit = !!this.id;
@@ -134,6 +137,41 @@ export class GuestArtifactFormComponent implements OnInit {
 
   onChange(): void {
     this.requestId = '';
+    this.error = '';
+  }
+
+  markTouched(field: string): void {
+    this.touched.add(field);
+  }
+
+  fieldError(field: string): string {
+    const raw = this[field as 'keywords' | 'links' | 'dois' | 'otherAgency' | 'acknowledgement'];
+    const items = field === 'otherAgency' ? this.agencies() : this.list(raw);
+    if (field === 'acknowledgement') {
+      return raw.trim().length > 1000 ? 'Acknowledgment cannot exceed 1000 characters.' : '';
+    }
+    if (raw && raw.split(',').some((item) => !item.trim()))
+      return 'Separate entries with commas; remove empty entries.';
+    const limits: Record<string, [number, number, string]> = {
+      keywords: [10, 100, 'keywords'],
+      links: [5, 400, 'links'],
+      dois: [5, 100, 'DOIs'],
+      otherAgency: [5, 100, 'funding agencies'],
+    };
+    const [count, length, label] = limits[field];
+    if (items.length > count || items.some((item) => item.length > length))
+      return `Use at most ${count} ${label}, each no longer than ${length} characters.`;
+    if (field === 'links' && items.some((link) => {
+      try {
+        const url = new URL(link);
+        return url.protocol !== 'https:' || !url.hostname.includes('.');
+      } catch {
+        return true;
+      }
+    })) return 'Enter valid HTTPS links, separated by commas.';
+    if (field === 'dois' && items.some((doi) => !/^10\.\d{4,9}\/[-_.;()/:A-Za-z0-9]+$/.test(doi)))
+      return 'Enter each DOI as 10.xxxx/suffix.';
+    return '';
   }
 
   async onFileSelected(event: Event): Promise<void> {
@@ -151,6 +189,7 @@ export class GuestArtifactFormComponent implements OnInit {
       !ALLOWED_EXTENSIONS.has(extension)
     ) {
       this.error = 'Choose one non-empty supported file no larger than 10 MiB.';
+      this.toastr.warning(this.error, 'File not accepted');
       input.value = '';
       return;
     }
@@ -169,6 +208,7 @@ export class GuestArtifactFormComponent implements OnInit {
       this.extension = extension;
     } catch {
       this.error = 'This browser could not compute the file fingerprint.';
+      this.toastr.error(this.error, 'File processing failed');
     } finally {
       this.hashing = false;
     }
@@ -183,6 +223,7 @@ export class GuestArtifactFormComponent implements OnInit {
       this.error =
         this.metadataError() ||
         'Complete the required fields and select a supported file.';
+      this.toastr.warning(this.error, 'Check the form');
       return;
     }
     const requestId = (this.requestId ||= crypto.randomUUID());
@@ -230,6 +271,10 @@ export class GuestArtifactFormComponent implements OnInit {
   private finish(id: string): void {
     this.busy = false;
     this.requestId = '';
+    this.toastr.success(
+      this.isEdit ? 'Artifact revision submitted.' : 'Artifact submitted.',
+      'Accepted',
+    );
     this.router.navigate(['/artifacts', id]);
   }
 
@@ -245,6 +290,7 @@ export class GuestArtifactFormComponent implements OnInit {
     else if (error.status === 429)
       this.error = 'Guest contribution or revision limit reached.';
     else this.error = 'Submission failed. Retry keeps the same request ID.';
+    this.toastr.error(this.error, 'Submission failed');
   }
 
   private list(text: string): string[] {
@@ -308,33 +354,10 @@ export class GuestArtifactFormComponent implements OnInit {
   }
 
   metadataError(): string {
-    const checks: Array<[string[], number, number, string]> = [
-      [this.list(this.keywords), 10, 100, 'keywords'],
-      [this.list(this.links), 5, 400, 'links'],
-      [this.list(this.dois), 5, 100, 'DOIs'],
-      [this.agencies(), 5, 100, 'funding agencies'],
-    ];
-    for (const [items, count, length, name] of checks)
-      if (items.length > count || items.some((item) => item.length > length))
-        return `Use at most ${count} ${name}, each no longer than ${length} characters.`;
-    if (
-      this.list(this.links).some((link) => {
-        try {
-          return new URL(link).protocol !== 'https:';
-        } catch {
-          return true;
-        }
-      })
-    )
-      return 'Related links must be HTTPS URLs.';
-    if (
-      this.list(this.dois).some(
-        (doi) => !/^10\.\d{4,9}\/[-_.;()/:A-Za-z0-9]+$/.test(doi),
-      )
-    )
-      return 'Enter each DOI as 10.xxxx/suffix.';
-    if (this.acknowledgement.trim().length > 1000)
-      return 'Acknowledgement must be at most 1000 characters.';
+    for (const field of ['keywords', 'links', 'dois', 'otherAgency', 'acknowledgement']) {
+      const error = this.fieldError(field);
+      if (error) return error;
+    }
     return '';
   }
 }

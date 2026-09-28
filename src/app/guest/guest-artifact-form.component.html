@@ -32,15 +32,18 @@
         </div>
         <div class="form-group">
           <label for="keywords" class="field-label">Key Words</label>
-          <input id="keywords" name="keywords" type="text" class="form-control" [(ngModel)]="keywords" (ngModelChange)="onChange()" placeholder="Enter keywords, separated by commas" />
+          <input id="keywords" name="keywords" type="text" class="form-control" [(ngModel)]="keywords" (ngModelChange)="onChange()" (blur)="markTouched('keywords')" maxlength="1000" [class.is-invalid]="touched.has('keywords') && fieldError('keywords')" placeholder="Enter keywords, separated by commas" />
+          <div *ngIf="touched.has('keywords') && fieldError('keywords')" class="error-message" role="alert">{{ fieldError('keywords') }}</div>
         </div>
         <div class="form-group">
           <label for="links" class="field-label">Links of interest</label>
-          <input id="links" name="links" type="text" class="form-control" [(ngModel)]="links" (ngModelChange)="onChange()" placeholder="HTTPS URLs, separated by commas" />
+          <input id="links" name="links" type="text" class="form-control" [(ngModel)]="links" (ngModelChange)="onChange()" (blur)="markTouched('links')" maxlength="2000" [class.is-invalid]="touched.has('links') && fieldError('links')" placeholder="HTTPS URLs, separated by commas" />
+          <div *ngIf="touched.has('links') && fieldError('links')" class="error-message" role="alert">{{ fieldError('links') }}</div>
         </div>
         <div class="form-group last-field">
           <label for="doi" class="field-label">DOI</label>
-          <input id="doi" name="doi" type="text" class="form-control" [(ngModel)]="dois" (ngModelChange)="onChange()" placeholder="10.1234/abc123" />
+          <input id="doi" name="doi" type="text" class="form-control" [(ngModel)]="dois" (ngModelChange)="onChange()" (blur)="markTouched('dois')" maxlength="1000" [class.is-invalid]="touched.has('dois') && fieldError('dois')" placeholder="10.1234/abc123" />
+          <div *ngIf="touched.has('dois') && fieldError('dois')" class="error-message" role="alert">{{ fieldError('dois') }}</div>
         </div>
         <div class="form-group" *ngIf="!isEdit">
           <label for="research-context" class="field-label">Research context</label>
@@ -57,11 +60,11 @@
             <label class="checkbox-label"><input type="checkbox" name="noaa" [(ngModel)]="noaa" (ngModelChange)="onChange()" /> NOAA</label>
             <label class="checkbox-label"><input type="checkbox" name="nasa" [(ngModel)]="nasa" (ngModelChange)="onChange()" /> NASA</label>
           </div>
-          <div class="other-agency"><label for="otherAgency">Other:</label><input id="otherAgency" name="otherAgency" type="text" class="form-control" [(ngModel)]="otherAgency" (ngModelChange)="onChange()" placeholder="Separate agencies with commas" /></div>
+          <div class="other-agency"><label for="otherAgency">Other:</label><input id="otherAgency" name="otherAgency" type="text" class="form-control" [(ngModel)]="otherAgency" (ngModelChange)="onChange()" (blur)="markTouched('otherAgency')" maxlength="500" [class.is-invalid]="touched.has('otherAgency') && fieldError('otherAgency')" placeholder="Separate agencies with commas" /><div *ngIf="touched.has('otherAgency') && fieldError('otherAgency')" class="error-message" role="alert">{{ fieldError('otherAgency') }}</div></div>
         </div>
         <div class="form-group">
           <label for="acknowledgment" class="field-label">Acknowledgment</label>
-          <textarea id="acknowledgment" name="acknowledgement" class="form-control" rows="4" [(ngModel)]="acknowledgement" (ngModelChange)="onChange()" maxlength="1000"></textarea>
+          <textarea id="acknowledgment" name="acknowledgement" class="form-control" rows="4" [(ngModel)]="acknowledgement" (ngModelChange)="onChange()" (blur)="markTouched('acknowledgement')" maxlength="1000"></textarea>
         </div>
         <div class="form-group">
           <label for="submission_comment" class="field-label">Submission Comment</label>

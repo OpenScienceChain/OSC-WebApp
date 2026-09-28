@@ -3,7 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { Router, RouterModule } from '@angular/router';
-import { DemoArtifact, DemoResearchContext, DemoStatus } from './demo.models';
+import { DemoCatalogArtifact, DemoResearchContext, DemoStatus } from './demo.models';
 import { DemoService } from './demo.service';
 import { GuestSessionPanelComponent } from './guest-session-panel.component';
 
@@ -29,7 +29,7 @@ interface WorkflowRepository {
 })
 export class GuestWorkflowFormComponent implements OnInit {
   status?: DemoStatus;
-  artifacts: DemoArtifact[] = [];
+  artifacts: DemoCatalogArtifact[] = [];
   selectedIds = new Set<string>();
   context: DemoResearchContext = 'REPRODUCIBLE_ANALYSIS';
   title = '';
@@ -60,22 +60,26 @@ export class GuestWorkflowFormComponent implements OnInit {
   }
 
   loadArtifacts(): void {
-    this.demo.getMyArtifacts().subscribe({
+    const organization = this.demo.session?.organization;
+    if (!organization) return;
+    this.demo.listArtifacts(organization).subscribe({
       next: (items) =>
         (this.artifacts = items.filter(
-          (item) => item.submissionState === 'SUCCESS',
+          (item) =>
+            item.organizationSlug === organization &&
+            item.submissionState === 'SUCCESS',
         )),
-      error: () => (this.error = 'Owned artifacts are unavailable.'),
+      error: () => (this.error = 'Organization artifacts are unavailable.'),
     });
   }
 
-  get selectedArtifacts(): DemoArtifact[] {
+  get selectedArtifacts(): DemoCatalogArtifact[] {
     return this.artifacts.filter((artifact) =>
       this.selectedIds.has(artifact.id),
     );
   }
 
-  get matchingArtifacts(): DemoArtifact[] {
+  get matchingArtifacts(): DemoCatalogArtifact[] {
     const query = this.artifactSearch.trim().toLowerCase();
     return this.artifacts.filter(
       (artifact) =>

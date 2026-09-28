@@ -9,7 +9,7 @@
     (started)="loadArtifacts()"
   ></app-guest-session-panel>
   <p *ngIf="demo.session" class="guest-form-note">
-    Link confirmed artifacts from your {{ demo.session.organization }} session.
+    Link confirmed artifacts from {{ demo.session.organization }}.
   </p>
   <p *ngIf="error" class="guest-form-note text-danger" role="alert">
     {{ error }}
@@ -137,7 +137,7 @@
             id="workflow-artifact-search"
             class="form-control"
             type="search"
-            placeholder="Search your confirmed artifacts or click to browse"
+            placeholder="Search confirmed artifacts in your organization"
             autocomplete="off"
             [(ngModel)]="artifactSearch"
             [ngModelOptions]="{ standalone: true }"
@@ -145,11 +145,8 @@
             (input)="showArtifactDropdown = true"
             [class.is-invalid]="submitted && selectedIds.size === 0"
           />
-          <div
-            *ngIf="showArtifactDropdown && matchingArtifacts.length"
-            class="dropdown-list"
-          >
-            <div class="dropdown-hint">Your confirmed artifacts</div>
+          <div *ngIf="showArtifactDropdown" class="dropdown-list">
+            <div class="dropdown-hint">Confirmed artifacts in this organization</div>
             <button
               type="button"
               class="dropdown-item"
@@ -157,7 +154,11 @@
               (click)="selectArtifact(artifact.id)"
             >
               <span class="dropdown-item-title">{{ artifact.title }}</span>
+              <span class="dropdown-item-desc">{{ artifact.contributorAlias }}</span>
             </button>
+            <p *ngIf="!matchingArtifacts.length" class="dropdown-empty">
+              No matching confirmed artifacts.
+            </p>
           </div>
           <div
             *ngIf="submitted && !selectedIds.size"
@@ -183,11 +184,11 @@
             </div>
           </div>
           <p *ngIf="demo.session && !artifacts.length" class="field-help">
-            No confirmed artifacts in this session yet. Contribute an artifact
+            No confirmed artifacts in this organization yet. Contribute an artifact
             first, then return here.
           </p>
           <p class="field-help">
-            You can link up to three artifacts from this session.
+            You can link up to three confirmed artifacts from this organization.
           </p>
         </div>
 

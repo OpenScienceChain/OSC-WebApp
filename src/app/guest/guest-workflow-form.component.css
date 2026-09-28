@@ -162,6 +162,12 @@ textarea.form-control {
   color: #6c757d;
 }
 
+.dropdown-empty {
+  padding: 10px 15px;
+  margin: 0;
+  color: #52677a;
+}
+
 /* Fetch status */
 .fetch-status {
   padding: 2px 0;
