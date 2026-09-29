@@ -33,55 +33,138 @@ import { DemoService } from './demo.service';
             <h1>{{ workflow.title }}</h1>
           </header>
           <div class="record-layout workflow-body">
-            <section class="description-col" aria-labelledby="workflow-description-heading">
+            <section
+              class="description-col"
+              aria-labelledby="workflow-description-heading"
+            >
               <h2 id="workflow-description-heading">Description</h2>
               <p class="pre-wrap">{{ workflow.description }}</p>
             </section>
-            <aside class="record-identity details-col" aria-labelledby="workflow-details-heading">
+            <aside
+              class="record-identity details-col"
+              aria-labelledby="workflow-details-heading"
+            >
               <h2 id="workflow-details-heading">Details</h2>
               <table class="table table-borderless detail-table">
                 <tbody>
-                  <tr><th scope="row">ID</th><td><code>{{ workflow.id }}</code></td></tr>
-                  <tr><th scope="row">Organization</th><td>{{ workflow.organization }}</td></tr>
-                  <tr><th scope="row">Submitter</th><td>{{ workflow.contributorAlias }}</td></tr>
-                  <tr><th scope="row">Submitted</th><td>{{ workflow.submittedAt | date: 'medium' }}</td></tr>
-                  <tr><th scope="row">State</th><td><span class="record-state" [class.is-confirmed]="confirmed">{{ workflow.submissionState }}</span></td></tr>
-                  <tr *ngIf="confirmed"><th scope="row">Blockchain TX</th><td><code>{{ workflow.blockchainTxId }}</code></td></tr>
-                  <tr *ngIf="!confirmed"><th scope="row">Provenance</th><td>Awaiting blockchain confirmation</td></tr>
+                  <tr>
+                    <th scope="row">ID</th>
+                    <td>
+                      <code>{{ workflow.id }}</code>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Organization</th>
+                    <td>{{ workflow.organization }}</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Submitter</th>
+                    <td>{{ workflow.contributorAlias }}</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Submitted</th>
+                    <td>{{ workflow.submittedAt | date: 'medium' }}</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">State</th>
+                    <td>
+                      <span
+                        class="record-state"
+                        [class.is-confirmed]="confirmed"
+                        >{{ workflow.submissionState }}</span
+                      >
+                    </td>
+                  </tr>
+                  <tr *ngIf="confirmed">
+                    <th scope="row">Blockchain TX</th>
+                    <td>
+                      <code>{{ workflow.blockchainTxId }}</code>
+                    </td>
+                  </tr>
+                  <tr *ngIf="!confirmed">
+                    <th scope="row">Provenance</th>
+                    <td>Awaiting blockchain confirmation</td>
+                  </tr>
                 </tbody>
               </table>
             </aside>
           </div>
           <section *ngIf="workflow.keywords?.length" class="record-section">
             <h2><i class="bi bi-tags" aria-hidden="true"></i> Keywords</h2>
-            <span class="keyword-badge" *ngFor="let keyword of workflow.keywords">{{ keyword }}</span>
+            <span
+              class="keyword-badge"
+              *ngFor="let keyword of workflow.keywords"
+              >{{ keyword }}</span
+            >
           </section>
           <section *ngIf="workflow.submissionComment" class="record-section">
             <h2>Submission Comment</h2>
             <p class="pre-wrap">{{ workflow.submissionComment }}</p>
           </section>
           <section class="record-section" *ngIf="workflow.artifactIds.length">
-            <h2><i class="bi bi-database" aria-hidden="true"></i> Linked Artifacts</h2>
-            <div class="linked-artifact" *ngFor="let id of workflow.artifactIds">
-                  <h3><a [routerLink]="['/artifacts', id]">{{ linkedArtifacts[id] ? linkedArtifacts[id].title : 'Artifact ' + id }}</a></h3>
-                  <p *ngIf="linkedArtifacts[id] && linkedArtifacts[id].description"><strong>Description:</strong> {{ linkedArtifacts[id].description }}</p>
+            <h2>
+              <i class="bi bi-database" aria-hidden="true"></i> Linked Artifacts
+            </h2>
+            <div
+              class="linked-artifact"
+              *ngFor="let id of workflow.artifactIds"
+            >
+              <h3>
+                <a [routerLink]="['/artifacts', id]">{{
+                  linkedArtifacts[id]
+                    ? linkedArtifacts[id].title
+                    : 'Artifact ' + id
+                }}</a>
+              </h3>
+              <p *ngIf="linkedArtifacts[id] && linkedArtifacts[id].description">
+                <strong>Description:</strong>
+                {{ linkedArtifacts[id].description }}
+              </p>
             </div>
           </section>
-          <section class="record-section" *ngIf="workflow.githubRepositories?.length">
-            <h2><i class="bi bi-github" aria-hidden="true"></i> GitHub Repositories</h2>
-            <div class="linked-artifact" *ngFor="let repository of workflow.githubRepositories">
-              <h3><a [href]="repository.url" target="_blank" rel="noopener noreferrer">{{ repository.url }}</a></h3>
+          <section
+            class="record-section"
+            *ngIf="workflow.githubRepositories?.length"
+          >
+            <h2>
+              <i class="bi bi-github" aria-hidden="true"></i> GitHub
+              Repositories
+            </h2>
+            <div
+              class="linked-artifact"
+              *ngFor="let repository of workflow.githubRepositories"
+            >
+              <h3>
+                <a
+                  [href]="repository.url"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  >{{ repository.url }}</a
+                >
+              </h3>
               <p *ngIf="repository.description">{{ repository.description }}</p>
-              <p *ngIf="repository.gitHash"><strong>Commit:</strong> <code>{{ repository.gitHash }}</code></p>
+              <p *ngIf="repository.gitHash">
+                <strong>Commit:</strong> <code>{{ repository.gitHash }}</code>
+              </p>
             </div>
           </section>
           <div class="record-actions">
-            <a class="secondary-action" routerLink="/list-workflows"><i class="bi bi-arrow-left" aria-hidden="true"></i>Back to Workflows</a>
+            <a class="secondary-action" routerLink="/list-workflows"
+              ><i class="bi bi-arrow-left" aria-hidden="true"></i>Back to
+              Workflows</a
+            >
             <a
+              *ngIf="canEdit"
               class="primary-action"
               [routerLink]="['/update-workflow', workflow.id]"
-              title="Sign in to manage this workflow"
-              ><i class="bi bi-pencil-square" aria-hidden="true"></i>Manage Workflow</a
+              ><i class="bi bi-pencil-square" aria-hidden="true"></i>Manage
+              Workflow</a
+            >
+            <a
+              *ngIf="!canEdit && !demo.session"
+              class="secondary-action"
+              routerLink="/auth/sign-in"
+              >Sign in to manage</a
             >
           </div>
         </ng-container>
@@ -95,10 +178,11 @@ export class GuestWorkflowDetailComponent implements OnInit {
   linkedArtifacts: Record<string, DemoCatalogArtifact> = {};
   isLoading = true;
   errorMessage = '';
+  canEdit = false;
   private id = '';
   constructor(
     private readonly route: ActivatedRoute,
-    private readonly demo: DemoService,
+    public readonly demo: DemoService,
   ) {}
   ngOnInit(): void {
     this.id = this.route.snapshot.paramMap.get('id') || '';
@@ -113,6 +197,7 @@ export class GuestWorkflowDetailComponent implements OnInit {
   loadWorkflow(): void {
     this.isLoading = true;
     this.errorMessage = '';
+    this.canEdit = false;
     this.demo.getPublicWorkflow(this.id).subscribe({
       next: (workflow) => {
         this.workflow = workflow;
@@ -123,6 +208,16 @@ export class GuestWorkflowDetailComponent implements OnInit {
           });
         }
         this.isLoading = false;
+        if (this.demo.session && this.confirmed) {
+          this.demo.getMyWorkflows().subscribe({
+            next: (items) =>
+              (this.canEdit = items.some(
+                (item) =>
+                  item.id === this.id && item.submissionState === 'SUCCESS',
+              )),
+            error: () => (this.canEdit = false),
+          });
+        }
       },
       error: () => {
         this.errorMessage = 'This public workflow could not be loaded.';

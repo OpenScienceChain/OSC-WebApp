@@ -28,6 +28,21 @@ export interface DemoSession {
   expiresAt: string;
   organization: DemoOrganizationSlug;
   contributorAlias: string;
+  accountUsername?: string;
+}
+
+export interface DemoAccountCredentials {
+  organization: DemoOrganizationSlug;
+  username: string;
+  pin: string;
+}
+
+export interface DemoWorkflowEditRequest {
+  requestId: string;
+  artifactIds: string[];
+  keywords: string[];
+  submissionComment: string;
+  githubRepositories: DemoWorkflowRequest['githubRepositories'];
 }
 
 export interface DemoArtifactRequest {
@@ -117,6 +132,10 @@ export interface DemoWorkflowRequest {
 export interface DemoWorkflow {
   id: string;
   title: string;
+  description: string;
+  keywords: string[];
+  submissionComment: string;
+  githubRepositories: DemoWorkflowRequest['githubRepositories'];
   organization: string;
   contributorAlias: string;
   artifactIds: string[];

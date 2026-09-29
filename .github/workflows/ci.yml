@@ -69,7 +69,9 @@ jobs:
       - name: Production build
         run: npm run build:production
       - name: WCAG accessibility checks
-        run: npm run test:a11y
+        run: |
+          ./node_modules/.bin/playwright install --with-deps chromium
+          npm run test:a11y
       - name: Audit production dependencies
         run: npm audit --omit=dev --audit-level=critical
       - name: Generate CycloneDX SBOM
@@ -80,6 +82,8 @@ jobs:
           name: webapp-evidence
           path: |
             coverage/
+            playwright-report/
+            test-results/
             sbom.cdx.json
           if-no-files-found: warn
           retention-days: 14

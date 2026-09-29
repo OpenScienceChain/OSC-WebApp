@@ -2,8 +2,13 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-import { Router, RouterModule } from '@angular/router';
-import { DemoCatalogArtifact, DemoResearchContext, DemoStatus } from './demo.models';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { forkJoin } from 'rxjs';
+import {
+  DemoCatalogArtifact,
+  DemoResearchContext,
+  DemoStatus,
+} from './demo.models';
 import { DemoService } from './demo.service';
 import { GuestSessionPanelComponent } from './guest-session-panel.component';
 import { ClampInputLengthDirective } from '../shared/clamp-input-length.directive';
@@ -30,6 +35,10 @@ interface WorkflowRepository {
   styleUrls: ['./guest-workflow-form.component.css'],
 })
 export class GuestWorkflowFormComponent implements OnInit {
+  readonly isEdit: boolean;
+  readonly id: string;
+  editReady = false;
+  accessDenied = false;
   status?: DemoStatus;
   artifacts: DemoCatalogArtifact[] = [];
   selectedIds = new Set<string>();
@@ -49,16 +58,58 @@ export class GuestWorkflowFormComponent implements OnInit {
 
   constructor(
     public readonly demo: DemoService,
+    private readonly route: ActivatedRoute,
     private readonly router: Router,
     private readonly http: HttpClient,
-  ) {}
+  ) {
+    this.id = route.snapshot.paramMap.get('id') || '';
+    this.isEdit = !!this.id;
+  }
 
   ngOnInit(): void {
     this.demo.getStatus().subscribe({
       next: (status) => (this.status = status),
       error: () => (this.error = 'Run status is unavailable.'),
     });
-    if (this.demo.session) this.loadArtifacts();
+    if (this.demo.session) {
+      this.loadArtifacts();
+      if (this.isEdit) this.loadEdit();
+    }
+  }
+
+  private loadEdit(): void {
+    forkJoin({
+      mine: this.demo.getMyWorkflows(),
+      detail: this.demo.getWorkflow(this.id),
+    }).subscribe({
+      next: ({ mine, detail }) => {
+        if (
+          !mine.some(
+            (item) => item.id === this.id && item.submissionState === 'SUCCESS',
+          )
+        ) {
+          this.accessDenied = true;
+          return;
+        }
+        this.title = detail.title;
+        this.description = detail.description;
+        this.keywords = (detail.keywords || []).join(', ');
+        this.submissionComment = detail.submissionComment || '';
+        this.selectedIds = new Set(detail.artifactIds);
+        this.githubRepositories = (detail.githubRepositories || []).map(
+          (repository) => ({
+            url: repository.url,
+            description: repository.description || '',
+            gitHash: repository.gitHash || '',
+            contents: repository.contents || [],
+            fetching: false,
+            fetchMessage: '',
+          }),
+        );
+        this.editReady = true;
+      },
+      error: () => (this.accessDenied = true),
+    });
   }
 
   loadArtifacts(): void {
@@ -114,6 +165,7 @@ export class GuestWorkflowFormComponent implements OnInit {
     return (
       !!this.demo.session &&
       this.status?.state === 'OPEN' &&
+      (!this.isEdit || this.editReady) &&
       this.formValid &&
       !this.busy
     );
@@ -286,46 +338,54 @@ export class GuestWorkflowFormComponent implements OnInit {
     }
     this.busy = true;
     this.error = '';
-    this.demo
-      .createWorkflow({
-        requestId: (this.requestId ||= crypto.randomUUID()),
-        artifactIds: [...this.selectedIds],
-        researchContext: this.context,
-        title: this.title.trim(),
-        description: this.description.trim(),
-        submissionComment: this.submissionComment.trim(),
-        keywords: this.keywordList(),
-        githubRepositories: this.githubRepositories.map((repository) => ({
-          url: repository.url.trim(),
-          description: repository.description.trim(),
-          gitHash: repository.gitHash.trim() || undefined,
-          contents: repository.contents.map((content) => ({
-            filename: content.filename.trim(),
-            hash: content.hash.trim(),
-          })),
+    const requestId = (this.requestId ||= crypto.randomUUID());
+    const fields = {
+      requestId,
+      artifactIds: [...this.selectedIds],
+      submissionComment: this.submissionComment.trim(),
+      keywords: this.keywordList(),
+      githubRepositories: this.githubRepositories.map((repository) => ({
+        url: repository.url.trim(),
+        description: repository.description.trim(),
+        gitHash: repository.gitHash.trim() || undefined,
+        contents: repository.contents.map((content) => ({
+          filename: content.filename.trim(),
+          hash: content.hash.trim(),
         })),
-      })
-      .subscribe({
-        next: (workflow) => {
-          this.busy = false;
-          this.requestId = '';
-          this.router.navigate(['/workflows', workflow.id]);
-        },
-        error: (error) => {
-          this.busy = false;
-          if (error.status === 401) {
-            this.demo.clearSession();
-            this.error = 'Session expired. Start a new session.';
-          } else if (error.status === 409) {
-            this.error =
-              'This request conflicted. Check your workflow and linked artifacts before retrying.';
-          } else if (error.status === 429) {
-            this.error = 'Workflow contribution limit reached.';
-          } else {
-            this.error =
-              'Workflow submission failed. Retry keeps the same request ID.';
-          }
-        },
-      });
+      })),
+    };
+    const operation = this.isEdit
+      ? this.demo.updateWorkflow(this.id, fields)
+      : this.demo.createWorkflow({
+          ...fields,
+          researchContext: this.context,
+          title: this.title.trim(),
+          description: this.description.trim(),
+        });
+    operation.subscribe({
+      next: (workflow) => {
+        this.busy = false;
+        this.requestId = '';
+        this.router.navigate(['/workflows', workflow.id]);
+      },
+      error: (error) => {
+        this.busy = false;
+        if (error.status === 401) {
+          this.demo.clearSession();
+          this.error = 'Your session expired. Sign in again to continue.';
+        } else if (error.status === 403) {
+          this.error =
+            'Only the account that submitted this workflow can update it.';
+        } else if (error.status === 409) {
+          this.error =
+            'This request conflicted. Check your workflow and linked artifacts before retrying.';
+        } else if (error.status === 429) {
+          this.error = 'Workflow contribution limit reached.';
+        } else {
+          this.error =
+            'Workflow submission failed. Retry keeps the same request ID.';
+        }
+      },
+    });
   }
 }

@@ -5,7 +5,9 @@
   color: var(--osc-ink);
 }
 
-code { color: #214969; }
+code {
+  color: #214969;
+}
 
 .record-page {
   padding: 34px 0 72px;
@@ -450,7 +452,7 @@ code { color: #214969; }
   padding: 7px 13px;
   border-radius: 4px;
   background: #7dd3d8;
-  color: #ffffff;
+  color: #173b43;
 }
 
 .record-kicker {
@@ -612,18 +614,59 @@ code { color: #214969; }
   cursor: not-allowed;
 }
 
-.copy-id { margin-left: 8px; border: 1px solid #9eb0b8; border-radius: 4px; background: #fff; color: #1d3557; width: 32px; height: 32px; }
-.manifest-section { width: 85%; margin: 16px auto 0; padding: 24px 0; }
-.manifest-section .manifest-heading { align-items: center; }
-.manifest-section table { table-layout: fixed; }
-.manifest-section th:nth-child(1) { width: 33%; }
-.manifest-section th:nth-child(2) { width: 57%; }
-.manifest-section th:nth-child(3) { width: 10%; }
-.manifest-section td { overflow-wrap: anywhere; }
-.manifest-section .secondary-action { padding: 7px 12px; border-radius: 4px; }
-@media (max-width: 850px) { .manifest-section { width: 100%; } }
-@media (max-width: 640px) { .manifest-section table { min-width: 640px; } }
-@media print { .record-actions, .manifest-heading button, .copy-id { display: none !important; } }
+.copy-id {
+  margin-left: 8px;
+  border: 1px solid #9eb0b8;
+  border-radius: 4px;
+  background: #fff;
+  color: #1d3557;
+  width: 32px;
+  height: 32px;
+}
+.manifest-section {
+  width: 85%;
+  margin: 16px auto 0;
+  padding: 24px 0;
+}
+.manifest-section .manifest-heading {
+  align-items: center;
+}
+.manifest-section table {
+  table-layout: fixed;
+}
+.manifest-section th:nth-child(1) {
+  width: 33%;
+}
+.manifest-section th:nth-child(2) {
+  width: 57%;
+}
+.manifest-section th:nth-child(3) {
+  width: 10%;
+}
+.manifest-section td {
+  overflow-wrap: anywhere;
+}
+.manifest-section .secondary-action {
+  padding: 7px 12px;
+  border-radius: 4px;
+}
+@media (max-width: 850px) {
+  .manifest-section {
+    width: 100%;
+  }
+}
+@media (max-width: 640px) {
+  .manifest-section table {
+    min-width: 640px;
+  }
+}
+@media print {
+  .record-actions,
+  .manifest-heading button,
+  .copy-id {
+    display: none !important;
+  }
+}
 
 @media (max-width: 850px) {
   .record-layout.artifact-body {

@@ -12,7 +12,11 @@ import { printFileHashes } from '../shared/print-file-hashes';
   template: `
     <main id="main-content" class="container py-4">
       <h1 class="page-headline mb-3" *ngIf="!selectedTxId">
-        {{ type === 'artifact' ? "Dive into your Artifact's Full History" : "Dive into your Workflow's Full History" }}
+        {{
+          type === 'artifact'
+            ? "Dive into your Artifact's Full History"
+            : "Dive into your Workflow's Full History"
+        }}
         <i class="bi bi-journal-text" aria-hidden="true"></i>
       </h1>
       <div class="mb-3 content-block" *ngIf="!selectedTxId">
@@ -55,13 +59,43 @@ import { printFileHashes } from '../shared/print-file-hashes';
         <section class="snapshot-detail" *ngIf="!isLoading">
           <div class="snapshot-intro content-block">
             <p><strong>Artifact ID:</strong> {{ id }}</p>
-            <p><strong>Tx ID:</strong> <code class="text-break">{{ item.txId || item.transactionId }}</code> <span class="badge" [ngClass]="badgeClass(item)">{{ badgeLabel(item) }}</span></p>
-            <p><strong>Timestamp:</strong> {{ item.timestamp | date: 'medium' }}</p>
+            <p>
+              <strong>Tx ID:</strong>
+              <code class="text-break">{{
+                item.txId || item.transactionId
+              }}</code>
+              <span class="badge" [ngClass]="badgeClass(item)">{{
+                badgeLabel(item)
+              }}</span>
+            </p>
+            <p>
+              <strong>Timestamp:</strong> {{ item.timestamp | date: 'medium' }}
+            </p>
             <div class="snapshot-actions">
-              <a class="btn btn-outline-primary" [routerLink]="['/', plural, id, 'history']">Go back to History</a>
-              <a *ngIf="canEdit" class="btn btn-primary" [routerLink]="['/update-artifact', id]">Update this Artifact</a>
-              <button *ngIf="!canEdit && type === 'artifact'" type="button" class="btn btn-primary" disabled title="Only the contributing session can update this artifact">Update this Artifact</button>
-              <a class="btn btn-outline-primary" [routerLink]="['/', plural, id]">See Artifact's Detail</a>
+              <a
+                class="btn btn-outline-primary"
+                [routerLink]="['/', plural, id, 'history']"
+                >Go back to History</a
+              >
+              <a
+                *ngIf="canEdit && type === 'artifact'"
+                class="btn btn-primary"
+                [routerLink]="['/update-artifact', id]"
+                >Update this Artifact</a
+              >
+              <a
+                *ngIf="canEdit && type === 'workflow'"
+                class="btn btn-primary"
+                [routerLink]="['/update-workflow', id]"
+                >Manage Workflow</a
+              >
+              <a
+                class="btn btn-outline-primary"
+                [routerLink]="['/', plural, id]"
+                >See
+                {{ type === 'artifact' ? "Artifact's" : "Workflow's" }}
+                Detail</a
+              >
             </div>
           </div>
           <div class="snapshot-record">
@@ -69,36 +103,129 @@ import { printFileHashes } from '../shared/print-file-hashes';
             <div class="snapshot-layout">
               <section>
                 <h2>Description</h2>
-                <p class="pre-wrap">{{ item.snapshot?.description || recordDescription }}</p>
+                <p class="pre-wrap">
+                  {{ item.snapshot?.description || recordDescription }}
+                </p>
               </section>
               <aside>
                 <h2>Details</h2>
-                <table class="table table-borderless snapshot-table"><tbody>
-                  <tr><th scope="row">ID</th><td>{{ id }}</td></tr>
-                  <tr><th scope="row">Timestamp</th><td>{{ item.timestamp | date: 'medium' }}</td></tr>
-                  <tr *ngIf="item.revision"><th scope="row">Revision</th><td>{{ item.revision }}</td></tr>
-                  <tr *ngIf="recordContributor"><th scope="row">Contributor</th><td>{{ recordContributor }}</td></tr>
-                  <tr *ngIf="item.snapshot?.keywords?.length"><th scope="row">Keywords</th><td><span class="snapshot-keyword" *ngFor="let keyword of item.snapshot?.keywords">{{ keyword }}</span></td></tr>
-                  <tr *ngIf="item.snapshot?.fundingAgencies?.length"><th scope="row">Funding Agencies</th><td>{{ item.snapshot?.fundingAgencies?.join(', ') }}</td></tr>
-                  <tr *ngIf="item.snapshot?.dois?.length"><th scope="row">DOIs</th><td>{{ item.snapshot?.dois?.join(', ') }}</td></tr>
-                  <tr *ngIf="item.snapshot?.submissionComment"><th scope="row">Comment</th><td class="pre-wrap">{{ item.snapshot?.submissionComment }}</td></tr>
-                  <tr><th scope="row">State</th><td><span class="badge" [ngClass]="submissionClass(item)">{{ item.snapshot?.submissionState || 'SUCCESS' }}</span></td></tr>
-                </tbody></table>
+                <table class="table table-borderless snapshot-table">
+                  <tbody>
+                    <tr>
+                      <th scope="row">ID</th>
+                      <td>{{ id }}</td>
+                    </tr>
+                    <tr>
+                      <th scope="row">Timestamp</th>
+                      <td>{{ item.timestamp | date: 'medium' }}</td>
+                    </tr>
+                    <tr *ngIf="item.revision">
+                      <th scope="row">Revision</th>
+                      <td>{{ item.revision }}</td>
+                    </tr>
+                    <tr *ngIf="recordContributor">
+                      <th scope="row">Contributor</th>
+                      <td>{{ recordContributor }}</td>
+                    </tr>
+                    <tr *ngIf="item.snapshot?.keywords?.length">
+                      <th scope="row">Keywords</th>
+                      <td>
+                        <span
+                          class="snapshot-keyword"
+                          *ngFor="let keyword of item.snapshot?.keywords"
+                          >{{ keyword }}</span
+                        >
+                      </td>
+                    </tr>
+                    <tr *ngIf="item.snapshot?.fundingAgencies?.length">
+                      <th scope="row">Funding Agencies</th>
+                      <td>{{ item.snapshot?.fundingAgencies?.join(', ') }}</td>
+                    </tr>
+                    <tr *ngIf="item.snapshot?.dois?.length">
+                      <th scope="row">DOIs</th>
+                      <td>{{ item.snapshot?.dois?.join(', ') }}</td>
+                    </tr>
+                    <tr *ngIf="item.snapshot?.submissionComment">
+                      <th scope="row">Comment</th>
+                      <td class="pre-wrap">
+                        {{ item.snapshot?.submissionComment }}
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">State</th>
+                      <td>
+                        <span class="badge" [ngClass]="submissionClass(item)">{{
+                          item.snapshot?.submissionState || 'SUCCESS'
+                        }}</span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
               </aside>
             </div>
             <section class="snapshot-manifest" *ngIf="type === 'artifact'">
-              <div class="manifest-heading"><h2>Manifest</h2><button *ngIf="item.snapshot?.manifest?.length" type="button" class="btn btn-outline-primary" (click)="printManifest()">Print file hashes</button></div>
-              <ng-container *ngIf="item.snapshot?.manifest?.length; else manifestRestricted">
-                <p>{{ item.snapshot?.manifest?.length }} {{ item.snapshot?.manifest?.length === 1 ? 'file' : 'files' }} total. Generated names protect the original local paths.</p>
-                <div class="table-responsive"><table class="table"><thead><tr><th>Filename</th><th>Hash</th><th>Alg.</th></tr></thead><tbody><tr *ngFor="let file of item.snapshot?.manifest"><td>{{ file.filename }}</td><td><code class="text-break">{{ file.hash }}</code></td><td>{{ file.algorithm }}</td></tr></tbody></table></div>
-                <p><strong>Footprint (SHA-256)</strong> <code class="text-break">{{ item.snapshot?.footprint }}</code></p>
+              <div class="manifest-heading">
+                <h2>Manifest</h2>
+                <button
+                  *ngIf="item.snapshot?.manifest?.length"
+                  type="button"
+                  class="btn btn-outline-primary"
+                  (click)="printManifest()"
+                >
+                  Print file hashes
+                </button>
+              </div>
+              <ng-container
+                *ngIf="item.snapshot?.manifest?.length; else manifestRestricted"
+              >
+                <p>
+                  {{ item.snapshot?.manifest?.length }}
+                  {{ item.snapshot?.manifest?.length === 1 ? 'file' : 'files' }}
+                  total. Generated names protect the original local paths.
+                </p>
+                <div
+                  class="table-responsive"
+                  tabindex="0"
+                  role="region"
+                  aria-label="Snapshot file manifest"
+                >
+                  <table class="table">
+                    <thead>
+                      <tr>
+                        <th scope="col">Filename</th>
+                        <th scope="col">Hash</th>
+                        <th scope="col">Alg.</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let file of item.snapshot?.manifest">
+                        <td>{{ file.filename }}</td>
+                        <td>
+                          <code class="text-break">{{ file.hash }}</code>
+                        </td>
+                        <td>{{ file.algorithm }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <p>
+                  <strong>Footprint (SHA-256)</strong>
+                  <code class="text-break">{{ item.snapshot?.footprint }}</code>
+                </p>
               </ng-container>
-              <ng-template #manifestRestricted><p>No public manifest was recorded in this snapshot.</p></ng-template>
+              <ng-template #manifestRestricted
+                ><p>
+                  No public manifest was recorded in this snapshot.
+                </p></ng-template
+              >
             </section>
           </div>
         </section>
       </ng-container>
-      <div class="history-list" *ngIf="!isLoading && !selectedTxId && visibleItems.length">
+      <div
+        class="history-list"
+        *ngIf="!isLoading && !selectedTxId && visibleItems.length"
+      >
         <div
           class="history-toolbar d-flex justify-content-between align-items-center mb-2"
         >
@@ -234,7 +361,11 @@ export class GuestHistoryComponent implements OnInit {
     this.id = this.route.snapshot.paramMap.get('id') || '';
     this.selectedTxId = this.route.snapshot.paramMap.get('txId') || '';
     this.load();
-    const detail: Observable<{ title: string; description: string; contributorAlias?: string }> =
+    const detail: Observable<{
+      title: string;
+      description: string;
+      contributorAlias?: string;
+    }> =
       this.type === 'artifact'
         ? this.demo.getPublicArtifact(this.id)
         : this.demo.getPublicWorkflow(this.id);
@@ -245,8 +376,17 @@ export class GuestHistoryComponent implements OnInit {
         this.recordContributor = record.contributorAlias || '';
       },
     });
-    if (this.type === 'artifact' && this.demo.session) {
+    if (!this.demo.session) return;
+    if (this.type === 'artifact') {
       this.demo.getMyArtifacts().subscribe({
+        next: (items) => {
+          this.canEdit = items.some(
+            (item) => item.id === this.id && item.submissionState === 'SUCCESS',
+          );
+        },
+      });
+    } else {
+      this.demo.getMyWorkflows().subscribe({
         next: (items) => {
           this.canEdit = items.some(
             (item) => item.id === this.id && item.submissionState === 'SUCCESS',
@@ -308,8 +448,11 @@ export class GuestHistoryComponent implements OnInit {
   }
   submissionClass(item: DemoHistoryItem): string {
     if (item.snapshot?.submissionState === 'FAILED') return 'bg-danger';
-    if (item.snapshot?.submissionState === 'PENDING') return 'bg-warning text-dark';
+    if (item.snapshot?.submissionState === 'PENDING')
+      return 'bg-warning text-dark';
     return 'bg-success';
   }
-  printManifest(): void { printFileHashes(this.selectedItem?.snapshot?.manifest ?? []); }
+  printManifest(): void {
+    printFileHashes(this.selectedItem?.snapshot?.manifest ?? []);
+  }
 }

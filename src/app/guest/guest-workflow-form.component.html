@@ -1,13 +1,28 @@
 <main id="main-content" class="create-workflow-container">
   <header class="header">
-    <h1>Contribute Workflow</h1>
+    <h1>{{ isEdit ? 'Manage Workflow' : 'Contribute Workflow' }}</h1>
     <div class="header-divider"></div>
   </header>
 
   <app-guest-session-panel
-    *ngIf="!demo.session"
+    *ngIf="!isEdit && !demo.session"
     (started)="loadArtifacts()"
   ></app-guest-session-panel>
+  <section
+    *ngIf="isEdit && (!demo.session || accessDenied)"
+    class="guest-form-note"
+    role="status"
+  >
+    <p>
+      {{
+        !demo.session
+          ? 'Sign in with the account that contributed this workflow to manage it.'
+          : 'This workflow is not available to manage from this account.'
+      }}
+    </p>
+    <a *ngIf="!demo.session" routerLink="/auth/sign-in">Sign in</a>
+    <a [routerLink]="['/workflows', id]">Back to workflow</a>
+  </section>
   <p *ngIf="demo.session" class="guest-form-note">
     Link confirmed artifacts from {{ demo.session.organization }}.
   </p>
@@ -15,7 +30,12 @@
     {{ error }}
   </p>
 
-  <form class="workflow-form" (ngSubmit)="submit()" novalidate>
+  <form
+    *ngIf="!isEdit || editReady"
+    class="workflow-form"
+    (ngSubmit)="submit()"
+    novalidate
+  >
     <div class="form-grid">
       <div class="left-column">
         <div class="form-group">
@@ -26,6 +46,7 @@
             class="form-control"
             type="text"
             maxlength="200"
+            [readOnly]="isEdit"
             [(ngModel)]="title"
             (ngModelChange)="onChange()"
             (blur)="markTouched('title')"
@@ -54,6 +75,7 @@
             class="form-control"
             rows="5"
             maxlength="3000"
+            [readOnly]="isEdit"
             [(ngModel)]="description"
             (ngModelChange)="onChange()"
             (blur)="markTouched('description')"
@@ -110,7 +132,7 @@
           </div>
         </div>
 
-        <div class="form-group">
+        <div class="form-group" *ngIf="!isEdit">
           <label for="workflow-context" class="context-label"
             >Research context</label
           >
@@ -147,7 +169,9 @@
             [class.is-invalid]="submitted && selectedIds.size === 0"
           />
           <div *ngIf="showArtifactDropdown" class="dropdown-list">
-            <div class="dropdown-hint">Confirmed artifacts in this organization</div>
+            <div class="dropdown-hint">
+              Confirmed artifacts in this organization
+            </div>
             <button
               type="button"
               class="dropdown-item"
@@ -155,7 +179,9 @@
               (click)="selectArtifact(artifact.id)"
             >
               <span class="dropdown-item-title">{{ artifact.title }}</span>
-              <span class="dropdown-item-desc">{{ artifact.contributorAlias }}</span>
+              <span class="dropdown-item-desc">{{
+                artifact.contributorAlias
+              }}</span>
             </button>
             <p *ngIf="!matchingArtifacts.length" class="dropdown-empty">
               No matching confirmed artifacts.
@@ -185,8 +211,8 @@
             </div>
           </div>
           <p *ngIf="demo.session && !artifacts.length" class="field-help">
-            No confirmed artifacts in this organization yet. Contribute an artifact
-            first, then return here.
+            No confirmed artifacts in this organization yet. Contribute an
+            artifact first, then return here.
           </p>
           <p class="field-help">
             You can link up to three confirmed artifacts from this organization.
@@ -321,7 +347,13 @@
         type="submit"
         [disabled]="busy || !demo.session || status?.state !== 'OPEN'"
       >
-        {{ busy ? 'Submitting...' : 'Submit workflow' }}
+        {{
+          busy
+            ? 'Submitting...'
+            : isEdit
+              ? 'Save workflow update'
+              : 'Submit workflow'
+        }}
       </button>
     </div>
   </form>

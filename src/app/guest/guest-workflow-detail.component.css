@@ -5,7 +5,9 @@
   color: var(--osc-ink);
 }
 
-code { color: #214969; }
+code {
+  color: #214969;
+}
 
 .record-page {
   padding: 34px 0 72px;
@@ -579,7 +581,7 @@ code { color: #214969; }
 
 .record-kicker > span:first-child {
   background: #a09ce1;
-  color: #ffffff;
+  color: #1d3557;
 }
 
 .record-layout.workflow-body {

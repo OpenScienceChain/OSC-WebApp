@@ -1,4 +1,4 @@
-<a class="skip-link" href="#main-content">Skip to main content</a>
+<a class="skip-link" href="#app-main">Skip to main content</a>
 
 <header
   class="site-header"
@@ -82,13 +82,6 @@
           (click)="closeNavigation()"
           >Workflows</a
         >
-        <a
-          class="nav-link"
-          routerLink="/"
-          fragment="provenance"
-          (click)="closeNavigation()"
-          >How it works</a
-        >
       </div>
 
       <div class="navigation-actions">
@@ -139,7 +132,7 @@
         </div>
 
         <a
-          *ngIf="!isAuthenticated"
+          *ngIf="!isAuthenticated && !contributorSignedIn"
           class="sign-in-button"
           routerLink="/auth/sign-in"
           routerLinkActive="active"
@@ -149,7 +142,7 @@
           Sign in
         </a>
         <button
-          *ngIf="isAuthenticated"
+          *ngIf="isAuthenticated || contributorSignedIn"
           class="sign-in-button"
           type="button"
           (click)="logout()"
@@ -166,6 +159,6 @@
   LOCAL MOCK PREVIEW - synthetic records; no Fabric connection
 </div>
 
-<div id="main-content" tabindex="-1">
+<div id="app-main" tabindex="-1">
   <router-outlet></router-outlet>
 </div>

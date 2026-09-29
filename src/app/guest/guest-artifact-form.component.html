@@ -1,55 +1,251 @@
 <main id="main-content" class="create-artifact-container">
   <header class="header">
-    <h1>{{ isEdit ? 'Update Artifact' : "Add a New Artifact to your Org's Vault!" }}</h1>
+    <h1>
+      {{
+        isEdit ? 'Update Artifact' : "Add a New Artifact to your Org's Vault!"
+      }}
+    </h1>
     <div class="header-divider"></div>
   </header>
 
-  <app-guest-session-panel *ngIf="!demo.session" (started)="onSessionStarted()"></app-guest-session-panel>
-  <p *ngIf="demo.session" class="form-note">Contributing for {{ demo.session.organization }} as {{ demo.session.contributorAlias }}.</p>
-  <p *ngIf="isEdit" class="form-note">Title and description stay fixed. Metadata and the file fingerprint can be revised after ledger confirmation.</p>
-  <p *ngIf="error" class="form-note text-danger" role="alert">{{ error }}</p>
+  <app-guest-session-panel
+    *ngIf="!isEdit && !demo.session"
+    (started)="onSessionStarted()"
+  ></app-guest-session-panel>
+  <section
+    *ngIf="isEdit && (!demo.session || accessDenied)"
+    class="form-note"
+    role="status"
+  >
+    <p>
+      {{
+        !demo.session
+          ? 'Sign in with the account that contributed this artifact to manage it.'
+          : 'This artifact is not available to update from this account.'
+      }}
+    </p>
+    <a *ngIf="!demo.session" routerLink="/auth/sign-in">Sign in</a>
+    <a [routerLink]="['/artifacts', id]">Back to artifact</a>
+  </section>
+  <p *ngIf="demo.session" class="form-note">
+    Contributing for {{ demo.session.organization }} as
+    {{ demo.session.contributorAlias }}.
+  </p>
+  <p *ngIf="isEdit" class="form-note">
+    Title and description stay fixed. Metadata and the file fingerprint can be
+    revised after ledger confirmation.
+  </p>
+  <p *ngIf="error && !accessDenied" class="form-note text-danger" role="alert">
+    {{ error }}
+  </p>
 
-  <form class="artifact-form" (ngSubmit)="submit()">
+  <form
+    *ngIf="!isEdit || !!baseline"
+    class="artifact-form"
+    (ngSubmit)="submit()"
+  >
     <div class="form-grid">
       <div class="left-column">
         <div class="form-group">
           <label for="title" class="field-label">Title</label>
-          <input id="title" name="title" type="text" class="form-control" [(ngModel)]="title" #titleModel="ngModel" (ngModelChange)="onChange('title')" (lengthLimit)="onLengthLimit('title', $event)" [readOnly]="isEdit" [class.is-invalid]="!isEdit && ((titleModel.invalid && titleModel.touched) || lengthWarnings['title'])" [attr.aria-invalid]="!isEdit && ((titleModel.invalid && titleModel.touched) || lengthWarnings['title'])" [attr.aria-describedby]="!isEdit && ((titleModel.invalid && titleModel.touched) || lengthWarnings['title']) ? 'title-error' : null" required minlength="3" maxlength="200" />
-          <div id="title-error" *ngIf="!isEdit && ((titleModel.invalid && titleModel.touched) || lengthWarnings['title'])" class="error-message" role="alert">
-            <small *ngIf="lengthWarnings['title']">{{ lengthWarnings['title'] }}</small>
-            <small *ngIf="titleModel.errors?.['required']">Title is required.</small>
-            <small *ngIf="titleModel.errors?.['minlength']">Title must be at least 3 characters long.</small>
-            <small *ngIf="titleModel.errors?.['maxlength']">Title cannot exceed 200 characters.</small>
+          <input
+            id="title"
+            name="title"
+            type="text"
+            class="form-control"
+            [(ngModel)]="title"
+            #titleModel="ngModel"
+            (ngModelChange)="onChange('title')"
+            (lengthLimit)="onLengthLimit('title', $event)"
+            [readOnly]="isEdit"
+            [class.is-invalid]="
+              !isEdit &&
+              ((titleModel.invalid && titleModel.touched) ||
+                lengthWarnings['title'])
+            "
+            [attr.aria-invalid]="
+              !isEdit &&
+              ((titleModel.invalid && titleModel.touched) ||
+                lengthWarnings['title'])
+            "
+            [attr.aria-describedby]="
+              !isEdit &&
+              ((titleModel.invalid && titleModel.touched) ||
+                lengthWarnings['title'])
+                ? 'title-error'
+                : null
+            "
+            required
+            minlength="3"
+            maxlength="200"
+          />
+          <div
+            id="title-error"
+            *ngIf="
+              !isEdit &&
+              ((titleModel.invalid && titleModel.touched) ||
+                lengthWarnings['title'])
+            "
+            class="error-message"
+            role="alert"
+          >
+            <small *ngIf="lengthWarnings['title']">{{
+              lengthWarnings['title']
+            }}</small>
+            <small *ngIf="titleModel.errors?.['required']"
+              >Title is required.</small
+            >
+            <small *ngIf="titleModel.errors?.['minlength']"
+              >Title must be at least 3 characters long.</small
+            >
+            <small *ngIf="titleModel.errors?.['maxlength']"
+              >Title cannot exceed 200 characters.</small
+            >
           </div>
         </div>
         <div class="form-group">
           <label for="description" class="field-label">Description</label>
-          <textarea id="description" name="description" class="form-control" rows="4" [(ngModel)]="description" #descriptionModel="ngModel" (ngModelChange)="onChange('description')" (lengthLimit)="onLengthLimit('description', $event)" [readOnly]="isEdit" [class.is-invalid]="!isEdit && ((descriptionModel.invalid && descriptionModel.touched) || lengthWarnings['description'])" [attr.aria-invalid]="!isEdit && ((descriptionModel.invalid && descriptionModel.touched) || lengthWarnings['description'])" [attr.aria-describedby]="!isEdit && ((descriptionModel.invalid && descriptionModel.touched) || lengthWarnings['description']) ? 'description-error' : null" required minlength="50" maxlength="3000"></textarea>
-          <div id="description-error" *ngIf="!isEdit && ((descriptionModel.invalid && descriptionModel.touched) || lengthWarnings['description'])" class="error-message" role="alert">
-            <small *ngIf="lengthWarnings['description']">{{ lengthWarnings['description'] }}</small>
-            <small *ngIf="descriptionModel.errors?.['required']">Description is required.</small>
-            <small *ngIf="descriptionModel.errors?.['minlength']">Description must be at least 50 characters long.</small>
-            <small *ngIf="descriptionModel.errors?.['maxlength']">Description cannot exceed 3000 characters.</small>
+          <textarea
+            id="description"
+            name="description"
+            class="form-control"
+            rows="4"
+            [(ngModel)]="description"
+            #descriptionModel="ngModel"
+            (ngModelChange)="onChange('description')"
+            (lengthLimit)="onLengthLimit('description', $event)"
+            [readOnly]="isEdit"
+            [class.is-invalid]="
+              !isEdit &&
+              ((descriptionModel.invalid && descriptionModel.touched) ||
+                lengthWarnings['description'])
+            "
+            [attr.aria-invalid]="
+              !isEdit &&
+              ((descriptionModel.invalid && descriptionModel.touched) ||
+                lengthWarnings['description'])
+            "
+            [attr.aria-describedby]="
+              !isEdit &&
+              ((descriptionModel.invalid && descriptionModel.touched) ||
+                lengthWarnings['description'])
+                ? 'description-error'
+                : null
+            "
+            required
+            minlength="50"
+            maxlength="3000"
+          ></textarea>
+          <div
+            id="description-error"
+            *ngIf="
+              !isEdit &&
+              ((descriptionModel.invalid && descriptionModel.touched) ||
+                lengthWarnings['description'])
+            "
+            class="error-message"
+            role="alert"
+          >
+            <small *ngIf="lengthWarnings['description']">{{
+              lengthWarnings['description']
+            }}</small>
+            <small *ngIf="descriptionModel.errors?.['required']"
+              >Description is required.</small
+            >
+            <small *ngIf="descriptionModel.errors?.['minlength']"
+              >Description must be at least 50 characters long.</small
+            >
+            <small *ngIf="descriptionModel.errors?.['maxlength']"
+              >Description cannot exceed 3000 characters.</small
+            >
           </div>
         </div>
         <div class="form-group">
           <label for="keywords" class="field-label">Key Words</label>
-          <input id="keywords" name="keywords" type="text" class="form-control" [(ngModel)]="keywords" (ngModelChange)="onChange('keywords')" (lengthLimit)="onLengthLimit('keywords', $event)" (blur)="markTouched('keywords')" maxlength="1000" [class.is-invalid]="touched.has('keywords') && fieldError('keywords')" placeholder="Enter keywords, separated by commas" />
-          <div *ngIf="touched.has('keywords') && fieldError('keywords')" class="error-message" role="alert">{{ fieldError('keywords') }}</div>
+          <input
+            id="keywords"
+            name="keywords"
+            type="text"
+            class="form-control"
+            [(ngModel)]="keywords"
+            (ngModelChange)="onChange('keywords')"
+            (lengthLimit)="onLengthLimit('keywords', $event)"
+            (blur)="markTouched('keywords')"
+            maxlength="1000"
+            [class.is-invalid]="
+              touched.has('keywords') && fieldError('keywords')
+            "
+            placeholder="Enter keywords, separated by commas"
+          />
+          <div
+            *ngIf="touched.has('keywords') && fieldError('keywords')"
+            class="error-message"
+            role="alert"
+          >
+            {{ fieldError('keywords') }}
+          </div>
         </div>
         <div class="form-group">
           <label for="links" class="field-label">Links of interest</label>
-          <input id="links" name="links" type="text" class="form-control" [(ngModel)]="links" (ngModelChange)="onChange('links')" (lengthLimit)="onLengthLimit('links', $event)" (blur)="markTouched('links')" maxlength="2000" [class.is-invalid]="touched.has('links') && fieldError('links')" placeholder="HTTPS URLs, separated by commas" />
-          <div *ngIf="touched.has('links') && fieldError('links')" class="error-message" role="alert">{{ fieldError('links') }}</div>
+          <input
+            id="links"
+            name="links"
+            type="text"
+            class="form-control"
+            [(ngModel)]="links"
+            (ngModelChange)="onChange('links')"
+            (lengthLimit)="onLengthLimit('links', $event)"
+            (blur)="markTouched('links')"
+            maxlength="2000"
+            [class.is-invalid]="touched.has('links') && fieldError('links')"
+            placeholder="HTTPS URLs, separated by commas"
+          />
+          <div
+            *ngIf="touched.has('links') && fieldError('links')"
+            class="error-message"
+            role="alert"
+          >
+            {{ fieldError('links') }}
+          </div>
         </div>
         <div class="form-group last-field">
           <label for="doi" class="field-label">DOI</label>
-          <input id="doi" name="doi" type="text" class="form-control" [(ngModel)]="dois" (ngModelChange)="onChange('dois')" (lengthLimit)="onLengthLimit('dois', $event)" (blur)="markTouched('dois')" maxlength="1000" [class.is-invalid]="touched.has('dois') && fieldError('dois')" placeholder="10.1234/abc123" />
-          <div *ngIf="touched.has('dois') && fieldError('dois')" class="error-message" role="alert">{{ fieldError('dois') }}</div>
+          <input
+            id="doi"
+            name="doi"
+            type="text"
+            class="form-control"
+            [(ngModel)]="dois"
+            (ngModelChange)="onChange('dois')"
+            (lengthLimit)="onLengthLimit('dois', $event)"
+            (blur)="markTouched('dois')"
+            maxlength="1000"
+            [class.is-invalid]="touched.has('dois') && fieldError('dois')"
+            placeholder="10.1234/abc123"
+          />
+          <div
+            *ngIf="touched.has('dois') && fieldError('dois')"
+            class="error-message"
+            role="alert"
+          >
+            {{ fieldError('dois') }}
+          </div>
         </div>
         <div class="form-group" *ngIf="!isEdit">
-          <label for="research-context" class="field-label">Research context</label>
-          <select id="research-context" name="researchContext" class="form-control" [(ngModel)]="researchContext" (ngModelChange)="onChange()"><option value="RESEARCH_DATASET">Research dataset</option><option value="REPRODUCIBLE_ANALYSIS">Reproducible analysis</option><option value="SOFTWARE_RELEASE">Software release</option></select>
+          <label for="research-context" class="field-label"
+            >Research context</label
+          >
+          <select
+            id="research-context"
+            name="researchContext"
+            class="form-control"
+            [(ngModel)]="researchContext"
+            (ngModelChange)="onChange()"
+          >
+            <option value="RESEARCH_DATASET">Research dataset</option>
+            <option value="REPRODUCIBLE_ANALYSIS">Reproducible analysis</option>
+            <option value="SOFTWARE_RELEASE">Software release</option>
+          </select>
         </div>
       </div>
 
@@ -57,56 +253,252 @@
         <div class="form-group">
           <span class="field-label" id="funding-label">Funding Agencies</span>
           <div class="checkbox-group" aria-labelledby="funding-label">
-            <label class="checkbox-label"><input type="checkbox" name="nsf" [(ngModel)]="nsf" (ngModelChange)="onChange()" /> NSF</label>
-            <label class="checkbox-label"><input type="checkbox" name="nih" [(ngModel)]="nih" (ngModelChange)="onChange()" /> NIH</label>
-            <label class="checkbox-label"><input type="checkbox" name="noaa" [(ngModel)]="noaa" (ngModelChange)="onChange()" /> NOAA</label>
-            <label class="checkbox-label"><input type="checkbox" name="nasa" [(ngModel)]="nasa" (ngModelChange)="onChange()" /> NASA</label>
+            <label class="checkbox-label"
+              ><input
+                type="checkbox"
+                name="nsf"
+                [(ngModel)]="nsf"
+                (ngModelChange)="onChange()"
+              />
+              NSF</label
+            >
+            <label class="checkbox-label"
+              ><input
+                type="checkbox"
+                name="nih"
+                [(ngModel)]="nih"
+                (ngModelChange)="onChange()"
+              />
+              NIH</label
+            >
+            <label class="checkbox-label"
+              ><input
+                type="checkbox"
+                name="noaa"
+                [(ngModel)]="noaa"
+                (ngModelChange)="onChange()"
+              />
+              NOAA</label
+            >
+            <label class="checkbox-label"
+              ><input
+                type="checkbox"
+                name="nasa"
+                [(ngModel)]="nasa"
+                (ngModelChange)="onChange()"
+              />
+              NASA</label
+            >
           </div>
-          <div class="other-agency"><label for="otherAgency">Other:</label><input id="otherAgency" name="otherAgency" type="text" class="form-control" [(ngModel)]="otherAgency" (ngModelChange)="onChange('otherAgency')" (lengthLimit)="onLengthLimit('otherAgency', $event)" (blur)="markTouched('otherAgency')" maxlength="500" [class.is-invalid]="touched.has('otherAgency') && fieldError('otherAgency')" placeholder="Separate agencies with commas" /><div *ngIf="touched.has('otherAgency') && fieldError('otherAgency')" class="error-message" role="alert">{{ fieldError('otherAgency') }}</div></div>
+          <div class="other-agency">
+            <label for="otherAgency">Other:</label
+            ><input
+              id="otherAgency"
+              name="otherAgency"
+              type="text"
+              class="form-control"
+              [(ngModel)]="otherAgency"
+              (ngModelChange)="onChange('otherAgency')"
+              (lengthLimit)="onLengthLimit('otherAgency', $event)"
+              (blur)="markTouched('otherAgency')"
+              maxlength="500"
+              [class.is-invalid]="
+                touched.has('otherAgency') && fieldError('otherAgency')
+              "
+              placeholder="Separate agencies with commas"
+            />
+            <div
+              *ngIf="touched.has('otherAgency') && fieldError('otherAgency')"
+              class="error-message"
+              role="alert"
+            >
+              {{ fieldError('otherAgency') }}
+            </div>
+          </div>
         </div>
         <div class="form-group">
           <label for="acknowledgment" class="field-label">Acknowledgment</label>
-          <textarea id="acknowledgment" name="acknowledgement" class="form-control" rows="4" [(ngModel)]="acknowledgement" (ngModelChange)="onChange('acknowledgement')" (lengthLimit)="onLengthLimit('acknowledgement', $event)" (blur)="markTouched('acknowledgement')" maxlength="1000"></textarea>
-          <div *ngIf="lengthWarnings['acknowledgement']" class="error-message" role="alert">{{ lengthWarnings['acknowledgement'] }}</div>
+          <textarea
+            id="acknowledgment"
+            name="acknowledgement"
+            class="form-control"
+            rows="4"
+            [(ngModel)]="acknowledgement"
+            (ngModelChange)="onChange('acknowledgement')"
+            (lengthLimit)="onLengthLimit('acknowledgement', $event)"
+            (blur)="markTouched('acknowledgement')"
+            maxlength="1000"
+          ></textarea>
+          <div
+            *ngIf="lengthWarnings['acknowledgement']"
+            class="error-message"
+            role="alert"
+          >
+            {{ lengthWarnings['acknowledgement'] }}
+          </div>
         </div>
         <div class="form-group">
-          <label for="submission_comment" class="field-label">Submission Comment</label>
-          <textarea id="submission_comment" name="submissionComment" class="form-control" rows="3" [(ngModel)]="submissionComment" #commentModel="ngModel" (ngModelChange)="onChange('submissionComment')" (lengthLimit)="onLengthLimit('submissionComment', $event)" [class.is-invalid]="(commentModel.invalid && commentModel.touched) || lengthWarnings['submissionComment']" [attr.aria-invalid]="(commentModel.invalid && commentModel.touched) || lengthWarnings['submissionComment']" [attr.aria-describedby]="(commentModel.invalid && commentModel.touched) || lengthWarnings['submissionComment'] ? 'submission-comment-error' : null" required minlength="20" maxlength="1000"></textarea>
-          <div id="submission-comment-error" *ngIf="(commentModel.invalid && commentModel.touched) || lengthWarnings['submissionComment']" class="error-message" role="alert">
-            <small *ngIf="lengthWarnings['submissionComment']">{{ lengthWarnings['submissionComment'] }}</small>
-            <small *ngIf="commentModel.errors?.['required']">Submission comment is required.</small>
-            <small *ngIf="commentModel.errors?.['minlength']">Submission comment must be at least 20 characters long.</small>
-            <small *ngIf="commentModel.errors?.['maxlength']">Submission comment cannot exceed 1000 characters.</small>
+          <label for="submission_comment" class="field-label"
+            >Submission Comment</label
+          >
+          <textarea
+            id="submission_comment"
+            name="submissionComment"
+            class="form-control"
+            rows="3"
+            [(ngModel)]="submissionComment"
+            #commentModel="ngModel"
+            (ngModelChange)="onChange('submissionComment')"
+            (lengthLimit)="onLengthLimit('submissionComment', $event)"
+            [class.is-invalid]="
+              (commentModel.invalid && commentModel.touched) ||
+              lengthWarnings['submissionComment']
+            "
+            [attr.aria-invalid]="
+              (commentModel.invalid && commentModel.touched) ||
+              lengthWarnings['submissionComment']
+            "
+            [attr.aria-describedby]="
+              (commentModel.invalid && commentModel.touched) ||
+              lengthWarnings['submissionComment']
+                ? 'submission-comment-error'
+                : null
+            "
+            required
+            minlength="20"
+            maxlength="1000"
+          ></textarea>
+          <div
+            id="submission-comment-error"
+            *ngIf="
+              (commentModel.invalid && commentModel.touched) ||
+              lengthWarnings['submissionComment']
+            "
+            class="error-message"
+            role="alert"
+          >
+            <small *ngIf="lengthWarnings['submissionComment']">{{
+              lengthWarnings['submissionComment']
+            }}</small>
+            <small *ngIf="commentModel.errors?.['required']"
+              >Submission comment is required.</small
+            >
+            <small *ngIf="commentModel.errors?.['minlength']"
+              >Submission comment must be at least 20 characters long.</small
+            >
+            <small *ngIf="commentModel.errors?.['maxlength']"
+              >Submission comment cannot exceed 1000 characters.</small
+            >
           </div>
         </div>
       </div>
     </div>
     <div class="file-upload-divider"></div>
     <section class="file-upload-section" aria-labelledby="file-heading">
-      <h2 id="file-heading" class="section-title">{{ isEdit ? 'Replace folders or files (optional)' : 'Select folders or files' }}</h2>
-      <div class="drop-zone" (dragover)="onDragOver($event)" (drop)="onDrop($event)"><div class="drop-zone-content">
-        <div class="icon-container"><i class="bi bi-cloud-upload" aria-hidden="true"></i></div>
-        <ng-container *ngIf="!selectedFiles.length && !hashing">
-          <h3>Drop files here</h3><p>Or</p>
-          <div class="button-group">
-            <button type="button" class="btn btn-primary" (click)="selectFolder()"><i class="bi bi-folder-plus" aria-hidden="true"></i> Select a Folder</button>
-            <button type="button" class="btn btn-primary" (click)="selectFile()"><i class="bi bi-file-earmark-plus" aria-hidden="true"></i> Select a File</button>
+      <h2 id="file-heading" class="section-title">
+        {{
+          isEdit
+            ? 'Replace folders or files (optional)'
+            : 'Select folders or files'
+        }}
+      </h2>
+      <div
+        class="drop-zone"
+        (dragover)="onDragOver($event)"
+        (drop)="onDrop($event)"
+      >
+        <div class="drop-zone-content">
+          <div class="icon-container">
+            <i class="bi bi-cloud-upload" aria-hidden="true"></i>
           </div>
-          <p class="max-size-info">Up to 50 files and 10 MiB total. File bytes and original names stay in this browser.</p>
-        </ng-container>
-        <input #fileInput type="file" class="visually-hidden" (change)="onFileSelected($event)" accept=".csv,.json,.md,.pdf,.png,.tif,.tiff,.txt,.yaml,.yml" aria-label="Choose a file" />
-        <input #folderInput type="file" class="visually-hidden" webkitdirectory multiple (change)="onFileSelected($event)" aria-label="Choose a folder" />
-        <p *ngIf="hashing" role="status">Calculating SHA-256 for {{ selectedFiles.length || 'selected' }} files...</p>
-        <div *ngIf="selectedFiles.length && !hashing" class="selected-files">
-          <p><strong>{{ selectedFiles.length }} {{ selectedFiles.length === 1 ? 'file' : 'files' }} processed</strong></p>
-          <p><strong>Footprint (SHA-256):</strong> <code class="text-break">{{ fingerprint }}</code></p>
-          <ul><li *ngFor="let file of selectedFiles | slice:0:10"><span>{{ file.name }}</span><code>sha256:{{ file.hash }}</code></li></ul>
-          <p *ngIf="selectedFiles.length > 10">... and {{ selectedFiles.length - 10 }} more files.</p>
-          <button type="button" class="btn btn-outline-primary" (click)="resetFiles()">Choose Different File/Folder</button>
+          <ng-container *ngIf="!selectedFiles.length && !hashing">
+            <h3>Drop files here</h3>
+            <p>Or</p>
+            <div class="button-group">
+              <button
+                type="button"
+                class="btn btn-primary"
+                (click)="selectFolder()"
+              >
+                <i class="bi bi-folder-plus" aria-hidden="true"></i> Select a
+                Folder
+              </button>
+              <button
+                type="button"
+                class="btn btn-primary"
+                (click)="selectFile()"
+              >
+                <i class="bi bi-file-earmark-plus" aria-hidden="true"></i>
+                Select a File
+              </button>
+            </div>
+            <p class="max-size-info">
+              Up to 50 files and 10 MiB total. File bytes and original names
+              stay in this browser.
+            </p>
+          </ng-container>
+          <input
+            #fileInput
+            type="file"
+            class="visually-hidden"
+            (change)="onFileSelected($event)"
+            accept=".csv,.json,.md,.pdf,.png,.tif,.tiff,.txt,.yaml,.yml"
+            aria-label="Choose a file"
+          />
+          <input
+            #folderInput
+            type="file"
+            class="visually-hidden"
+            webkitdirectory
+            multiple
+            (change)="onFileSelected($event)"
+            aria-label="Choose a folder"
+          />
+          <p *ngIf="hashing" role="status">
+            Calculating SHA-256 for
+            {{ selectedFiles.length || 'selected' }} files...
+          </p>
+          <div *ngIf="selectedFiles.length && !hashing" class="selected-files">
+            <p>
+              <strong
+                >{{ selectedFiles.length }}
+                {{
+                  selectedFiles.length === 1 ? 'file' : 'files'
+                }}
+                processed</strong
+              >
+            </p>
+            <p>
+              <strong>Footprint (SHA-256):</strong>
+              <code class="text-break">{{ fingerprint }}</code>
+            </p>
+            <ul>
+              <li *ngFor="let file of selectedFiles | slice: 0 : 10">
+                <span>{{ file.name }}</span
+                ><code>sha256:{{ file.hash }}</code>
+              </li>
+            </ul>
+            <p *ngIf="selectedFiles.length > 10">
+              ... and {{ selectedFiles.length - 10 }} more files.
+            </p>
+            <button
+              type="button"
+              class="btn btn-outline-primary"
+              (click)="resetFiles()"
+            >
+              Choose Different File/Folder
+            </button>
+          </div>
         </div>
-      </div></div>
+      </div>
       <p *ngIf="fileError" class="file-error" role="alert">{{ fileError }}</p>
     </section>
-    <div class="form-navigation"><a class="btn btn-secondary" routerLink="/list-artifacts">Cancel and Go Back</a><button class="btn btn-primary" type="submit" [disabled]="!canSubmit">{{ busy ? 'Submitting...' : isEdit ? 'Submit revision' : 'Submit' }}</button></div>
+    <div class="form-navigation">
+      <a class="btn btn-secondary" routerLink="/list-artifacts"
+        >Cancel and Go Back</a
+      ><button class="btn btn-primary" type="submit" [disabled]="!canSubmit">
+        {{ busy ? 'Submitting...' : isEdit ? 'Submit revision' : 'Submit' }}
+      </button>
+    </div>
   </form>
 </main>

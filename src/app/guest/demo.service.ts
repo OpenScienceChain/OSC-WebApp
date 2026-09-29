@@ -1,9 +1,10 @@
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable, tap } from 'rxjs';
+import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { getApiBaseUrl } from '../services/api-base-url';
 import {
   DemoArtifact,
+  DemoAccountCredentials,
   DemoArtifactHistory,
   DemoArtifactRequest,
   DemoArtifactEditRequest,
@@ -15,6 +16,7 @@ import {
   DemoSession,
   DemoStatus,
   DemoWorkflow,
+  DemoWorkflowEditRequest,
   DemoWorkflowRequest,
 } from './demo.models';
 
@@ -23,6 +25,10 @@ const SESSION_STORAGE_KEY = 'osc-usrse26-demo-session';
 @Injectable({ providedIn: 'root' })
 export class DemoService {
   private currentSession: DemoSession | null = this.readSession();
+  private readonly sessionSubject = new BehaviorSubject<DemoSession | null>(
+    this.currentSession,
+  );
+  readonly sessionChanges$ = this.sessionSubject.asObservable();
 
   constructor(private readonly http: HttpClient) {}
 
@@ -80,6 +86,34 @@ export class DemoService {
         { withCredentials: true },
       )
       .pipe(tap((session) => this.storeSession(session)));
+  }
+
+  registerAccount(
+    credentials: DemoAccountCredentials,
+  ): Observable<DemoSession> {
+    return this.http
+      .post<DemoSession>(this.url('/account/register'), credentials, {
+        withCredentials: true,
+      })
+      .pipe(tap((session) => this.storeSession(session)));
+  }
+
+  signInAccount(credentials: DemoAccountCredentials): Observable<DemoSession> {
+    return this.http
+      .post<DemoSession>(this.url('/account/sign-in'), credentials, {
+        withCredentials: true,
+      })
+      .pipe(tap((session) => this.storeSession(session)));
+  }
+
+  signOutAccount(): Observable<{ signedOut: boolean }> {
+    return this.http
+      .post<{ signedOut: boolean }>(
+        this.url('/account/sign-out'),
+        {},
+        this.mutation(),
+      )
+      .pipe(tap(() => this.clearSession()));
   }
 
   refreshSession(): Observable<DemoSession> {
@@ -152,6 +186,17 @@ export class DemoService {
     );
   }
 
+  updateWorkflow(
+    id: string,
+    request: DemoWorkflowEditRequest,
+  ): Observable<DemoWorkflow> {
+    return this.http.patch<DemoWorkflow>(
+      this.url(`/workflows/${id}`),
+      request,
+      this.mutation(request.requestId),
+    );
+  }
+
   getWorkflow(id: string): Observable<DemoWorkflow> {
     return this.http.get<DemoWorkflow>(this.url(`/workflows/${id}`), {
       withCredentials: true,
@@ -211,6 +256,7 @@ export class DemoService {
 
   clearSession(): void {
     this.currentSession = null;
+    this.sessionSubject.next(null);
     if (typeof sessionStorage !== 'undefined') {
       sessionStorage.removeItem(SESSION_STORAGE_KEY);
     }
@@ -242,6 +288,7 @@ export class DemoService {
 
   private storeSession(session: DemoSession): void {
     this.currentSession = session;
+    this.sessionSubject.next(session);
     if (typeof sessionStorage !== 'undefined') {
       sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(session));
     }

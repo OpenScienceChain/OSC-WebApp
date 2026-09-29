@@ -44,8 +44,9 @@ const ALLOWED_EXTENSIONS = new Set([
 })
 export class GuestArtifactFormComponent implements OnInit {
   readonly isEdit: boolean;
-  private readonly id: string;
-  private baseline?: DemoCatalogArtifact;
+  readonly id: string;
+  baseline?: DemoCatalogArtifact;
+  accessDenied = false;
   status?: DemoStatus;
   busy = false;
   hashing = false;
@@ -107,8 +108,7 @@ export class GuestArtifactFormComponent implements OnInit {
             (item) => item.id === this.id && item.submissionState === 'SUCCESS',
           )
         ) {
-          this.error =
-            'Only the session that owns this confirmed artifact may edit it.';
+          this.accessDenied = true;
           return;
         }
         this.baseline = detail;
@@ -120,8 +120,7 @@ export class GuestArtifactFormComponent implements OnInit {
         this.acknowledgement = detail.acknowledgements || '';
         this.otherAgency = (detail.fundingAgencies || []).join(', ');
       },
-      error: () =>
-        (this.error = 'This owned artifact could not be loaded for editing.'),
+      error: () => (this.accessDenied = true),
     });
   }
 
@@ -151,7 +150,19 @@ export class GuestArtifactFormComponent implements OnInit {
 
   onLengthLimit(field: string, max: number): void {
     if (this.lengthWarnings[field]) return;
-    const label = ({ title: 'Title', description: 'Description', keywords: 'Keywords', links: 'Links', dois: 'DOIs', otherAgency: 'Other agencies', acknowledgement: 'Acknowledgment', submissionComment: 'Submission comment' } as Record<string, string>)[field] || field;
+    const label =
+      (
+        {
+          title: 'Title',
+          description: 'Description',
+          keywords: 'Keywords',
+          links: 'Links',
+          dois: 'DOIs',
+          otherAgency: 'Other agencies',
+          acknowledgement: 'Acknowledgment',
+          submissionComment: 'Submission comment',
+        } as Record<string, string>
+      )[field] || field;
     const message = `${label} cannot exceed ${max} characters.`;
     this.lengthWarnings[field] = message;
     this.touched.add(field);
@@ -164,10 +175,16 @@ export class GuestArtifactFormComponent implements OnInit {
 
   fieldError(field: string): string {
     if (this.lengthWarnings[field]) return this.lengthWarnings[field];
-    const raw = this[field as 'keywords' | 'links' | 'dois' | 'otherAgency' | 'acknowledgement'];
+    const raw =
+      this[
+        field as
+          'keywords' | 'links' | 'dois' | 'otherAgency' | 'acknowledgement'
+      ];
     const items = field === 'otherAgency' ? this.agencies() : this.list(raw);
     if (field === 'acknowledgement') {
-      return raw.trim().length > 1000 ? 'Acknowledgment cannot exceed 1000 characters.' : '';
+      return raw.trim().length > 1000
+        ? 'Acknowledgment cannot exceed 1000 characters.'
+        : '';
     }
     if (raw && raw.split(',').some((item) => !item.trim()))
       return 'Separate entries with commas; remove empty entries.';
@@ -180,21 +197,32 @@ export class GuestArtifactFormComponent implements OnInit {
     const [count, length, label] = limits[field];
     if (items.length > count || items.some((item) => item.length > length))
       return `Use at most ${count} ${label}, each no longer than ${length} characters.`;
-    if (field === 'links' && items.some((link) => {
-      try {
-        const url = new URL(link);
-        return url.protocol !== 'https:' || !url.hostname.includes('.');
-      } catch {
-        return true;
-      }
-    })) return 'Enter valid HTTPS links, separated by commas.';
-    if (field === 'dois' && items.some((doi) => !/^10\.\d{4,9}\/[-_.;()/:A-Za-z0-9]+$/.test(doi)))
+    if (
+      field === 'links' &&
+      items.some((link) => {
+        try {
+          const url = new URL(link);
+          return url.protocol !== 'https:' || !url.hostname.includes('.');
+        } catch {
+          return true;
+        }
+      })
+    )
+      return 'Enter valid HTTPS links, separated by commas.';
+    if (
+      field === 'dois' &&
+      items.some((doi) => !/^10\.\d{4,9}\/[-_.;()/:A-Za-z0-9]+$/.test(doi))
+    )
       return 'Enter each DOI as 10.xxxx/suffix.';
     return '';
   }
 
-  selectFile(): void { this.fileInput?.nativeElement.click(); }
-  selectFolder(): void { this.folderInput?.nativeElement.click(); }
+  selectFile(): void {
+    this.fileInput?.nativeElement.click();
+  }
+  selectFolder(): void {
+    this.folderInput?.nativeElement.click();
+  }
 
   async onFileSelected(event: Event): Promise<void> {
     const input = event.target as HTMLInputElement;
@@ -202,7 +230,9 @@ export class GuestArtifactFormComponent implements OnInit {
     input.value = '';
   }
 
-  onDragOver(event: DragEvent): void { event.preventDefault(); }
+  onDragOver(event: DragEvent): void {
+    event.preventDefault();
+  }
   async onDrop(event: DragEvent): Promise<void> {
     event.preventDefault();
     await this.processFiles(Array.from(event.dataTransfer?.files || []));
@@ -221,34 +251,61 @@ export class GuestArtifactFormComponent implements OnInit {
     this.resetFiles();
     if (!files.length) return;
     const total = files.reduce((sum, file) => sum + file.size, 0);
-    const unsupported = files.find((file) =>
-      !ALLOWED_EXTENSIONS.has(file.name.split('.').pop()?.toLowerCase() || ''));
-    if (files.length > 50 || total > MAX_FILE_BYTES || files.some((file) => file.size < 1) || unsupported) {
-      this.fileError = files.length > 50 ? 'Choose at most 50 files.' :
-        total > MAX_FILE_BYTES ? 'The selected files exceed the 10 MiB total limit.' :
-        files.some((file) => file.size < 1) ? 'Empty files cannot be registered.' :
-        `Unsupported file type: ${unsupported?.name.split('.').pop() || 'unknown'}.`;
+    const unsupported = files.find(
+      (file) =>
+        !ALLOWED_EXTENSIONS.has(
+          file.name.split('.').pop()?.toLowerCase() || '',
+        ),
+    );
+    if (
+      files.length > 50 ||
+      total > MAX_FILE_BYTES ||
+      files.some((file) => file.size < 1) ||
+      unsupported
+    ) {
+      this.fileError =
+        files.length > 50
+          ? 'Choose at most 50 files.'
+          : total > MAX_FILE_BYTES
+            ? 'The selected files exceed the 10 MiB total limit.'
+            : files.some((file) => file.size < 1)
+              ? 'Empty files cannot be registered.'
+              : `Unsupported file type: ${unsupported?.name.split('.').pop() || 'unknown'}.`;
       this.toastr.warning(this.fileError, 'File not accepted');
       return;
     }
     this.hashing = true;
     try {
       const sorted = [...files].sort((a, b) =>
-        (a.webkitRelativePath || a.name).localeCompare(b.webkitRelativePath || b.name, 'en'));
+        (a.webkitRelativePath || a.name).localeCompare(
+          b.webkitRelativePath || b.name,
+          'en',
+        ),
+      );
       const entries = [] as (DemoFileEntry & { name: string })[];
-      for (const file of sorted) entries.push({
-        name: file.webkitRelativePath || file.name,
-        hash: await this.sha256(await file.arrayBuffer()),
-        sizeBytes: file.size,
-        extension: file.name.split('.').pop()!.toLowerCase(),
-      });
+      for (const file of sorted)
+        entries.push({
+          name: file.webkitRelativePath || file.name,
+          hash: await this.sha256(await file.arrayBuffer()),
+          sizeBytes: file.size,
+          extension: file.name.split('.').pop()!.toLowerCase(),
+        });
       this.selectedFiles = entries;
       this.sizeBytes = total;
       this.extension = entries.length > 1 ? 'bundle' : entries[0].extension;
-      this.fingerprint = entries.length === 1 ? entries[0].hash :
-        await this.sha256(new TextEncoder().encode(entries.map((file, index) =>
-          `${index + 1}\t${file.extension}\t${file.hash}\t${file.sizeBytes}`,
-        ).join('\n')));
+      this.fingerprint =
+        entries.length === 1
+          ? entries[0].hash
+          : await this.sha256(
+              new TextEncoder().encode(
+                entries
+                  .map(
+                    (file, index) =>
+                      `${index + 1}\t${file.extension}\t${file.hash}\t${file.sizeBytes}`,
+                  )
+                  .join('\n'),
+              ),
+            );
     } catch {
       this.fileError = 'This browser could not compute the file fingerprint.';
       this.toastr.error(this.fileError, 'File processing failed');
@@ -259,18 +316,24 @@ export class GuestArtifactFormComponent implements OnInit {
 
   private async sha256(bytes: BufferSource): Promise<string> {
     const digest = await crypto.subtle.digest('SHA-256', bytes);
-    return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('');
+    return Array.from(new Uint8Array(digest), (byte) =>
+      byte.toString(16).padStart(2, '0'),
+    ).join('');
   }
 
   private fileEntries(): DemoFileEntry[] | undefined {
     return this.selectedFiles.length > 1
-      ? this.selectedFiles.map(({ hash, sizeBytes, extension }) => ({ hash, sizeBytes, extension }))
+      ? this.selectedFiles.map(({ hash, sizeBytes, extension }) => ({
+          hash,
+          sizeBytes,
+          extension,
+        }))
       : undefined;
   }
 
   submit(): void {
     if (!this.demo.session) {
-      this.error = 'Start a guest session before contributing.';
+      this.error = 'Sign in to your contributor account before submitting.';
       return;
     }
     if (!this.canSubmit) {
@@ -337,13 +400,14 @@ export class GuestArtifactFormComponent implements OnInit {
     this.busy = false;
     if (error.status === 401) {
       this.demo.clearSession();
-      this.error = 'Guest session expired. Start a new session.';
+      this.error = 'Your session expired. Sign in again to continue.';
     } else if (error.status === 403)
-      this.error = 'This session cannot edit that artifact.';
+      this.error =
+        'Only the account that submitted this artifact can update it.';
     else if (error.status === 409)
       this.error = 'A revision is pending or the request conflicted.';
     else if (error.status === 429)
-      this.error = 'Guest contribution or revision limit reached.';
+      this.error = 'The contribution or revision limit has been reached.';
     else this.error = 'Submission failed. Retry keeps the same request ID.';
     this.toastr.error(this.error, 'Submission failed');
   }
@@ -410,7 +474,13 @@ export class GuestArtifactFormComponent implements OnInit {
   }
 
   metadataError(): string {
-    for (const field of ['keywords', 'links', 'dois', 'otherAgency', 'acknowledgement']) {
+    for (const field of [
+      'keywords',
+      'links',
+      'dois',
+      'otherAgency',
+      'acknowledgement',
+    ]) {
       const error = this.fieldError(field);
       if (error) return error;
     }

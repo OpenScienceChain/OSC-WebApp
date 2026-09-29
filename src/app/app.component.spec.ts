@@ -99,7 +99,7 @@ describe('AppComponent', () => {
   it('should provide a skip link to routed content', () => {
     const compiled = fixture.nativeElement;
     const skipLink = compiled.querySelector('.skip-link');
-    expect(skipLink.getAttribute('href')).toBe('#main-content');
+    expect(skipLink.getAttribute('href')).toBe('#app-main');
   });
 
   it('should render routed page content through a router outlet', () => {

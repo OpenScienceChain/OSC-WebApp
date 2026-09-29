@@ -30,6 +30,14 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'update-workflow/:id',
+    canMatch: [guestModeMatch],
+    loadComponent: () =>
+      import('./guest/guest-workflow-form.component').then(
+        (m) => m.GuestWorkflowFormComponent,
+      ),
+  },
+  {
     path: 'update-artifact/:id',
     canMatch: [guestModeMatch],
     loadComponent: () =>

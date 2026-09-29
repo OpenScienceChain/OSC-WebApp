@@ -5,6 +5,7 @@ import { ToastrService } from 'ngx-toastr';
 import { filter } from 'rxjs/operators';
 import { AuthService } from './auth/auth.service';
 import { getRuntimeConfig } from './config/runtime-config';
+import { DemoService } from './guest/demo.service';
 
 @Component({
   selector: 'app-root',
@@ -16,6 +17,7 @@ import { getRuntimeConfig } from './config/runtime-config';
 export class AppComponent implements OnInit {
   readonly mockPreview = getRuntimeConfig()?.MOCK_PREVIEW === true;
   isAuthenticated = false;
+  contributorSignedIn = false;
   showBackButton = false;
   mobileNavigationOpen = false;
   contributeMenuOpen = false;
@@ -28,10 +30,14 @@ export class AppComponent implements OnInit {
     public router: Router,
     private readonly location: Location,
     private readonly authService: AuthService,
+    private readonly demo: DemoService,
     private readonly toastr: ToastrService,
   ) {
     this.authService.isAuthenticated$.subscribe(
       (isAuthenticated) => (this.isAuthenticated = isAuthenticated),
+    );
+    this.demo.sessionChanges$.subscribe(
+      (session) => (this.contributorSignedIn = !!session?.accountUsername),
     );
   }
 
@@ -87,6 +93,16 @@ export class AppComponent implements OnInit {
   }
 
   logout(): void {
+    if (this.contributorSignedIn) {
+      this.demo.signOutAccount().subscribe({
+        next: () => this.closeNavigation(),
+        error: () => {
+          this.demo.clearSession();
+          this.closeNavigation();
+        },
+      });
+      return;
+    }
     this.authService.logout().subscribe({
       next: () => {
         this.closeNavigation();

@@ -1,0 +1,39 @@
+.account-modes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  margin: 0 0 24px;
+  border: 1px solid #879ba7;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.account-modes button {
+  border: 0;
+  padding: 10px 8px;
+  background: #fff;
+  color: var(--osc-navy);
+  font-weight: 700;
+}
+.account-modes button + button {
+  border-left: 1px solid #879ba7;
+}
+.account-modes button[aria-pressed='true'] {
+  background: var(--osc-navy);
+  color: #fff;
+}
+.account-modes button:focus-visible,
+.team-sign-in:focus-visible {
+  outline: 3px solid #e0a923;
+  outline-offset: 2px;
+}
+.account-disclosure {
+  margin: 20px 0 10px;
+  color: var(--osc-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.team-sign-in {
+  color: #0e665c;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: underline;
+}
