@@ -1,4 +1,11 @@
-import { ComponentFixture, TestBed, fakeAsync, tick, flush, flushMicrotasks } from '@angular/core/testing';
+import {
+  ComponentFixture,
+  TestBed,
+  fakeAsync,
+  tick,
+  flush,
+  flushMicrotasks,
+} from '@angular/core/testing';
 declare const expect: any;
 import { HistoryDetailComponent } from './history-detail.component';
 import { ActivatedRoute } from '@angular/router';
@@ -10,27 +17,50 @@ describe('HistoryDetailComponent', () => {
   let component: HistoryDetailComponent;
   let fixture: ComponentFixture<HistoryDetailComponent>;
 
-  const params = { snapshot: { paramMap: new Map([['id', 'abc'], ['txId', 'tx-1']]) } } as any;
+  const params = {
+    snapshot: {
+      paramMap: new Map([
+        ['id', 'abc'],
+        ['txId', 'tx-1'],
+      ]),
+    },
+  } as any;
 
   const serviceStub = {
     getArtifactHistory: (_id: string, opts: any) => {
       const includeValue = !!opts.includeValue;
-      const first = { txId: 'tx-0', timestamp: new Date().toISOString(), isDelete: false } as any;
+      const first = {
+        txId: 'tx-0',
+        timestamp: new Date().toISOString(),
+        isDelete: false,
+      } as any;
       const second = includeValue
-        ? ({ txId: 'tx-1', timestamp: new Date().toISOString(), isDelete: false, value: { manifest: [{ filename: 'a', hash: 'h', algorithm: 'sha256' }] } } as any)
-        : ({ txId: 'tx-1', timestamp: new Date().toISOString(), isDelete: false } as any);
+        ? ({
+            txId: 'tx-1',
+            timestamp: new Date().toISOString(),
+            isDelete: false,
+            value: {
+              manifest: [{ filename: 'a', hash: 'h', algorithm: 'sha256' }],
+            },
+          } as any)
+        : ({
+            txId: 'tx-1',
+            timestamp: new Date().toISOString(),
+            isDelete: false,
+          } as any);
       return of({ items: [first, second], total: 2 } as any);
-    }
+    },
   } as Partial<ArtifactService> as ArtifactService;
 
   beforeEach(async () => {
+    Object.defineProperty(history, 'state', { value: {}, configurable: true });
     await TestBed.configureTestingModule({
       imports: [HistoryDetailComponent],
       providers: [
         { provide: ActivatedRoute, useValue: params },
         { provide: ArtifactService, useValue: serviceStub },
-        HistoryCacheService
-      ]
+        HistoryCacheService,
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(HistoryDetailComponent);
@@ -44,8 +74,14 @@ describe('HistoryDetailComponent', () => {
 
   it('loads from cache when present', () => {
     const cache = TestBed.inject(HistoryCacheService);
-    cache.set('tx-1', { txId: 'tx-1', timestamp: new Date().toISOString(), isDelete: false } as any);
-    const comp = TestBed.createComponent(HistoryDetailComponent).componentInstance;
+    cache.set('tx-1', {
+      txId: 'tx-1',
+      timestamp: new Date().toISOString(),
+      isDelete: false,
+    } as any);
+    const comp = TestBed.createComponent(
+      HistoryDetailComponent,
+    ).componentInstance;
     comp.ngOnInit();
     expect(comp.item?.txId).toBe('tx-1');
     expect(comp.isLoading).toBeFalse();
@@ -53,7 +89,9 @@ describe('HistoryDetailComponent', () => {
 
   it('fetches until found and sets flags', fakeAsync(() => {
     Object.defineProperty(history, 'state', { value: {}, configurable: true });
-    const comp = TestBed.createComponent(HistoryDetailComponent).componentInstance;
+    const comp = TestBed.createComponent(
+      HistoryDetailComponent,
+    ).componentInstance;
     comp.ngOnInit();
     flush();
     tick();
@@ -68,14 +106,20 @@ describe('HistoryDetailComponent', () => {
     const cacheSpy = spyOn(cache, 'set').and.callThrough();
     Object.defineProperty(history, 'state', {
       value: {
-        snapshot: { txId: 'tx-nav', timestamp: new Date().toISOString(), isDelete: false } as any,
+        snapshot: {
+          txId: 'tx-nav',
+          timestamp: new Date().toISOString(),
+          isDelete: false,
+        } as any,
         isCurrent: true,
-        isInitial: false
+        isInitial: false,
       },
-      configurable: true
+      configurable: true,
     });
 
-    const comp = TestBed.createComponent(HistoryDetailComponent).componentInstance;
+    const comp = TestBed.createComponent(
+      HistoryDetailComponent,
+    ).componentInstance;
     comp.ngOnInit();
 
     expect(comp.item?.txId).toBe('tx-nav');
@@ -90,9 +134,13 @@ describe('HistoryDetailComponent', () => {
     cache.clear();
     Object.defineProperty(history, 'state', { value: {}, configurable: true });
     const svc = TestBed.inject(ArtifactService) as any;
-    spyOn(svc, 'getArtifactHistory').and.returnValue(of({ items: [], total: 0 } as any));
+    spyOn(svc, 'getArtifactHistory').and.returnValue(
+      of({ items: [], total: 0 } as any),
+    );
 
-    const comp = TestBed.createComponent(HistoryDetailComponent).componentInstance;
+    const comp = TestBed.createComponent(
+      HistoryDetailComponent,
+    ).componentInstance;
     comp.ngOnInit();
     flush();
     flushMicrotasks();
@@ -107,9 +155,13 @@ describe('HistoryDetailComponent', () => {
     cache.clear();
     Object.defineProperty(history, 'state', { value: {}, configurable: true });
     const svc = TestBed.inject(ArtifactService) as any;
-    spyOn(svc, 'getArtifactHistory').and.returnValue(throwError(() => new Error('boom')));
+    spyOn(svc, 'getArtifactHistory').and.returnValue(
+      throwError(() => new Error('boom')),
+    );
 
-    const comp = TestBed.createComponent(HistoryDetailComponent).componentInstance;
+    const comp = TestBed.createComponent(
+      HistoryDetailComponent,
+    ).componentInstance;
     comp.ngOnInit();
     flush();
     flushMicrotasks();
@@ -121,15 +173,23 @@ describe('HistoryDetailComponent', () => {
 
   it('printManifest builds window content safely', fakeAsync(() => {
     // Ensure item with manifest
-    component.item = { value: { manifest: [{ filename: 'a', hash: 'h', algorithm: 'sha256' }] } } as any;
+    component.item = {
+      value: { manifest: [{ filename: 'a', hash: 'h', algorithm: 'sha256' }] },
+    } as any;
     const mockWin = {
       document: {
-        createElement: (t: string) => (t === 'style' ? { textContent: '' } : { textContent: '', appendChild: () => {} }),
+        createElement: (t: string) =>
+          t === 'style'
+            ? { textContent: '' }
+            : { textContent: '', appendChild: () => {} },
         head: { appendChild: () => {} },
         body: { innerHTML: '', appendChild: () => {} },
-        open: () => {}, write: () => {}, close: () => {}
+        open: () => {},
+        write: () => {},
+        close: () => {},
       },
-      focus: () => {}, print: () => {}
+      focus: () => {},
+      print: () => {},
     } as unknown as Window;
     spyOn(window, 'open').and.returnValue(mockWin);
     component.printManifest();
@@ -145,12 +205,14 @@ describe('HistoryDetailComponent', () => {
   });
 
   it('printManifest alerts when popup blocked', () => {
-    component.item = { value: { manifest: [{ filename: 'a', hash: 'h', algorithm: 'sha256' }] } } as any;
+    component.item = {
+      value: { manifest: [{ filename: 'a', hash: 'h', algorithm: 'sha256' }] },
+    } as any;
     spyOn(window, 'open').and.returnValue(null as any);
     const alertSpy = spyOn(window, 'alert');
     component.printManifest();
-    expect(alertSpy).toHaveBeenCalledWith('Please allow pop-ups to print the manifest.');
+    expect(alertSpy).toHaveBeenCalledWith(
+      'Please allow pop-ups to print the manifest.',
+    );
   });
 });
-
-
