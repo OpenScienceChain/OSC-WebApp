@@ -6,6 +6,7 @@ import { Router, RouterModule } from '@angular/router';
 import { DemoCatalogArtifact, DemoResearchContext, DemoStatus } from './demo.models';
 import { DemoService } from './demo.service';
 import { GuestSessionPanelComponent } from './guest-session-panel.component';
+import { ClampInputLengthDirective } from '../shared/clamp-input-length.directive';
 
 interface WorkflowRepository {
   url: string;
@@ -23,6 +24,7 @@ interface WorkflowRepository {
     FormsModule,
     RouterModule,
     GuestSessionPanelComponent,
+    ClampInputLengthDirective,
   ],
   templateUrl: './guest-workflow-form.component.html',
   styleUrls: ['./guest-workflow-form.component.css'],

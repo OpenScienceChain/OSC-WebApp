@@ -182,8 +182,8 @@ label {
   align-items: flex-end;
   overflow: hidden;
   border-radius: 0 6px 6px 0;
-  background-image: url('/assets/images/laboratory-research-thisisengineering.jpg');
-  background-position: 70% center;
+  background-image: url('/assets/images/sign-in-laboratory-adam-bezer.jpg');
+  background-position: 58% center;
   background-size: cover;
   color: #ffffff;
 }
@@ -198,6 +198,21 @@ label {
 .sign-in-context > div {
   position: relative;
   z-index: 1;
+}
+
+.photo-credit {
+  position: absolute;
+  z-index: 1;
+  top: 15px;
+  right: 18px;
+  color: #ffffff;
+  font-size: 11px;
+  text-shadow: 0 1px 3px #082436;
+}
+
+.photo-credit a {
+  color: inherit;
+  text-decoration: underline;
 }
 
 .sign-in-context .eyebrow {
@@ -242,11 +257,12 @@ label {
 
   .sign-in-panel {
     border-right: 1px solid var(--osc-line);
-    border-radius: 6px;
+    border-radius: 6px 6px 0 0;
   }
 
   .sign-in-context {
-    display: none;
+    min-height: 260px;
+    border-radius: 0 0 6px 6px;
   }
 }
 
@@ -257,10 +273,18 @@ label {
   }
 
   .sign-in-panel {
-    min-height: calc(100vh - 64px);
     padding: 36px 22px;
     border: 0;
     border-radius: 0;
+  }
+
+  .sign-in-context {
+    padding: 34px 22px;
+    border-radius: 0;
+  }
+
+  .sign-in-context h2 {
+    font-size: 27px;
   }
 
   .logo {

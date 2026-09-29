@@ -71,6 +71,14 @@ describe('SignInComponent', () => {
     expect(logo.alt).toBe('Open Science Chain');
   });
 
+  it('credits the sign-in photograph', () => {
+    const credit = fixture.nativeElement.querySelector('.photo-credit a');
+    expect(credit.textContent).toContain('Adam Bezer');
+    expect(credit.href).toBe(
+      'https://unsplash.com/photos/a-scientist-is-working-in-a-laboratory-TOZsuh0MWJw',
+    );
+  });
+
   it('should expose errors through aria-describedby after invalid submission', () => {
     component.onSubmit();
     fixture.detectChanges();

@@ -38,14 +38,6 @@ export const routes: Routes = [
       ),
   },
   {
-    path: 'update-workflow/:id',
-    canMatch: [guestModeMatch],
-    loadComponent: () =>
-      import('./guest/guest-workflow-detail.component').then(
-        (m) => m.GuestWorkflowDetailComponent,
-      ),
-  },
-  {
     path: 'artifacts/:id/history/:txId',
     canMatch: [guestModeMatch],
     data: { recordType: 'artifact' },

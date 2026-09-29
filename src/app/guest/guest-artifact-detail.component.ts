@@ -3,6 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { DemoCatalogArtifact } from './demo.models';
 import { DemoService } from './demo.service';
+import { printFileHashes } from '../shared/print-file-hashes';
 
 @Component({
   standalone: true,
@@ -10,10 +11,6 @@ import { DemoService } from './demo.service';
   template: `
     <main id="main-content" class="record-page">
       <div class="record-shell">
-        <a class="back-link" routerLink="/list-artifacts"
-          ><i class="bi bi-arrow-left" aria-hidden="true"></i>Back to
-          artifacts</a
-        >
         <div *ngIf="isLoading" class="state-panel" role="status">
           Loading artifact record...
         </div>
@@ -29,130 +26,60 @@ import { DemoService } from './demo.service';
         <ng-container *ngIf="!isLoading && artifact">
           <header class="record-header">
             <div class="record-kicker">
-              <span>Scientific artifact</span
-              ><span class="record-state" [class.is-confirmed]="confirmed">{{
+              <span>Scientific Artifact</span
+              ><span *ngIf="!confirmed" class="record-state">{{
                 artifact.submissionState
               }}</span>
             </div>
             <h1>{{ artifact.title }}</h1>
-            <p>{{ artifact.description }}</p>
           </header>
-          <section
-            class="ledger-confirmation"
-            [class.is-pending]="!confirmed"
-            aria-labelledby="artifact-ledger-heading"
-          >
-            <i class="bi bi-shield-check" aria-hidden="true"></i>
-            <div class="ledger-summary">
-              <p class="section-label">Blockchain provenance</p>
-              <h2 id="artifact-ledger-heading">
-                {{
-                  confirmed
-                    ? 'Recorded on the OSC permissioned blockchain'
-                    : 'Awaiting blockchain confirmation'
-                }}
-              </h2>
-              <p>
-                This record's public metadata is connected to an
-                organization-scoped provenance history.
-              </p>
-            </div>
-            <dl class="ledger-facts" *ngIf="confirmed">
-              <div>
-                <dt>Transaction</dt>
-                <dd>{{ artifact.blockchainTxId }}</dd>
-              </div>
-              <div>
-                <dt>Submitted</dt>
-                <dd>{{ artifact.submittedAt | date: 'medium' }}</dd>
-              </div>
-            </dl>
-          </section>
-          <div class="record-layout">
-            <section aria-labelledby="artifact-context-heading">
-              <p class="section-label">Research context</p>
-              <h2 id="artifact-context-heading">
-                Metadata kept with the output
-              </h2>
-              <dl class="context-list">
-                <div *ngIf="artifact.keywords?.length">
-                  <dt>Keywords</dt>
-                  <dd class="tag-list">
-                    <span *ngFor="let keyword of artifact.keywords">{{
-                      keyword
-                    }}</span>
-                  </dd>
-                </div>
-                <div *ngIf="artifact.fundingAgencies?.length">
-                  <dt>Funding</dt>
-                  <dd>{{ artifact.fundingAgencies?.join(', ') }}</dd>
-                </div>
-                <div *ngIf="artifact.dois?.length">
-                  <dt>DOI</dt>
-                  <dd>{{ artifact.dois?.join(', ') }}</dd>
-                </div>
-                <div *ngIf="artifact.links?.length">
-                  <dt>Related links</dt>
-                  <dd>
-                    <a
-                      *ngFor="let link of artifact.links"
-                      [href]="link"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      >{{ link }}</a
-                    >
-                  </dd>
-                </div>
-                <div *ngIf="artifact.submissionComment">
-                  <dt>Submission note</dt>
-                  <dd>{{ artifact.submissionComment }}</dd>
-                </div>
-                <div *ngIf="artifact.acknowledgements">
-                  <dt>Acknowledgements</dt>
-                  <dd>{{ artifact.acknowledgements }}</dd>
-                </div>
-              </dl>
+          <div class="record-layout artifact-body">
+            <section class="description-col" aria-labelledby="artifact-description-heading">
+              <h2 id="artifact-description-heading">Description</h2>
+              <p class="pre-wrap">{{ artifact.description }}</p>
             </section>
-            <aside
-              class="record-identity"
-              aria-labelledby="artifact-identity-heading"
-            >
-              <p class="section-label">Record identity</p>
-              <h2 id="artifact-identity-heading">Who registered this record</h2>
-              <dl>
-                <div>
-                  <dt>OSC ID</dt>
-                  <dd>
-                    <code>{{ artifact.id }}</code>
-                  </dd>
-                </div>
-                <div>
-                  <dt>Organization</dt>
-                  <dd>{{ artifact.organization }}</dd>
-                </div>
-                <div>
-                  <dt>Contributor</dt>
-                  <dd>{{ artifact.contributorAlias }}</dd>
-                </div>
-                <div>
-                  <dt>Submitted</dt>
-                  <dd>{{ artifact.submittedAt | date: 'medium' }}</dd>
-                </div>
-              </dl>
+            <aside class="record-identity details-col" aria-labelledby="artifact-details-heading">
+              <h2 id="artifact-details-heading">Details</h2>
+              <table class="table table-borderless detail-table">
+                <tbody>
+                  <tr><th scope="row">ID</th><td><code>{{ artifact.id }}</code> <button type="button" class="copy-id" (click)="copyId()" title="Copy artifact ID" aria-label="Copy artifact ID"><i class="bi bi-clipboard" aria-hidden="true"></i></button></td></tr>
+                  <tr><th scope="row">Organization</th><td>{{ artifact.organization }}</td></tr>
+                  <tr><th scope="row">Submitted</th><td>{{ artifact.submittedAt | date: 'medium' }}</td></tr>
+                  <tr *ngIf="artifact.lastUpdatedAt"><th scope="row">Last Updated</th><td>{{ artifact.lastUpdatedAt | date: 'medium' }}</td></tr>
+                  <tr><th scope="row">Contributor</th><td>{{ artifact.contributorAlias }}</td></tr>
+                  <tr *ngIf="artifact.keywords?.length"><th scope="row">Keywords</th><td><span class="keyword-badge" *ngFor="let keyword of artifact.keywords">{{ keyword }}</span></td></tr>
+                  <tr *ngIf="artifact.links?.length"><th scope="row">Links</th><td><a *ngFor="let link of artifact.links" [href]="link" target="_blank" rel="noopener noreferrer">{{ link }}</a></td></tr>
+                  <tr><th scope="row">Funding Agencies</th><td>{{ artifact.fundingAgencies?.join(', ') || 'Not recorded' }}</td></tr>
+                  <tr><th scope="row">DOIs</th><td>{{ artifact.dois?.join(', ') || 'Not recorded' }}</td></tr>
+                  <tr *ngIf="artifact.submissionComment"><th scope="row">Comment</th><td class="pre-wrap">{{ artifact.submissionComment }}</td></tr>
+                  <tr><th scope="row">State</th><td><span class="record-state" [class.is-confirmed]="confirmed">{{ artifact.submissionState }}</span></td></tr>
+                  <tr *ngIf="confirmed"><th scope="row">Blockchain TX</th><td><code>{{ artifact.blockchainTxId }}</code></td></tr>
+                  <tr *ngIf="!confirmed"><th scope="row">Provenance</th><td>Awaiting blockchain confirmation</td></tr>
+                  <tr *ngIf="artifact.acknowledgements"><th scope="row">Acknowledgements</th><td>{{ artifact.acknowledgements }}</td></tr>
+                </tbody>
+              </table>
             </aside>
           </div>
+          <section class="manifest-section" aria-labelledby="manifest-heading">
+            <div class="manifest-heading"><h2 id="manifest-heading">Manifest</h2></div>
+            <ng-container *ngIf="artifact.manifest?.length; else unavailableManifest">
+              <p>{{ artifact.manifest?.length }} {{ artifact.manifest?.length === 1 ? 'file' : 'files' }} total. Generated names protect the original local paths.</p>
+              <div class="table-responsive"><table><thead><tr><th>Filename</th><th>Hash</th><th>Alg.</th></tr></thead><tbody><tr *ngFor="let file of artifact.manifest"><td>{{ file.filename }}</td><td><code>{{ file.hash }}</code></td><td>{{ file.algorithm }}</td></tr></tbody></table></div>
+              <div class="footprint" *ngIf="artifact.footprint"><span>Footprint (SHA-256)</span><code>{{ artifact.footprint }}</code></div>
+            </ng-container>
+            <ng-template #unavailableManifest><p class="manifest-empty">No confirmed public manifest is available for this artifact.</p></ng-template>
+          </section>
           <div class="record-actions">
+            <button *ngIf="artifact.manifest?.length" type="button" class="secondary-action" (click)="printManifest()"><i class="bi bi-printer" aria-hidden="true"></i>Print file hashes</button>
             <a
-              class="secondary-action"
+              class="primary-action"
               [routerLink]="['/artifacts', artifact.id, 'history']"
-              ><i class="bi bi-clock-history" aria-hidden="true"></i>View
-              provenance history</a
+              ><i class="bi bi-clock-history" aria-hidden="true"></i>History</a
             ><a
-              *ngIf="canEdit"
               class="primary-action"
               [routerLink]="['/update-artifact', artifact.id]"
-              ><i class="bi bi-pencil-square" aria-hidden="true"></i>Update
-              artifact</a
+              [title]="canEdit ? 'Update this artifact' : 'Only the contributing session can save updates'"
+              ><i class="bi bi-pencil-square" aria-hidden="true"></i>Update Artifact</a
             >
           </div>
         </ng-container>
@@ -188,6 +115,7 @@ export class GuestArtifactDetailComponent implements OnInit {
   loadArtifact(): void {
     this.isLoading = true;
     this.errorMessage = '';
+    this.canEdit = false;
     this.demo.getPublicArtifact(this.id).subscribe({
       next: (artifact) => {
         this.artifact = artifact;
@@ -204,11 +132,15 @@ export class GuestArtifactDetailComponent implements OnInit {
   private checkOwnership(): void {
     if (!this.demo.session || !this.confirmed) return;
     this.demo.getMyArtifacts().subscribe({
-      next: (items) =>
-        (this.canEdit = items.some(
+      next: (items) => {
+        this.canEdit = items.some(
           (item) => item.id === this.id && item.submissionState === 'SUCCESS',
-        )),
+        );
+      },
       error: () => (this.canEdit = false),
     });
   }
+
+  async copyId(): Promise<void> { await navigator.clipboard.writeText(this.id); }
+  printManifest(): void { printFileHashes(this.artifact?.manifest ?? []); }
 }

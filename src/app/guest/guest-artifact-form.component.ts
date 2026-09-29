@@ -1,11 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
 import {
   DemoArtifactEditRequest,
+  DemoFileEntry,
   DemoArtifactMetadata,
   DemoCatalogArtifact,
   DemoResearchContext,
@@ -13,6 +14,7 @@ import {
 } from './demo.models';
 import { DemoService } from './demo.service';
 import { GuestSessionPanelComponent } from './guest-session-panel.component';
+import { ClampInputLengthDirective } from '../shared/clamp-input-length.directive';
 
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
 const ALLOWED_EXTENSIONS = new Set([
@@ -35,6 +37,7 @@ const ALLOWED_EXTENSIONS = new Set([
     FormsModule,
     RouterModule,
     GuestSessionPanelComponent,
+    ClampInputLengthDirective,
   ],
   templateUrl: './guest-artifact-form.component.html',
   styleUrls: ['./guest-artifact-form.component.css'],
@@ -47,6 +50,7 @@ export class GuestArtifactFormComponent implements OnInit {
   busy = false;
   hashing = false;
   error = '';
+  fileError = '';
   requestId = '';
   title = '';
   description = '';
@@ -64,7 +68,11 @@ export class GuestArtifactFormComponent implements OnInit {
   fingerprint = '';
   sizeBytes = 0;
   extension = '';
+  selectedFiles: (DemoFileEntry & { name: string })[] = [];
+  @ViewChild('fileInput') fileInput?: ElementRef<HTMLInputElement>;
+  @ViewChild('folderInput') folderInput?: ElementRef<HTMLInputElement>;
   touched = new Set<string>();
+  lengthWarnings: Record<string, string> = {};
 
   constructor(
     private readonly route: ActivatedRoute,
@@ -135,9 +143,19 @@ export class GuestArtifactFormComponent implements OnInit {
     );
   }
 
-  onChange(): void {
+  onChange(field?: string): void {
     this.requestId = '';
     this.error = '';
+    if (field) delete this.lengthWarnings[field];
+  }
+
+  onLengthLimit(field: string, max: number): void {
+    if (this.lengthWarnings[field]) return;
+    const label = ({ title: 'Title', description: 'Description', keywords: 'Keywords', links: 'Links', dois: 'DOIs', otherAgency: 'Other agencies', acknowledgement: 'Acknowledgment', submissionComment: 'Submission comment' } as Record<string, string>)[field] || field;
+    const message = `${label} cannot exceed ${max} characters.`;
+    this.lengthWarnings[field] = message;
+    this.touched.add(field);
+    this.toastr.warning(message, 'Length limit');
   }
 
   markTouched(field: string): void {
@@ -145,6 +163,7 @@ export class GuestArtifactFormComponent implements OnInit {
   }
 
   fieldError(field: string): string {
+    if (this.lengthWarnings[field]) return this.lengthWarnings[field];
     const raw = this[field as 'keywords' | 'links' | 'dois' | 'otherAgency' | 'acknowledgement'];
     const items = field === 'otherAgency' ? this.agencies() : this.list(raw);
     if (field === 'acknowledgement') {
@@ -174,44 +193,79 @@ export class GuestArtifactFormComponent implements OnInit {
     return '';
   }
 
+  selectFile(): void { this.fileInput?.nativeElement.click(); }
+  selectFolder(): void { this.folderInput?.nativeElement.click(); }
+
   async onFileSelected(event: Event): Promise<void> {
     const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
+    await this.processFiles(Array.from(input.files || []));
+    input.value = '';
+  }
+
+  onDragOver(event: DragEvent): void { event.preventDefault(); }
+  async onDrop(event: DragEvent): Promise<void> {
+    event.preventDefault();
+    await this.processFiles(Array.from(event.dataTransfer?.files || []));
+  }
+
+  resetFiles(): void {
     this.onChange();
+    this.fileError = '';
     this.fingerprint = '';
     this.sizeBytes = 0;
     this.extension = '';
-    if (!file) return;
-    const extension = file.name.split('.').pop()?.toLowerCase() || '';
-    if (
-      file.size < 1 ||
-      file.size > MAX_FILE_BYTES ||
-      !ALLOWED_EXTENSIONS.has(extension)
-    ) {
-      this.error = 'Choose one non-empty supported file no larger than 10 MiB.';
-      this.toastr.warning(this.error, 'File not accepted');
-      input.value = '';
+    this.selectedFiles = [];
+  }
+
+  private async processFiles(files: File[]): Promise<void> {
+    this.resetFiles();
+    if (!files.length) return;
+    const total = files.reduce((sum, file) => sum + file.size, 0);
+    const unsupported = files.find((file) =>
+      !ALLOWED_EXTENSIONS.has(file.name.split('.').pop()?.toLowerCase() || ''));
+    if (files.length > 50 || total > MAX_FILE_BYTES || files.some((file) => file.size < 1) || unsupported) {
+      this.fileError = files.length > 50 ? 'Choose at most 50 files.' :
+        total > MAX_FILE_BYTES ? 'The selected files exceed the 10 MiB total limit.' :
+        files.some((file) => file.size < 1) ? 'Empty files cannot be registered.' :
+        `Unsupported file type: ${unsupported?.name.split('.').pop() || 'unknown'}.`;
+      this.toastr.warning(this.fileError, 'File not accepted');
       return;
     }
-    this.error = '';
     this.hashing = true;
     try {
-      const digest = await crypto.subtle.digest(
-        'SHA-256',
-        await file.arrayBuffer(),
-      );
-      if (input.files?.[0] !== file) return;
-      this.fingerprint = Array.from(new Uint8Array(digest), (byte) =>
-        byte.toString(16).padStart(2, '0'),
-      ).join('');
-      this.sizeBytes = file.size;
-      this.extension = extension;
+      const sorted = [...files].sort((a, b) =>
+        (a.webkitRelativePath || a.name).localeCompare(b.webkitRelativePath || b.name, 'en'));
+      const entries = [] as (DemoFileEntry & { name: string })[];
+      for (const file of sorted) entries.push({
+        name: file.webkitRelativePath || file.name,
+        hash: await this.sha256(await file.arrayBuffer()),
+        sizeBytes: file.size,
+        extension: file.name.split('.').pop()!.toLowerCase(),
+      });
+      this.selectedFiles = entries;
+      this.sizeBytes = total;
+      this.extension = entries.length > 1 ? 'bundle' : entries[0].extension;
+      this.fingerprint = entries.length === 1 ? entries[0].hash :
+        await this.sha256(new TextEncoder().encode(entries.map((file, index) =>
+          `${index + 1}\t${file.extension}\t${file.hash}\t${file.sizeBytes}`,
+        ).join('\n')));
     } catch {
-      this.error = 'This browser could not compute the file fingerprint.';
-      this.toastr.error(this.error, 'File processing failed');
+      this.fileError = 'This browser could not compute the file fingerprint.';
+      this.toastr.error(this.fileError, 'File processing failed');
     } finally {
       this.hashing = false;
     }
+  }
+
+  private async sha256(bytes: BufferSource): Promise<string> {
+    const digest = await crypto.subtle.digest('SHA-256', bytes);
+    return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('');
+  }
+
+  private fileEntries(): DemoFileEntry[] | undefined {
+    return this.selectedFiles.length > 1
+      ? this.selectedFiles.map(({ hash, sizeBytes, extension }) => ({ hash, sizeBytes, extension }))
+      : undefined;
   }
 
   submit(): void {
@@ -259,6 +313,7 @@ export class GuestArtifactFormComponent implements OnInit {
           fingerprint: this.fingerprint,
           sizeBytes: this.sizeBytes,
           extension: this.extension,
+          ...(this.fileEntries() ? { files: this.fileEntries() } : {}),
           ...metadata,
         })
         .subscribe({
@@ -349,6 +404,7 @@ export class GuestArtifactFormComponent implements OnInit {
       changes.fingerprint = this.fingerprint;
       changes.sizeBytes = this.sizeBytes;
       changes.extension = this.extension;
+      if (this.fileEntries()) changes.files = this.fileEntries();
     }
     return changes;
   }

@@ -14,6 +14,7 @@
             id="title"
             type="text"
             formControlName="title"
+            maxlength="200"
             class="form-control"
             [ngClass]="{'is-invalid': workflowForm.get('title')?.invalid && workflowForm.get('title')?.touched}"
           >
@@ -29,6 +30,7 @@
           <textarea
             id="description"
             formControlName="description"
+            maxlength="3000"
             class="form-control"
             rows="5"
             [ngClass]="{'is-invalid': workflowForm.get('description')?.invalid && workflowForm.get('description')?.touched}"
@@ -46,6 +48,7 @@
             id="keywords"
             type="text"
             formControlName="keywords"
+            maxlength="1000"
             class="form-control"
             placeholder="Enter keywords, separated by commas"
           >
@@ -56,6 +59,7 @@
           <textarea
             id="submission_comment"
             formControlName="submission_comment"
+            maxlength="1000"
             class="form-control"
             rows="3"
             [ngClass]="{'is-invalid': workflowForm.get('submission_comment')?.invalid && workflowForm.get('submission_comment')?.touched}"
@@ -78,6 +82,7 @@
             class="form-control"
             [ngClass]="{'is-invalid': artifactError}"
             placeholder="Search artifacts by title or click to browse..."
+            maxlength="200"
             [value]="artifactSearchQuery"
             (input)="onArtifactSearch($any($event.target).value)"
             (focus)="onArtifactSearchFocus()"
@@ -119,6 +124,7 @@
                 </div>
                 <input
                   formControlName="url"
+                  maxlength="400"
                   class="form-control mb-1"
                   placeholder="GitHub URL (e.g., https://github.com/org/repo)"
                   [ngClass]="{'is-invalid': repo.get('url')?.invalid && repo.get('url')?.touched}"
@@ -136,8 +142,8 @@
                   <small class="text-warning">{{ getRepoFetchState(ri).error }} — you can fill the fields manually.</small>
                 </div>
 
-                <input formControlName="description" class="form-control mb-2" placeholder="Repository description">
-                <input formControlName="gitHash" class="form-control mb-2" placeholder="Latest commit hash">
+                <input formControlName="description" class="form-control mb-2" maxlength="500" placeholder="Repository description">
+                <input formControlName="gitHash" class="form-control mb-2" maxlength="40" placeholder="Latest commit hash">
 
                 <div class="contents-section">
                   <div class="d-flex justify-content-between align-items-center">
@@ -151,8 +157,8 @@
                       <ng-container *ngFor="let content of getContents(ri).controls; let ci = index">
                         <div class="d-flex gap-2 mb-2">
                           <div [formGroupName]="ci" class="d-flex gap-2 flex-grow-1">
-                            <input formControlName="filename" class="form-control form-control-sm" placeholder="Filename">
-                            <input formControlName="hash" class="form-control form-control-sm" placeholder="File hash (optional for folders)">
+                            <input formControlName="filename" class="form-control form-control-sm" maxlength="160" placeholder="Filename">
+                            <input formControlName="hash" class="form-control form-control-sm" maxlength="128" placeholder="File hash (optional for folders)">
                           </div>
                           <button type="button" class="btn btn-sm btn-outline-secondary" (click)="removeContent(ri, ci)">&times;</button>
                         </div>

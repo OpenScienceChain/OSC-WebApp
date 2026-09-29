@@ -4,34 +4,40 @@ import { ActivatedRoute, RouterModule } from '@angular/router';
 import { Observable } from 'rxjs';
 import { DemoHistoryItem } from './demo.models';
 import { DemoService } from './demo.service';
+import { printFileHashes } from '../shared/print-file-hashes';
 
 @Component({
   standalone: true,
   imports: [CommonModule, RouterModule],
   template: `
     <main id="main-content" class="container py-4">
-      <h1 class="page-headline mb-3">
-        {{ type === 'artifact' ? 'Artifact' : 'Workflow' }}
-        {{ selectedTxId ? 'snapshot' : 'history' }}
+      <h1 class="page-headline mb-3" *ngIf="!selectedTxId">
+        {{ type === 'artifact' ? "Dive into your Artifact's Full History" : "Dive into your Workflow's Full History" }}
+        <i class="bi bi-journal-text" aria-hidden="true"></i>
       </h1>
-      <div class="mb-3 content-block">
-        <p *ngIf="recordTitle"><strong>Title:</strong> {{ recordTitle }}</p>
-        <p><strong>ID:</strong> {{ id }}</p>
+      <div class="mb-3 content-block" *ngIf="!selectedTxId">
+        <p *ngIf="recordTitle" class="mb-1">
+          <strong>Title:</strong> {{ recordTitle }}
+        </p>
+        <p *ngIf="recordDescription" class="mb-1">
+          <strong>Description:</strong> {{ recordDescription }}
+        </p>
+        <p class="mb-1"><strong>ID:</strong> {{ id }}</p>
         <div class="mt-2 d-flex gap-2 flex-wrap">
-          <a
-            *ngIf="selectedTxId"
-            class="btn btn-outline-primary"
-            [routerLink]="['/', plural, id, 'history']"
-            >All history</a
-          >
           <button
             class="btn btn-outline-primary"
             type="button"
             (click)="load()"
           >
-            Refresh history</button
+            Refresh History</button
+          ><a
+            *ngIf="canEdit && !selectedTxId && type === 'artifact'"
+            class="btn btn-primary"
+            [routerLink]="['/update-artifact', id]"
+            >Update this Artifact</a
           ><a class="btn btn-outline-primary" [routerLink]="['/', plural, id]"
-            >See record detail</a
+            >See
+            {{ type === 'artifact' ? "Artifact's" : "Workflow's" }} Detail</a
           >
         </div>
       </div>
@@ -45,7 +51,54 @@ import { DemoService } from './demo.service';
       >
         No public history found.
       </div>
-      <div class="history-list" *ngIf="!isLoading && visibleItems.length">
+      <ng-container *ngIf="selectedItem as item">
+        <section class="snapshot-detail" *ngIf="!isLoading">
+          <div class="snapshot-intro content-block">
+            <p><strong>Artifact ID:</strong> {{ id }}</p>
+            <p><strong>Tx ID:</strong> <code class="text-break">{{ item.txId || item.transactionId }}</code> <span class="badge" [ngClass]="badgeClass(item)">{{ badgeLabel(item) }}</span></p>
+            <p><strong>Timestamp:</strong> {{ item.timestamp | date: 'medium' }}</p>
+            <div class="snapshot-actions">
+              <a class="btn btn-outline-primary" [routerLink]="['/', plural, id, 'history']">Go back to History</a>
+              <a *ngIf="canEdit" class="btn btn-primary" [routerLink]="['/update-artifact', id]">Update this Artifact</a>
+              <button *ngIf="!canEdit && type === 'artifact'" type="button" class="btn btn-primary" disabled title="Only the contributing session can update this artifact">Update this Artifact</button>
+              <a class="btn btn-outline-primary" [routerLink]="['/', plural, id]">See Artifact's Detail</a>
+            </div>
+          </div>
+          <div class="snapshot-record">
+            <h1>{{ item.snapshot?.title || recordTitle }}</h1>
+            <div class="snapshot-layout">
+              <section>
+                <h2>Description</h2>
+                <p class="pre-wrap">{{ item.snapshot?.description || recordDescription }}</p>
+              </section>
+              <aside>
+                <h2>Details</h2>
+                <table class="table table-borderless snapshot-table"><tbody>
+                  <tr><th scope="row">ID</th><td>{{ id }}</td></tr>
+                  <tr><th scope="row">Timestamp</th><td>{{ item.timestamp | date: 'medium' }}</td></tr>
+                  <tr *ngIf="item.revision"><th scope="row">Revision</th><td>{{ item.revision }}</td></tr>
+                  <tr *ngIf="recordContributor"><th scope="row">Contributor</th><td>{{ recordContributor }}</td></tr>
+                  <tr *ngIf="item.snapshot?.keywords?.length"><th scope="row">Keywords</th><td><span class="snapshot-keyword" *ngFor="let keyword of item.snapshot?.keywords">{{ keyword }}</span></td></tr>
+                  <tr *ngIf="item.snapshot?.fundingAgencies?.length"><th scope="row">Funding Agencies</th><td>{{ item.snapshot?.fundingAgencies?.join(', ') }}</td></tr>
+                  <tr *ngIf="item.snapshot?.dois?.length"><th scope="row">DOIs</th><td>{{ item.snapshot?.dois?.join(', ') }}</td></tr>
+                  <tr *ngIf="item.snapshot?.submissionComment"><th scope="row">Comment</th><td class="pre-wrap">{{ item.snapshot?.submissionComment }}</td></tr>
+                  <tr><th scope="row">State</th><td><span class="badge" [ngClass]="submissionClass(item)">{{ item.snapshot?.submissionState || 'SUCCESS' }}</span></td></tr>
+                </tbody></table>
+              </aside>
+            </div>
+            <section class="snapshot-manifest" *ngIf="type === 'artifact'">
+              <div class="manifest-heading"><h2>Manifest</h2><button *ngIf="item.snapshot?.manifest?.length" type="button" class="btn btn-outline-primary" (click)="printManifest()">Print file hashes</button></div>
+              <ng-container *ngIf="item.snapshot?.manifest?.length; else manifestRestricted">
+                <p>{{ item.snapshot?.manifest?.length }} {{ item.snapshot?.manifest?.length === 1 ? 'file' : 'files' }} total. Generated names protect the original local paths.</p>
+                <div class="table-responsive"><table class="table"><thead><tr><th>Filename</th><th>Hash</th><th>Alg.</th></tr></thead><tbody><tr *ngFor="let file of item.snapshot?.manifest"><td>{{ file.filename }}</td><td><code class="text-break">{{ file.hash }}</code></td><td>{{ file.algorithm }}</td></tr></tbody></table></div>
+                <p><strong>Footprint (SHA-256)</strong> <code class="text-break">{{ item.snapshot?.footprint }}</code></p>
+              </ng-container>
+              <ng-template #manifestRestricted><p>No public manifest was recorded in this snapshot.</p></ng-template>
+            </section>
+          </div>
+        </section>
+      </ng-container>
+      <div class="history-list" *ngIf="!isLoading && !selectedTxId && visibleItems.length">
         <div
           class="history-toolbar d-flex justify-content-between align-items-center mb-2"
         >
@@ -53,7 +106,7 @@ import { DemoService } from './demo.service';
             {{
               selectedTxId
                 ? 'Selected ledger event'
-                : total + ' public ledger events'
+                : 'Showing ' + items.length + ' public ledger events'
             }}
           </div>
         </div>
@@ -67,7 +120,7 @@ import { DemoService } from './demo.service';
             <div>
               <strong>{{ item.timestamp | date: 'medium' }}</strong>
             </div>
-            <div>
+            <div class="history-card-actions">
               <span class="badge" [ngClass]="badgeClass(item)">{{
                 badgeLabel(item)
               }}</span>
@@ -77,7 +130,7 @@ import { DemoService } from './demo.service';
                   !selectedTxId &&
                   (item.txId || item.transactionId)
                 "
-                class="snapshot-link"
+                class="permalink"
                 [routerLink]="[
                   '/',
                   plural,
@@ -88,8 +141,9 @@ import { DemoService } from './demo.service';
                 [attr.aria-label]="
                   'View snapshot for revision ' + (item.revision || 'unknown')
                 "
-                >View snapshot</a
-              >
+                title="Open snapshot detail"
+                ><i class="bi bi-link-45deg" aria-hidden="true"></i
+              ></a>
             </div>
           </div>
           <div class="card-body">
@@ -164,6 +218,9 @@ export class GuestHistoryComponent implements OnInit {
   id = '';
   selectedTxId = '';
   recordTitle = '';
+  recordDescription = '';
+  recordContributor = '';
+  canEdit = false;
   items: DemoHistoryItem[] = [];
   total = 0;
   isLoading = true;
@@ -177,11 +234,26 @@ export class GuestHistoryComponent implements OnInit {
     this.id = this.route.snapshot.paramMap.get('id') || '';
     this.selectedTxId = this.route.snapshot.paramMap.get('txId') || '';
     this.load();
-    const detail: Observable<{ title: string }> =
+    const detail: Observable<{ title: string; description: string; contributorAlias?: string }> =
       this.type === 'artifact'
         ? this.demo.getPublicArtifact(this.id)
         : this.demo.getPublicWorkflow(this.id);
-    detail.subscribe({ next: (record) => (this.recordTitle = record.title) });
+    detail.subscribe({
+      next: (record) => {
+        this.recordTitle = record.title;
+        this.recordDescription = record.description;
+        this.recordContributor = record.contributorAlias || '';
+      },
+    });
+    if (this.type === 'artifact' && this.demo.session) {
+      this.demo.getMyArtifacts().subscribe({
+        next: (items) => {
+          this.canEdit = items.some(
+            (item) => item.id === this.id && item.submissionState === 'SUCCESS',
+          );
+        },
+      });
+    }
   }
   get plural(): string {
     return `${this.type}s`;
@@ -192,6 +264,9 @@ export class GuestHistoryComponent implements OnInit {
           (item) => (item.txId || item.transactionId) === this.selectedTxId,
         )
       : this.items;
+  }
+  get selectedItem(): DemoHistoryItem | undefined {
+    return this.selectedTxId ? this.visibleItems[0] : undefined;
   }
   load(): void {
     this.isLoading = true;
@@ -231,4 +306,10 @@ export class GuestHistoryComponent implements OnInit {
     if (item.revision === 1) return 'tag-initial';
     return 'tag-update';
   }
+  submissionClass(item: DemoHistoryItem): string {
+    if (item.snapshot?.submissionState === 'FAILED') return 'bg-danger';
+    if (item.snapshot?.submissionState === 'PENDING') return 'bg-warning text-dark';
+    return 'bg-success';
+  }
+  printManifest(): void { printFileHashes(this.selectedItem?.snapshot?.manifest ?? []); }
 }

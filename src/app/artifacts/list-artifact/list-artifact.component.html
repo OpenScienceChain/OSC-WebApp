@@ -1,9 +1,7 @@
 <main class="catalog-page" aria-labelledby="artifacts-heading">
   <header class="page-header">
     <div>
-      <p class="eyebrow">Research catalog</p>
-      <h1 id="artifacts-heading">Artifacts</h1>
-      <p>Discover datasets, software, publications, and their provenance.</p>
+      <h1 id="artifacts-heading">Artifacts Vault</h1>
     </div>
   </header>
 
@@ -55,7 +53,7 @@
 
   <section class="results" aria-labelledby="artifact-results-heading">
     <div class="results-heading">
-      <h2 id="artifact-results-heading">Catalog results</h2>
+      <h2 id="artifact-results-heading">Discover, Search &amp; Explore Artifacts</h2>
       <p *ngIf="!isLoading && !errorMessage" role="status" aria-live="polite">
         {{ filteredArtifacts.length }}
         {{ filteredArtifacts.length === 1 ? 'artifact' : 'artifacts' }} found

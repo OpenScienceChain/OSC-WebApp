@@ -10,19 +10,19 @@
       <div class="left-column">
         <div class="form-group">
           <label for="title" class="field-label">Title</label>
-          <input id="title" type="text" formControlName="title" class="form-control" readonly>
+          <input id="title" type="text" formControlName="title" class="form-control" maxlength="200" readonly>
           <small class="text-muted">Title cannot be changed after creation.</small>
         </div>
 
         <div class="form-group">
           <label for="description" class="field-label">Description</label>
-          <textarea id="description" formControlName="description" class="form-control" rows="5" readonly></textarea>
+          <textarea id="description" formControlName="description" class="form-control" rows="5" maxlength="3000" readonly></textarea>
           <small class="text-muted">Description cannot be changed after creation.</small>
         </div>
 
         <div class="form-group">
           <label for="keywords" class="field-label">Keywords</label>
-          <input id="keywords" type="text" formControlName="keywords" class="form-control" placeholder="Enter keywords, separated by commas">
+          <input id="keywords" type="text" formControlName="keywords" class="form-control" maxlength="1000" placeholder="Enter keywords, separated by commas">
         </div>
 
         <div class="form-group">
@@ -30,6 +30,7 @@
           <textarea
             id="submission_comment"
             formControlName="submission_comment"
+            maxlength="1000"
             class="form-control"
             rows="3"
             [ngClass]="{'is-invalid': workflowForm.get('submission_comment')?.invalid && workflowForm.get('submission_comment')?.touched}"
@@ -51,6 +52,7 @@
             type="text"
             class="form-control"
             placeholder="Search artifacts by title or click to browse..."
+            maxlength="200"
             [value]="artifactSearchQuery"
             (input)="onArtifactSearch($any($event.target).value)"
             (focus)="onArtifactSearchFocus()"
@@ -89,6 +91,7 @@
                 </div>
                 <input
                   formControlName="url"
+                  maxlength="400"
                   class="form-control mb-1"
                   placeholder="GitHub URL (e.g., https://github.com/org/repo)"
                   [ngClass]="{'is-invalid': repo.get('url')?.invalid && repo.get('url')?.touched}"
@@ -106,8 +109,8 @@
                   <small class="text-warning">{{ getRepoFetchState(ri).error }} — you can fill the fields manually.</small>
                 </div>
 
-                <input formControlName="description" class="form-control mb-2" placeholder="Repository description">
-                <input formControlName="gitHash" class="form-control mb-2" placeholder="Latest commit hash">
+                <input formControlName="description" class="form-control mb-2" maxlength="500" placeholder="Repository description">
+                <input formControlName="gitHash" class="form-control mb-2" maxlength="40" placeholder="Latest commit hash">
 
                 <div class="contents-section">
                   <div class="d-flex justify-content-between align-items-center">
@@ -121,8 +124,8 @@
                       <ng-container *ngFor="let content of getContents(ri).controls; let ci = index">
                         <div class="d-flex gap-2 mb-2">
                           <div [formGroupName]="ci" class="d-flex gap-2 flex-grow-1">
-                            <input formControlName="filename" class="form-control form-control-sm" placeholder="Filename">
-                            <input formControlName="hash" class="form-control form-control-sm" placeholder="File hash (optional for folders)">
+                            <input formControlName="filename" class="form-control form-control-sm" maxlength="160" placeholder="Filename">
+                            <input formControlName="hash" class="form-control form-control-sm" maxlength="128" placeholder="File hash (optional for folders)">
                           </div>
                           <button type="button" class="btn btn-sm btn-outline-secondary" (click)="removeContent(ri, ci)">&times;</button>
                         </div>

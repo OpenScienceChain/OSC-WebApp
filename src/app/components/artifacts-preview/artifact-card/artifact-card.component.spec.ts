@@ -55,7 +55,8 @@ describe('ArtifactCardComponent', () => {
     const link = fixture.debugElement.query(
       By.css('.card-actions a'),
     ).nativeElement;
-    expect(link.textContent).toContain('View artifact');
+    expect(link.childNodes[0].textContent.trim()).toBe('View');
+    expect(link.textContent).toContain(testArtifact.title);
     expect(link.getAttribute('href')).toBe('/artifacts/1');
   });
 });

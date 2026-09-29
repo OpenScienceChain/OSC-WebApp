@@ -110,6 +110,26 @@
   gap: 10px;
 }
 
+.portal-header .navigation-actions {
+  gap: 16px;
+}
+
+.portal-header .contribute-button,
+.portal-header .sign-in-button {
+  border-color: transparent;
+  background: transparent;
+  color: #ffffff;
+  font-size: 17px;
+}
+
+.portal-header .contribute-button:hover,
+.portal-header .sign-in-button:hover,
+.portal-header .sign-in-button.active {
+  background: #315270;
+  border-color: transparent;
+  color: #ffffff;
+}
+
 .nav-action,
 .sign-in-button {
   padding: 9px 14px;
@@ -126,8 +146,15 @@
 }
 
 .contribute-button {
-  background: #168071;
-  border-color: #168071;
+  background: transparent;
+  border-color: transparent;
+}
+
+.contribute-button:hover,
+.contribute-button:focus-visible {
+  background: #315270;
+  border-color: transparent;
+  color: #ffffff;
 }
 
 .contribute-button i {

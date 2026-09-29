@@ -12,4 +12,5 @@ import { WorkflowListItem } from '../../../models/workflow.model';
 })
 export class WorkflowCardComponent {
   @Input() workflow!: WorkflowListItem;
+  @Input() showManage = false;
 }

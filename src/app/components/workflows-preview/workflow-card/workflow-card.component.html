@@ -22,6 +22,14 @@
         View workflow
         <span class="visually-hidden">{{ workflow.title }}</span>
       </a>
+      <a
+        *ngIf="showManage"
+        class="manage-action"
+        [routerLink]="['/update-workflow', workflow.id]"
+      >
+        Manage Workflow
+        <span class="visually-hidden">{{ workflow.title }}</span>
+      </a>
     </div>
   </div>
 </article>

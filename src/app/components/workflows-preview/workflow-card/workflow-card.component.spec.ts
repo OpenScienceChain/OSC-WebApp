@@ -60,6 +60,14 @@ describe('WorkflowCardComponent', () => {
     expect(viewButton.attributes['href']).toBe('/workflows/1');
   });
 
+  it('shows a management link only when requested by the list', () => {
+    expect(fixture.debugElement.query(By.css('.manage-action'))).toBeNull();
+    component.showManage = true;
+    fixture.detectChanges();
+    const manageLink = fixture.debugElement.query(By.css('.manage-action'));
+    expect(manageLink.attributes['href']).toBe('/update-workflow/1');
+  });
+
   it('should use semantic card structure', () => {
     const cardElement = fixture.debugElement.query(
       By.css('article.catalog-card'),

@@ -14,6 +14,17 @@
   border-radius: 6px;
   background: #ffffff;
   box-shadow: 0 4px 14px rgba(22, 58, 89, 0.08);
+  transition: transform 300ms ease, box-shadow 300ms ease;
+}
+
+.catalog-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15), 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .catalog-card { transition: none; }
+  .catalog-card:hover { transform: none; }
 }
 
 .catalog-card header {
@@ -83,6 +94,9 @@ dd {
 }
 
 .card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
   margin-top: auto;
   padding-top: 15px;
   border-top: 1px solid #e0e8ec;
@@ -105,4 +119,13 @@ dd {
 
 .card-actions a:hover {
   background: var(--osc-navy-deep);
+}
+
+.card-actions .manage-action {
+  background: #ffffff;
+  color: var(--osc-navy);
+}
+
+.card-actions .manage-action:hover {
+  background: var(--osc-surface);
 }

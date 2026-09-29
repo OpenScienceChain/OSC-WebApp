@@ -10,11 +10,12 @@ import { Artifact } from '../../models/artifact.model';
 import { Workflow, UpdateWorkflowDTO, GitHubRepository } from '../../models/workflow.model';
 import { switchMap } from 'rxjs/operators';
 import { of } from 'rxjs';
+import { ClampInputLengthDirective } from '../../shared/clamp-input-length.directive';
 
 @Component({
   selector: 'app-update-workflow',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule, ClampInputLengthDirective],
   templateUrl: './update-workflow.component.html',
   styleUrls: ['./update-workflow.component.css']
 })

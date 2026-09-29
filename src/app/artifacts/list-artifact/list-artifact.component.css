@@ -7,12 +7,12 @@
   width: min(1220px, calc(100% - 40px));
   min-height: calc(100vh - 72px);
   margin: 0 auto;
-  padding: 56px 0 70px;
+  padding: 38px 0 70px;
 }
 
 .page-header {
-  padding-bottom: 28px;
-  border-bottom: 1px solid var(--osc-line);
+  padding-bottom: 12px;
+  border-bottom: 1px solid #9ba4b5;
 }
 
 .eyebrow {
@@ -26,7 +26,7 @@
 .page-header h1 {
   margin: 0;
   color: var(--osc-navy);
-  font-size: 44px;
+  font-size: clamp(2rem, 3vw, 3.375rem);
   font-weight: 750;
 }
 
@@ -109,7 +109,7 @@ label {
 .results-heading h2 {
   margin: 0;
   color: var(--osc-navy);
-  font-size: 26px;
+  font-size: 24px;
 }
 
 .results-heading p {

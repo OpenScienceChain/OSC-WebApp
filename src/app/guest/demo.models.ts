@@ -35,6 +35,7 @@ export interface DemoArtifactRequest {
   fingerprint: string;
   sizeBytes: number;
   extension: string;
+  files?: DemoFileEntry[];
   researchContext: DemoResearchContext;
   title: string;
   description: string;
@@ -57,6 +58,19 @@ export interface DemoArtifactEditRequest {
   fingerprint?: string;
   sizeBytes?: number;
   extension?: string;
+  files?: DemoFileEntry[];
+}
+
+export interface DemoFileEntry {
+  hash: string;
+  sizeBytes: number;
+  extension: string;
+}
+
+export interface DemoManifestEntry {
+  filename: string;
+  hash: string;
+  algorithm: 'sha256';
 }
 
 export interface DemoArtifactMetadata {
@@ -75,11 +89,13 @@ export interface DemoArtifact extends DemoArtifactMetadata {
   contributorAlias: string;
   fingerprint: string;
   manifestName: string;
+  manifest?: DemoManifestEntry[];
   verified: boolean;
   submissionState: string;
   blockchainTxId?: string | null;
   submissionError?: string | null;
   submittedAt: string;
+  lastUpdatedAt?: string;
 }
 
 export interface DemoWorkflowRequest {
@@ -121,7 +137,10 @@ export interface DemoCatalogArtifact extends DemoArtifactMetadata {
   verified: boolean;
   submissionState: string;
   submittedAt: string;
+  lastUpdatedAt?: string;
   blockchainTxId?: string | null;
+  manifest?: DemoManifestEntry[];
+  footprint?: string;
 }
 
 export interface DemoCatalogWorkflow {
@@ -148,8 +167,11 @@ export interface DemoHistoryItem {
   isDelete?: boolean;
   revision?: number;
   snapshot?: DemoArtifactMetadata & {
+    submissionState?: 'PENDING' | 'FAILED' | 'SUCCESS';
     title?: string;
     description?: string;
+    manifest?: DemoManifestEntry[];
+    footprint?: string;
   };
   value?: Record<string, unknown>;
 }

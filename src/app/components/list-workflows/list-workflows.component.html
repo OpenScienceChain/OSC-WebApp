@@ -1,13 +1,11 @@
 <main class="catalog-page" aria-labelledby="workflows-heading">
   <header class="page-header">
-    <p class="eyebrow">Reproducible processes</p>
     <h1 id="workflows-heading">Workflows</h1>
-    <p>Explore documented processes and the research artifacts they connect.</p>
   </header>
 
   <section class="results" aria-labelledby="workflow-results-heading">
     <div class="results-heading">
-      <h2 id="workflow-results-heading">Workflow catalog</h2>
+      <h2 id="workflow-results-heading">Discover &amp; Explore Workflows</h2>
       <p *ngIf="!isLoading && !errorMessage" role="status" aria-live="polite">
         {{ workflows.length }}
         {{ workflows.length === 1 ? 'workflow' : 'workflows' }} available
@@ -36,8 +34,9 @@
       *ngIf="!isLoading && !errorMessage && workflows.length > 0"
     >
       <app-workflow-card
-        *ngFor="let workflow of workflows"
+        *ngFor="let workflow of paginatedWorkflows"
         [workflow]="workflow"
+        [showManage]="true"
       ></app-workflow-card>
     </div>
 
@@ -53,4 +52,45 @@
       </div>
     </div>
   </section>
+
+  <nav
+    class="pagination-container"
+    *ngIf="!isLoading && !errorMessage && totalPages > 1"
+    aria-label="Workflow result pages"
+  >
+    <button
+      type="button"
+      (click)="onPageChange(currentPage - 1)"
+      [disabled]="currentPage === 1"
+      class="page-arrow"
+      aria-label="Previous page"
+    >
+      <i class="bi bi-chevron-left" aria-hidden="true"></i>
+    </button>
+    <ng-container *ngFor="let page of getPages()">
+      <button
+        *ngIf="page !== '...'; else ellipsis"
+        type="button"
+        (click)="onPageChange(page)"
+        class="page-number"
+        [class.active]="currentPage === page"
+        [attr.aria-current]="currentPage === page ? 'page' : null"
+        [attr.aria-label]="'Page ' + page"
+      >
+        {{ page }}
+      </button>
+      <ng-template #ellipsis>
+        <span class="page-ellipsis" aria-hidden="true">...</span>
+      </ng-template>
+    </ng-container>
+    <button
+      type="button"
+      (click)="onPageChange(currentPage + 1)"
+      [disabled]="currentPage === totalPages"
+      class="page-arrow"
+      aria-label="Next page"
+    >
+      <i class="bi bi-chevron-right" aria-hidden="true"></i>
+    </button>
+  </nav>
 </main>

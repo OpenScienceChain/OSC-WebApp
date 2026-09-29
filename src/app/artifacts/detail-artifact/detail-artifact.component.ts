@@ -3,6 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ArtifactDetail } from '../../models/artifact-detail.model';
 import { ArtifactService } from '../services/artifact.service';
+import { printFileHashes } from '../../shared/print-file-hashes';
 
 @Component({
   selector: 'app-detail-artifact',
@@ -74,43 +75,7 @@ export class DetailArtifactComponent implements OnInit {
   }
 
   printManifest(): void {
-    if (!this.artifact?.manifest?.length) return;
-
-    const manifestText = this.artifact.manifest
-      .map((item) => `${item.filename}\t${item.hash}\t${item.algorithm}`)
-      .join('\n');
-
-    const win = window.open('', '_blank');
-    if (!win) {
-      alert('Please allow pop-ups to print the manifest.');
-      return;
-    }
-
-    const doc: any = win.document;
-    doc.title = 'Artifact Manifest';
-
-    if (doc?.head && doc?.body && typeof doc.createElement === 'function') {
-      const styleElement = doc.createElement('style');
-      styleElement.textContent =
-        'body { font-family: monospace; margin: 16px; white-space: pre-wrap; }';
-      doc.head.appendChild(styleElement);
-
-      const manifest = doc.createElement('pre');
-      manifest.textContent = manifestText;
-      doc.body.innerHTML = '';
-      doc.body.appendChild(manifest);
-    } else {
-      const escaped = manifestText.replace(/&/g, '&amp;').replace(/</g, '&lt;');
-      const html = `<!doctype html><html><head><title>Artifact Manifest</title><style>body { font-family: monospace; white-space: pre; margin: 16px; }</style></head><body>${escaped}</body></html>`;
-      if (typeof doc.open === 'function') doc.open();
-      if (typeof doc.write === 'function') doc.write(html);
-      if (typeof doc.close === 'function') doc.close();
-    }
-
-    setTimeout(() => {
-      if (typeof (win as any).focus === 'function') (win as any).focus();
-      if (typeof (win as any).print === 'function') (win as any).print();
-    }, 10);
+    printFileHashes(this.artifact?.manifest ?? []);
   }
 
   onUpdateArtifact(): void {

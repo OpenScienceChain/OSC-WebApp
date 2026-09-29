@@ -101,7 +101,7 @@
         <div class="manifest-section mt-3" *ngIf="(it.value?.manifest || []).length">
           <h4 class="section-heading mb-2 d-inline-flex align-items-center">
             Manifest
-            <button class="btn btn-primary btn-sm ms-2" (click)="printManifest()">Print full Manifest</button>
+            <button class="btn btn-primary btn-sm ms-2" (click)="printManifest()">Print file hashes</button>
           </h4>
           <p class="small text-muted">{{ it.value?.manifest?.length }} files total, showing only 10</p>
           <div class="table-responsive">

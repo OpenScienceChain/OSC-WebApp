@@ -1,6 +1,9 @@
 <a class="skip-link" href="#main-content">Skip to main content</a>
 
-<header class="site-header">
+<header
+  class="site-header"
+  [class.portal-header]="router.url !== '/' && !router.url.startsWith('/#')"
+>
   <nav class="primary-navigation" aria-label="Primary navigation">
     <div class="brand-group">
       <button
@@ -159,7 +162,9 @@
   </nav>
 </header>
 
-<div *ngIf="mockPreview" class="mock-preview-banner" role="status">LOCAL MOCK PREVIEW - synthetic records; no Fabric connection</div>
+<div *ngIf="mockPreview" class="mock-preview-banner" role="status">
+  LOCAL MOCK PREVIEW - synthetic records; no Fabric connection
+</div>
 
 <div id="main-content" tabindex="-1">
   <router-outlet></router-outlet>
