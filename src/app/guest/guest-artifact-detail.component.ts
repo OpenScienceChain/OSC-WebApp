@@ -225,7 +225,7 @@ import { printFileHashes } from '../shared/print-file-hashes';
                     </tr>
                   </thead>
                   <tbody>
-                    <tr *ngFor="let file of artifact.manifest">
+                    <tr *ngFor="let file of artifact.manifest | slice: 0 : 10">
                       <td>{{ file.filename }}</td>
                       <td>
                         <code>{{ file.hash }}</code>
@@ -235,6 +235,9 @@ import { printFileHashes } from '../shared/print-file-hashes';
                   </tbody>
                 </table>
               </div>
+              <p *ngIf="(artifact.manifest?.length ?? 0) > 10">
+                and {{ (artifact.manifest?.length ?? 0) - 10 }} more files
+              </p>
               <div class="footprint" *ngIf="artifact.footprint">
                 <span>Footprint (SHA-256)</span
                 ><code>{{ artifact.footprint }}</code>
