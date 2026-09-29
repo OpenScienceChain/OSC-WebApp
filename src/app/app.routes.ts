@@ -5,6 +5,11 @@ import { guestModeMatch } from './guest/guest-mode.match';
 
 // Componente vacío para la ruta raíz
 export const routes: Routes = [
+  {
+    path: 'research-example',
+    loadComponent: () =>
+      import('./showcase/showcase.component').then((m) => m.ShowcaseComponent),
+  },
   { path: 'demo', pathMatch: 'full', redirectTo: 'list-artifacts' },
   { path: 'demo/contribute', redirectTo: 'contribute' },
   { path: 'demo/workflows/new', redirectTo: 'create-workflow' },

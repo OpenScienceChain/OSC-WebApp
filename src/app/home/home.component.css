@@ -558,11 +558,50 @@ h1 span + span {
   padding-bottom: 42px;
 }
 
+.research-example-link {
+  padding: 52px 0;
+  border-bottom: 1px solid var(--osc-line);
+  background: #f4f8f8;
+}
+
+.research-example-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 50px;
+  align-items: start;
+}
+
+.research-example-layout h2 {
+  margin: 0;
+  color: var(--osc-navy);
+  font-size: 30px;
+}
+
+.research-example-layout p:not(.eyebrow) {
+  max-width: 510px;
+  margin: 0 0 18px;
+  color: var(--osc-muted);
+  line-height: 1.6;
+}
+
+.research-example-layout a {
+  display: inline-flex;
+  gap: 9px;
+  align-items: center;
+  color: var(--osc-teal-dark);
+  font-weight: 750;
+  text-underline-offset: 4px;
+}
+
 .catalog-heading {
   margin-bottom: 40px;
 }
 
 @media (max-width: 900px) {
+  .research-example-layout {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
   .hero {
     background-position: 62% center;
   }
