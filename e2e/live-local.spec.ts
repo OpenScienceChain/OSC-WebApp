@@ -304,3 +304,55 @@ test('local account ownership and confirmed artifact/workflow revisions', async 
     page.getByRole('link', { name: /Manage Workflow/i }),
   ).toBeVisible();
 });
+
+test('500 file hashes totaling 50 MiB confirm on the local ledger', async ({
+  page,
+}) => {
+  test.setTimeout(180_000);
+  await page.goto('/');
+  const suffix = randomUUID().replaceAll('-', '').slice(0, 9);
+  await register(page, `bundle${suffix}`, '482716');
+  const files = Array.from({ length: 500 }, (_, index) => ({
+    hash: createHash('sha256')
+      .update(`bundle-${suffix}-${index}`)
+      .digest('hex'),
+    sizeBytes: index < 400 ? 104858 : 104856,
+    extension: 'txt',
+  }));
+  const fingerprint = createHash('sha256')
+    .update(
+      files
+        .map(
+          (file, index) =>
+            `${index + 1}\t${file.extension}\t${file.hash}\t${file.sizeBytes}`,
+        )
+        .join('\n'),
+    )
+    .digest('hex');
+  const result = await api<{ id: string }>(page, 'POST', '/artifacts', {
+    requestId: randomUUID(),
+    fingerprint,
+    sizeBytes: 50 * 1024 * 1024,
+    extension: 'bundle',
+    files,
+    researchContext: 'RESEARCH_DATASET',
+    title: `Local boundary manifest ${suffix}`,
+    description:
+      'A synthetic local-only manifest that verifies the maximum file count and aggregate size against the real ledger.',
+    submissionComment:
+      'Initial bounded manifest contribution for local ledger testing.',
+  });
+  expect(result.status).toBe(201);
+  await expect
+    .poll(
+      async () => {
+        const detail = await api<{
+          submissionState: string;
+          manifest?: unknown[];
+        }>(page, 'GET', `/public/artifacts/${result.body.id}`);
+        return `${detail.body.submissionState}:${detail.body.manifest?.length || 0}`;
+      },
+      { timeout: 120_000, intervals: [1000, 2000, 3000] },
+    )
+    .toBe('SUCCESS:500');
+});

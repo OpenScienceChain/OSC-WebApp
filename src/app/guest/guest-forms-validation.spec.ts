@@ -93,16 +93,62 @@ describe('Guest portal form boundaries', () => {
       { warning: jasmine.createSpy('warning') } as any,
     );
     const files = Array.from(
-      { length: 51 },
+      { length: 501 },
       (_, index) =>
         new File(['x'], `record-${index}.txt`, { type: 'text/plain' }),
     );
     await form.onDrop({ preventDefault() {}, dataTransfer: { files } } as any);
-    expect(form.fileError).toBe('Choose at most 50 files.');
+    expect(form.fileError).toBe('Choose at most 500 files.');
     expect(form.error).toBe('');
     expect(form.selectedFiles).toEqual([]);
     form.resetFiles();
     expect(form.fileError).toBe('');
+  });
+
+  it('accepts 500 file fingerprints and rejects selections over 50 MiB', async () => {
+    const form = new GuestArtifactFormComponent(
+      { snapshot: { paramMap: { get: () => null } } } as any,
+      {} as any,
+      {} as any,
+      { warning: jasmine.createSpy('warning') } as any,
+    );
+    spyOn<any>(form, 'sha256').and.returnValue(Promise.resolve('a'.repeat(64)));
+    const files = Array.from(
+      { length: 500 },
+      (_, index) => new File(['x'], `record-${index}.txt`),
+    );
+    await form.onDrop({ preventDefault() {}, dataTransfer: { files } } as any);
+    expect(form.fileError).toBe('');
+    expect(form.selectedFiles.length).toBe(500);
+    expect(form.sizeBytes).toBe(500);
+
+    const oversized = new File(['x'], 'oversized.txt');
+    Object.defineProperty(oversized, 'size', { value: 50 * 1024 * 1024 + 1 });
+    await form.onDrop({
+      preventDefault() {},
+      dataTransfer: { files: [oversized] },
+    } as any);
+    expect(form.fileError).toBe(
+      'The selected files exceed the 50 MiB total limit.',
+    );
+  });
+
+  it('does not replace a retained manifest when files are dropped', async () => {
+    const form = new GuestArtifactFormComponent(
+      { snapshot: { paramMap: { get: () => 'artifact-id' } } } as any,
+      {} as any,
+      {} as any,
+      {} as any,
+    );
+    form.keepManifestUnchanged = true;
+    const preventDefault = jasmine.createSpy('preventDefault');
+    await form.onDrop({
+      preventDefault,
+      dataTransfer: { files: [new File(['x'], 'record.txt')] },
+    } as any);
+    expect(preventDefault).toHaveBeenCalled();
+    expect(form.selectedFiles).toEqual([]);
+    expect(form.fingerprint).toBe('');
   });
 
   it('lists only confirmed artifacts from the selected organization', () => {

@@ -48,10 +48,6 @@
   >
     <span>Organization</span><strong>{{ organizationName }}</strong>
   </div>
-  <p *ngIf="isEdit && baseline" class="form-note">
-    Title and description stay fixed. Metadata and the file fingerprint can be
-    revised after ledger confirmation.
-  </p>
   <p *ngIf="error && !accessDenied" class="form-note text-danger" role="alert">
     {{ error }}
   </p>
@@ -421,39 +417,18 @@
       <h2 id="file-heading" class="section-title">
         {{ isEdit ? 'Files for this revision' : 'Select folders or files' }}
       </h2>
-      <div *ngIf="isEdit" class="form-check form-switch manifest-choice">
-        <input
-          id="keep-manifest"
-          name="keepManifestUnchanged"
-          class="form-check-input"
-          type="checkbox"
-          role="switch"
-          [(ngModel)]="keepManifestUnchanged"
-          (ngModelChange)="onManifestChoice()"
-          aria-describedby="keep-manifest-help"
-        />
-        <label class="form-check-label" for="keep-manifest"
-          >Keep current manifest and footprint</label
-        >
-        <p id="keep-manifest-help">
-          Turn on to revise metadata without choosing the same files again.
-        </p>
-      </div>
-      <p *ngIf="isEdit && keepManifestUnchanged" class="retained-footprint">
-        Current footprint (SHA-256):
-        <code class="text-break">{{ baseline?.footprint }}</code>
-      </p>
       <div
-        *ngIf="!isEdit || !keepManifestUnchanged"
         class="drop-zone"
         (dragover)="onDragOver($event)"
         (drop)="onDrop($event)"
       >
         <div class="drop-zone-content">
-          <div class="icon-container">
+          <div *ngIf="!keepManifestUnchanged" class="icon-container">
             <i class="bi bi-cloud-upload" aria-hidden="true"></i>
           </div>
-          <ng-container *ngIf="!selectedFiles.length && !hashing">
+          <ng-container
+            *ngIf="!keepManifestUnchanged && !selectedFiles.length && !hashing"
+          >
             <h3>Drop files here</h3>
             <p>Or</p>
             <div class="button-group">
@@ -475,7 +450,7 @@
               </button>
             </div>
             <p class="max-size-info">
-              Up to 50 files and 10 MiB total. File bytes and original names
+              Up to 500 files and 50 MiB total. File bytes and original names
               stay in this browser.
             </p>
           </ng-container>
@@ -496,11 +471,14 @@
             (change)="onFileSelected($event)"
             aria-label="Choose a folder"
           />
-          <p *ngIf="hashing" role="status">
+          <p *ngIf="!keepManifestUnchanged && hashing" role="status">
             Calculating SHA-256 for
             {{ selectedFiles.length || 'selected' }} files...
           </p>
-          <div *ngIf="selectedFiles.length && !hashing" class="selected-files">
+          <div
+            *ngIf="!keepManifestUnchanged && selectedFiles.length && !hashing"
+            class="selected-files"
+          >
             <p>
               <strong
                 >{{ selectedFiles.length }}
@@ -528,6 +506,31 @@
             >
               Choose Different File/Folder
             </button>
+          </div>
+          <p *ngIf="isEdit && keepManifestUnchanged" class="retained-footprint">
+            Current footprint (SHA-256):
+            <code class="text-break">{{ baseline?.footprint }}</code>
+          </p>
+          <div *ngIf="isEdit" class="manifest-choice">
+            <div class="manifest-choice-control form-switch">
+              <input
+                id="keep-manifest"
+                name="keepManifestUnchanged"
+                class="form-check-input"
+                type="checkbox"
+                role="switch"
+                [(ngModel)]="keepManifestUnchanged"
+                (ngModelChange)="onManifestChoice()"
+                [disabled]="hashing"
+                aria-describedby="keep-manifest-help"
+              />
+              <label for="keep-manifest"
+                >Keep current manifest and footprint</label
+              >
+            </div>
+            <p id="keep-manifest-help">
+              Revise metadata without choosing the same files again.
+            </p>
           </div>
         </div>
       </div>

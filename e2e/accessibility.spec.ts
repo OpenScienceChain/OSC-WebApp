@@ -379,6 +379,18 @@ test.describe('owner views', () => {
       name: 'Keep current manifest and footprint',
     });
     await expect(keepManifest).toBeVisible();
+    await expect(
+      page.locator('.drop-zone').getByRole('switch', {
+        name: 'Keep current manifest and footprint',
+      }),
+    ).toBeVisible();
+    const limits = page.getByText('Up to 500 files and 50 MiB total.', {
+      exact: false,
+    });
+    await expect(limits).toBeVisible();
+    expect((await keepManifest.boundingBox())!.y).toBeGreaterThan(
+      (await limits.boundingBox())!.y,
+    );
     await expect(keepManifest).not.toBeChecked();
     await expect(
       page.getByRole('button', { name: 'Submit revision' }),

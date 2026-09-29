@@ -21,7 +21,8 @@ import {
 import { DemoService } from './demo.service';
 import { ClampInputLengthDirective } from '../shared/clamp-input-length.directive';
 
-const MAX_FILE_BYTES = 10 * 1024 * 1024;
+const MAX_FILE_BYTES = 50 * 1024 * 1024;
+const MAX_FILE_COUNT = 500;
 const ALLOWED_EXTENSIONS = new Set([
   'csv',
   'json',
@@ -281,6 +282,7 @@ export class GuestArtifactFormComponent implements OnInit, OnDestroy {
   }
   async onDrop(event: DragEvent): Promise<void> {
     event.preventDefault();
+    if (this.keepManifestUnchanged) return;
     await this.processFiles(Array.from(event.dataTransfer?.files || []));
   }
 
@@ -304,16 +306,16 @@ export class GuestArtifactFormComponent implements OnInit, OnDestroy {
         ),
     );
     if (
-      files.length > 50 ||
+      files.length > MAX_FILE_COUNT ||
       total > MAX_FILE_BYTES ||
       files.some((file) => file.size < 1) ||
       unsupported
     ) {
       this.fileError =
-        files.length > 50
-          ? 'Choose at most 50 files.'
+        files.length > MAX_FILE_COUNT
+          ? 'Choose at most 500 files.'
           : total > MAX_FILE_BYTES
-            ? 'The selected files exceed the 10 MiB total limit.'
+            ? 'The selected files exceed the 50 MiB total limit.'
             : files.some((file) => file.size < 1)
               ? 'Empty files cannot be registered.'
               : `Unsupported file type: ${unsupported?.name.split('.').pop() || 'unknown'}.`;

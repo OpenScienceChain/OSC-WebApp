@@ -202,31 +202,47 @@ textarea.form-control {
 }
 
 .manifest-choice {
-  margin: 0.5rem 0 1.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 1.25rem auto 0;
   color: #1d3557;
   font-family: 'Open Sans', sans-serif;
 }
 
-.manifest-choice .form-check-input {
-  cursor: pointer;
+.manifest-choice-control {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+  padding-left: 0;
 }
 
-.manifest-choice .form-check-label {
-  display: inline;
+.manifest-choice .form-check-input {
+  cursor: pointer;
+  width: 2.4rem;
+  height: 1.3rem;
+  margin: 0;
+}
+
+.manifest-choice label {
+  font-size: 1.05rem;
   font-weight: 700;
   cursor: pointer;
 }
 
 .manifest-choice p,
 .retained-footprint {
-  margin: 0.35rem 0 0;
+  margin: 0;
   color: #496073;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   line-height: 1.5;
 }
 
 .retained-footprint {
-  margin-bottom: 1.25rem;
+  overflow-wrap: anywhere;
 }
 
 .retained-footprint code {
