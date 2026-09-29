@@ -11,7 +11,9 @@ const hash = 'a'.repeat(64);
 
 function catalog(state: 'SUCCESS' | 'PENDING'): ShowcaseCatalog {
   return {
+    key: 'magnetic-arch',
     organization: 'Magnetic Arch Plasma Showcase',
+    summary: 'Five experimental plasma configurations.',
     ready: state === 'SUCCESS',
     source: {
       title: 'Magnetic arch plasma expansion',
@@ -54,8 +56,10 @@ function catalog(state: 'SUCCESS' | 'PENDING'): ShowcaseCatalog {
 describe('ShowcaseComponent', () => {
   async function create(state: 'SUCCESS' | 'PENDING') {
     const service = {
-      catalog: jasmine.createSpy('catalog').and.returnValue(of(catalog(state))),
-      history: jasmine.createSpy('history').and.returnValue(
+      examples: jasmine
+        .createSpy('examples')
+        .and.returnValue(of({ examples: [catalog(state)] })),
+      exampleHistory: jasmine.createSpy('exampleHistory').and.returnValue(
         of({
           items: [
             {
@@ -85,18 +89,22 @@ describe('ShowcaseComponent', () => {
   it('shows measurement metadata and retrieves confirmed Fabric history on demand', async () => {
     const { fixture, service } = await create('SUCCESS');
     const page = fixture.nativeElement as HTMLElement;
-    expect(page.querySelector('h1')?.textContent).toContain(
+    expect(page.querySelector('#active-heading')?.textContent).toContain(
       'Magnetic arch plasma',
     );
     expect(page.textContent).toContain('S0_-10deg.csv');
     expect(page.textContent).toContain('-10 degrees');
     const button = Array.from(page.querySelectorAll('button')).find((item) =>
-      item.textContent?.includes('Show ledger history'),
+      item.textContent?.includes('View artifact ledger history'),
     );
     expect(button).toBeTruthy();
     button?.click();
     fixture.detectChanges();
-    expect(service.history).toHaveBeenCalledOnceWith('artifacts', artifactId);
+    expect(service.exampleHistory).toHaveBeenCalledOnceWith(
+      'magnetic-arch',
+      'artifacts',
+      artifactId,
+    );
     expect(
       page.querySelector('#artifact-ledger-history')?.textContent,
     ).toContain(txId);
@@ -107,6 +115,6 @@ describe('ShowcaseComponent', () => {
     const page = fixture.nativeElement as HTMLElement;
     expect(page.textContent).toContain('No confirmed Fabric transaction');
     expect(page.textContent).not.toContain('Submission confirmed');
-    expect(service.history).not.toHaveBeenCalled();
+    expect(service.exampleHistory).not.toHaveBeenCalled();
   });
 });

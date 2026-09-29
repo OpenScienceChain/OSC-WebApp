@@ -5,8 +5,18 @@
       ><span>Research example</span>
     </nav>
 
+    <header class="page-intro">
+      <p class="eyebrow">Published research, verifiable provenance</p>
+      <h1>Follow the evidence</h1>
+      <p class="lead">
+        Explore real research from three communities. OSC records source-file
+        fingerprints, linked artifacts, and confirmed ledger history without
+        storing the research files.
+      </p>
+    </header>
+
     <div *ngIf="loading" class="page-state" role="status">
-      Loading research example...
+      Loading research examples...
     </div>
     <div *ngIf="!loading && error" class="page-state error-state" role="alert">
       <p>{{ error }}</p>
@@ -14,96 +24,378 @@
     </div>
 
     <ng-container *ngIf="!loading && catalog as example">
-      <header class="page-intro">
-        <p class="eyebrow">Public research example</p>
-        <h1>Magnetic arch plasma</h1>
-        <p class="lead">
-          One published experiment, five source configurations, and a named hash
-          for each measurement. Follow the records from the source dataset to
-          confirmed Fabric transactions.
-        </p>
-        <p class="read-only">
-          <i class="bi bi-eye" aria-hidden="true"></i> Read-only example
-        </p>
-      </header>
+      <section aria-labelledby="examples-heading" class="example-picker">
+        <div class="section-title-row">
+          <div>
+            <p class="eyebrow">Explore a collection</p>
+            <h2 id="examples-heading">Three research trails</h2>
+          </div>
+          <span>Curated external sources, registered locally</span>
+        </div>
+        <div class="example-grid" aria-label="Research examples">
+          <button
+            *ngFor="let item of examples; trackBy: trackByExample"
+            type="button"
+            [class.selected]="example.key === item.key"
+            [attr.aria-pressed]="example.key === item.key"
+            (click)="selectExample(item)"
+          >
+            <span class="example-index">{{
+              item.key === 'magnetic-arch'
+                ? '01'
+                : item.key === 'eeg-eye-state'
+                  ? '02'
+                  : '03'
+            }}</span>
+            <strong>{{ item.source.title }}</strong>
+            <span class="example-org">{{ item.organization }}</span>
+            <span class="example-summary">{{ item.summary }}</span>
+            <span class="example-open"
+              >Explore <i class="bi bi-arrow-right" aria-hidden="true"></i
+            ></span>
+          </button>
+        </div>
+      </section>
 
-      <div class="fact-row" aria-label="Example at a glance">
-        <div>
-          <strong>{{ example.artifacts.length }}</strong
-          ><span>Configurations registered</span>
+      <section class="active-example" aria-labelledby="active-heading">
+        <div class="active-heading">
+          <div>
+            <p class="eyebrow">{{ example.organization }}</p>
+            <h2 id="active-heading">{{ example.source.title }}</h2>
+            <p>{{ example.summary }}</p>
+          </div>
+          <span
+            class="state-badge"
+            [class.state-success]="example.ready"
+            [class.state-pending]="!example.ready"
+          >
+            {{
+              example.ready ? 'Ledger confirmed' : 'Registration in progress'
+            }}
+          </span>
         </div>
-        <div>
-          <strong>{{ measurementCount }}</strong
-          ><span>File hashes recorded</span>
+        <div class="fact-row" aria-label="Collection at a glance">
+          <div>
+            <strong>{{ example.artifacts.length }}</strong
+            ><span>Curated artifacts</span>
+          </div>
+          <div>
+            <strong>{{ fileCount }}</strong
+            ><span>Source-file hashes</span>
+          </div>
+          <div>
+            <strong>{{ example.workflows.length }}</strong
+            ><span>Linked workflow</span>
+          </div>
         </div>
-        <div>
-          <strong [class.confirmed-text]="example.ready">{{
-            example.ready ? 'Confirmed' : 'In progress'
-          }}</strong>
-          <span>Fabric submission</span>
-        </div>
-      </div>
+      </section>
 
-      <section
-        class="content-section source-section"
-        aria-labelledby="source-heading"
-      >
+      <section class="provenance-section" aria-labelledby="path-heading">
+        <div class="section-title-row">
+          <div>
+            <p class="eyebrow">How the trail is recorded</p>
+            <h2 id="path-heading">From publisher to ledger</h2>
+          </div>
+        </div>
+        <ol class="provenance-path">
+          <li>
+            <span class="step-icon"
+              ><i class="bi bi-journal-richtext" aria-hidden="true"></i></span
+            ><strong>Published source</strong
+            ><span>Files remain with the publisher</span>
+          </li>
+          <li>
+            <span class="step-icon"
+              ><i class="bi bi-fingerprint" aria-hidden="true"></i></span
+            ><strong>SHA-256 fingerprints</strong
+            ><span>Computed from original source bytes</span>
+          </li>
+          <li>
+            <span class="step-icon"
+              ><i class="bi bi-box-seam" aria-hidden="true"></i></span
+            ><strong>OSC artifacts</strong
+            ><span>Metadata and hashes registered</span>
+          </li>
+          <li>
+            <span class="step-icon"
+              ><i class="bi bi-diagram-3" aria-hidden="true"></i></span
+            ><strong>Linked workflow</strong
+            ><span>Curated provenance grouping</span>
+          </li>
+          <li>
+            <span class="step-icon"
+              ><i class="bi bi-hdd-network" aria-hidden="true"></i></span
+            ><strong>Fabric history</strong
+            ><span>Transaction and revisions verified</span>
+          </li>
+        </ol>
+        <p class="path-note">
+          The diagram describes the provenance record, not where the research
+          data is stored. A workflow here groups source records; it does not
+          claim an analysis was executed.
+        </p>
+      </section>
+
+      <section class="content-section" aria-labelledby="source-heading">
         <div class="section-heading">
-          <p class="eyebrow">01 / Source</p>
-          <h2 id="source-heading">An experiment with many measurements</h2>
+          <p class="eyebrow">01 / Original research</p>
+          <h2 id="source-heading">Source and attribution</h2>
         </div>
         <div class="section-body">
           <p>
-            The source dataset describes a magnetic arch formed by two
-            electron-cyclotron-resonance plasma sources. Its retarding potential
-            analyzer (RPA) measurements vary the observation angle across five
-            magnetic configurations; the DA configuration also includes Faraday
-            Cup (FC) data.
+            These are OSC-curated records of external research. They are not
+            work authored or submitted by {{ example.organization }}.
           </p>
-          <p>
-            The files stay with the source repository. This example records
-            their names and SHA-256 fingerprints, not the measurement bytes.
-          </p>
-          <div class="source-citation">
+          <dl class="source-citation">
             <div>
-              <span>Dataset</span><strong>{{ example.source.title }}</strong>
+              <dt>Published dataset</dt>
+              <dd>{{ example.source.title }}</dd>
             </div>
             <div>
-              <span>Creators</span
-              ><strong>{{ example.source.creators.join(', ') }}</strong>
+              <dt>Creators</dt>
+              <dd>{{ example.source.creators.join(', ') }}</dd>
             </div>
             <div>
-              <span>Collected</span><strong>February-March 2023</strong>
+              <dt>Collection</dt>
+              <dd>{{ example.source.collected }}</dd>
             </div>
             <div>
-              <span>Source</span
-              ><a
-                [href]="example.source.url"
-                target="_blank"
-                rel="noopener noreferrer"
-                >Zenodo record {{ example.source.doi }}
-                <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i
-              ></a>
+              <dt>DOI</dt>
+              <dd>
+                <a
+                  [href]="example.source.url"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  >{{ example.source.doi }}
+                  <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i
+                ></a>
+              </dd>
             </div>
-          </div>
+          </dl>
           <p class="source-note">{{ example.source.licenseNote }}</p>
+        </div>
+      </section>
+
+      <section class="content-section" aria-labelledby="artifact-heading">
+        <div class="section-heading">
+          <p class="eyebrow">02 / Registered sources</p>
+          <h2 id="artifact-heading">Explore the artifacts</h2>
+        </div>
+        <div class="section-body">
+          <p>
+            Each card represents a source-file manifest. The bars compare file
+            counts, not scientific measurements.
+          </p>
+          <div
+            *ngIf="example.artifacts.length"
+            class="artifact-grid"
+            aria-label="Curated source artifacts"
+          >
+            <button
+              *ngFor="let item of orderedArtifacts; trackBy: trackByArtifact"
+              type="button"
+              [attr.aria-pressed]="selected?.id === item.id"
+              [class.selected]="selected?.id === item.id"
+              (click)="select(item)"
+            >
+              <span class="artifact-type">Source artifact</span
+              ><strong>{{ item.title }}</strong>
+              <span class="artifact-description">{{ item.description }}</span>
+              <span class="bar-track" aria-hidden="true"
+                ><span [style.width]="barWidth(item)"></span
+              ></span>
+              <span class="artifact-count"
+                >{{ item.manifest.length }}
+                {{
+                  item.manifest.length === 1 ? 'file hash' : 'file hashes'
+                }}</span
+              >
+            </button>
+          </div>
+          <p *ngIf="!example.artifacts.length" class="pending-note">
+            Curated records have not been registered yet.
+          </p>
+
+          <div *ngIf="selected as record" class="artifact-detail">
+            <div class="detail-heading">
+              <div>
+                <p class="eyebrow">Selected artifact</p>
+                <h3>{{ record.title }}</h3>
+              </div>
+              <span
+                class="state-badge"
+                [class.state-success]="record.submissionState === 'SUCCESS'"
+                [class.state-failed]="record.submissionState === 'FAILED'"
+                [class.state-pending]="record.submissionState === 'PENDING'"
+                >{{ record.submissionState }}</span
+              >
+            </div>
+            <p>{{ record.description }}</p>
+            <dl class="record-evidence">
+              <div>
+                <dt>Artifact ID</dt>
+                <dd>
+                  <code>{{ record.id }}</code>
+                </dd>
+              </div>
+              <div *ngIf="record.footprint">
+                <dt>Manifest footprint</dt>
+                <dd>
+                  <code>{{ record.footprint }}</code>
+                </dd>
+              </div>
+              <div *ngIf="record.blockchainTxId">
+                <dt>Fabric transaction</dt>
+                <dd>
+                  <code>{{ record.blockchainTxId }}</code>
+                </dd>
+              </div>
+            </dl>
+            <h4>Source-file fingerprints</h4>
+            <p class="manifest-note">
+              SHA-256 values identify source bytes. OSC does not keep the
+              original files.
+            </p>
+            <div
+              class="manifest-scroll"
+              tabindex="0"
+              role="region"
+              aria-label="Source-file fingerprints"
+            >
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Source file</th>
+                    <th *ngIf="example.key === 'magnetic-arch'" scope="col">
+                      Probe / angle
+                    </th>
+                    <th scope="col">SHA-256</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr
+                    *ngFor="
+                      let file of record.manifest | slice: 0 : 10;
+                      trackBy: trackByFile
+                    "
+                  >
+                    <td data-label="Source file">{{ file.filename }}</td>
+                    <td
+                      *ngIf="example.key === 'magnetic-arch'"
+                      data-label="Probe / angle"
+                    >
+                      {{ file.probe
+                      }}<span *ngIf="file.angleDegrees !== null">
+                        / {{ file.angleDegrees }} degrees</span
+                      >
+                    </td>
+                    <td data-label="SHA-256">
+                      <code>{{ file.hash }}</code>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <details *ngIf="record.manifest.length > 10" class="more-hashes">
+              <summary>
+                And {{ record.manifest.length - 10 }} more files. Show all
+                hashes
+              </summary>
+              <ul>
+                <li
+                  *ngFor="
+                    let file of record.manifest | slice: 10;
+                    trackBy: trackByFile
+                  "
+                >
+                  <span>{{ file.filename }}</span
+                  ><code>{{ file.hash }}</code>
+                </li>
+              </ul>
+            </details>
+            <div
+              *ngIf="record.blockchainTxId; else awaitingProof"
+              class="history-section"
+            >
+              <button
+                type="button"
+                class="text-action"
+                [attr.aria-expanded]="showHistory"
+                aria-controls="artifact-ledger-history"
+                (click)="toggleHistory()"
+              >
+                <i class="bi bi-clock-history" aria-hidden="true"></i
+                >{{ showHistory ? 'Hide' : 'View' }} artifact ledger history
+              </button>
+              <div id="artifact-ledger-history" [hidden]="!showHistory">
+                <p *ngIf="historyLoading" role="status">
+                  Loading Fabric history...
+                </p>
+                <p *ngIf="historyError" role="alert">{{ historyError }}</p>
+                <ol
+                  *ngIf="artifactHistory"
+                  class="history-list"
+                  aria-label="Artifact ledger history"
+                >
+                  <li *ngFor="let revision of artifactHistory.items">
+                    <strong>Revision {{ revision.revision || 1 }}</strong
+                    ><time>{{ revision.timestamp | date: 'medium' }}</time
+                    ><code>{{ revision.txId }}</code>
+                    <span
+                      >{{ revision.snapshot.manifest?.length || 0 }} file hashes
+                      in this revision</span
+                    >
+                    <span
+                      *ngIf="revision.snapshot.footprint"
+                      [class.comparison-mismatch]="
+                        revision.snapshot.footprint !== record.footprint
+                      "
+                      >{{
+                        revision.snapshot.footprint === record.footprint
+                          ? 'Footprint matches current record'
+                          : 'Footprint differs from current record'
+                      }}</span
+                    >
+                    <details
+                      *ngIf="revision.snapshot.manifest?.length"
+                      class="ledger-snapshot"
+                    >
+                      <summary>Inspect ledger-recorded hashes</summary>
+                      <ul>
+                        <li
+                          *ngFor="
+                            let file of revision.snapshot.manifest;
+                            trackBy: trackByFile
+                          "
+                        >
+                          <span>{{ file.filename }}</span
+                          ><code>{{ file.hash }}</code>
+                        </li>
+                      </ul>
+                    </details>
+                  </li>
+                </ol>
+              </div>
+            </div>
+            <ng-template #awaitingProof
+              ><p class="pending-note">
+                No confirmed Fabric transaction is available for this artifact
+                yet.
+              </p></ng-template
+            >
+          </div>
         </div>
       </section>
 
       <section class="content-section" aria-labelledby="workflow-heading">
         <div class="section-heading">
-          <p class="eyebrow">02 / Connection</p>
-          <h2 id="workflow-heading">A workflow links the configurations</h2>
+          <p class="eyebrow">03 / Connection</p>
+          <h2 id="workflow-heading">A linked provenance record</h2>
         </div>
         <div class="section-body">
-          <p>
-            Each configuration is a separate artifact. The workflow connects
-            those five records without combining or uploading their source
-            files.
-          </p>
           <div *ngIf="workflow as linkedWorkflow" class="workflow-proof">
-            <div class="proof-title">
-              <strong>{{ linkedWorkflow.title }}</strong>
+            <div class="detail-heading">
+              <h3>{{ linkedWorkflow.title }}</h3>
               <span
                 class="state-badge"
                 [class.state-success]="
@@ -118,11 +410,19 @@
                 >{{ linkedWorkflow.submissionState }}</span
               >
             </div>
-            <p>{{ linkedWorkflow.artifactIds.length }} linked configurations</p>
-            <div *ngIf="linkedWorkflow.blockchainTxId" class="transaction-line">
-              <span>Fabric transaction</span
-              ><code>{{ linkedWorkflow.blockchainTxId }}</code>
-            </div>
+            <p>{{ linkedWorkflow.description }}</p>
+            <dl class="record-evidence">
+              <div>
+                <dt>Linked artifacts</dt>
+                <dd>{{ linkedWorkflow.artifactIds.length }}</dd>
+              </div>
+              <div *ngIf="linkedWorkflow.blockchainTxId">
+                <dt>Fabric transaction</dt>
+                <dd>
+                  <code>{{ linkedWorkflow.blockchainTxId }}</code>
+                </dd>
+              </div>
+            </dl>
             <button
               *ngIf="linkedWorkflow.blockchainTxId"
               type="button"
@@ -131,12 +431,9 @@
               aria-controls="workflow-ledger-history"
               (click)="showWorkflowHistory()"
             >
-              <i class="bi bi-clock-history" aria-hidden="true"></i>
-              {{
-                workflowHistoryVisible
-                  ? 'Hide workflow history'
-                  : 'Show workflow history'
-              }}
+              <i class="bi bi-clock-history" aria-hidden="true"></i
+              >{{ workflowHistoryVisible ? 'Hide' : 'View' }} workflow ledger
+              history
             </button>
             <div
               id="workflow-ledger-history"
@@ -154,191 +451,19 @@
                 aria-label="Workflow ledger history"
               >
                 <li *ngFor="let revision of workflowHistory.items">
-                  <strong>Revision {{ revision.revision || 1 }}</strong>
-                  <span>{{ revision.timestamp | date: 'medium' }}</span>
-                  <code>{{ revision.txId }}</code>
-                  <span
+                  <strong>Revision {{ revision.revision || 1 }}</strong
+                  ><time>{{ revision.timestamp | date: 'medium' }}</time
+                  ><code>{{ revision.txId }}</code
+                  ><span
                     >{{ revision.snapshot.artifactIds?.length || 0 }} linked
-                    artifacts in this ledger revision</span
+                    artifacts in this revision</span
                   >
                 </li>
               </ol>
             </div>
           </div>
           <p *ngIf="!workflow" class="pending-note">
-            The workflow has not been registered yet.
-          </p>
-        </div>
-      </section>
-
-      <section
-        class="content-section measurements-section"
-        aria-labelledby="measurement-heading"
-      >
-        <div class="section-heading">
-          <p class="eyebrow">03 / Measurements</p>
-          <h2 id="measurement-heading">Inspect a configuration</h2>
-        </div>
-        <div class="section-body">
-          <p>
-            Choose a configuration to inspect its individual file fingerprints
-            and ledger proof.
-          </p>
-          <div *ngIf="example.artifacts.length" class="configuration-layout">
-            <div class="configuration-list" aria-label="Configurations">
-              <button
-                *ngFor="let item of example.artifacts; trackBy: trackByArtifact"
-                type="button"
-                [attr.aria-pressed]="selected?.id === item.id"
-                [class.selected]="selected?.id === item.id"
-                (click)="select(item)"
-              >
-                <span>{{ item.title }}</span>
-                <small>{{ item.manifest.length }} file hashes</small>
-              </button>
-            </div>
-            <div *ngIf="selected as record" class="configuration-detail">
-              <div class="detail-heading">
-                <div>
-                  <h3>{{ record.title }}</h3>
-                  <p>{{ record.description }}</p>
-                </div>
-                <span
-                  class="state-badge"
-                  [class.state-success]="record.submissionState === 'SUCCESS'"
-                  [class.state-failed]="record.submissionState === 'FAILED'"
-                  [class.state-pending]="record.submissionState === 'PENDING'"
-                  >{{ record.submissionState }}</span
-                >
-              </div>
-              <div class="fingerprint-line" *ngIf="record.footprint">
-                <span>Configuration footprint (SHA-256)</span
-                ><code>{{ record.footprint }}</code>
-              </div>
-              <h4>File manifest</h4>
-              <p class="manifest-note">
-                Angle labels are derived from the published filenames. A hash
-                identifies file content; OSC does not store the files.
-              </p>
-              <div class="manifest-scroll">
-                <table>
-                  <thead>
-                    <tr>
-                      <th scope="col">Source file</th>
-                      <th scope="col">Probe</th>
-                      <th scope="col">Angle</th>
-                      <th scope="col">SHA-256</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr
-                      *ngFor="let file of record.manifest; trackBy: trackByFile"
-                    >
-                      <td data-label="Source file">{{ file.filename }}</td>
-                      <td data-label="Probe">{{ file.probe }}</td>
-                      <td data-label="Angle">
-                        {{
-                          file.angleDegrees === null
-                            ? 'Not applicable'
-                            : file.angleDegrees + ' degrees'
-                        }}
-                      </td>
-                      <td data-label="SHA-256">
-                        <code>{{ file.hash }}</code>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              <div
-                class="ledger-proof"
-                *ngIf="record.blockchainTxId; else awaitingProof"
-              >
-                <h4>Fabric ledger proof</h4>
-                <p>
-                  Submission confirmed. This transaction ID can be checked
-                  against the record's ledger history.
-                </p>
-                <div class="transaction-line">
-                  <span>Transaction ID</span
-                  ><code>{{ record.blockchainTxId }}</code>
-                </div>
-                <button
-                  type="button"
-                  class="text-action"
-                  [attr.aria-expanded]="showHistory"
-                  aria-controls="artifact-ledger-history"
-                  (click)="toggleHistory()"
-                >
-                  <i class="bi bi-clock-history" aria-hidden="true"></i>
-                  {{
-                    showHistory ? 'Hide ledger history' : 'Show ledger history'
-                  }}
-                </button>
-                <div id="artifact-ledger-history" [hidden]="!showHistory">
-                  <p *ngIf="historyLoading" role="status">
-                    Loading Fabric history...
-                  </p>
-                  <p *ngIf="historyError" role="alert">{{ historyError }}</p>
-                  <ol
-                    *ngIf="artifactHistory"
-                    class="history-list"
-                    aria-label="Artifact ledger history"
-                  >
-                    <li *ngFor="let revision of artifactHistory.items">
-                      <strong>Revision {{ revision.revision || 1 }}</strong>
-                      <span>{{ revision.timestamp | date: 'medium' }}</span>
-                      <code>{{ revision.txId }}</code>
-                      <span
-                        >{{ revision.snapshot.manifest?.length || 0 }} file
-                        hashes in this ledger revision</span
-                      >
-                      <span
-                        class="comparison"
-                        [class.comparison-mismatch]="
-                          revision.snapshot.footprint !== record.footprint
-                        "
-                      >
-                        {{
-                          revision.snapshot.footprint === record.footprint
-                            ? 'Ledger footprint matches the current record'
-                            : 'Ledger footprint differs from the current record'
-                        }}
-                      </span>
-                      <details
-                        *ngIf="revision.snapshot.manifest?.length"
-                        class="ledger-snapshot"
-                      >
-                        <summary>
-                          Inspect hashes recorded in this ledger revision
-                        </summary>
-                        <ul>
-                          <li
-                            *ngFor="
-                              let file of revision.snapshot.manifest;
-                              trackBy: trackByFile
-                            "
-                          >
-                            <span>{{ file.filename }}</span>
-                            <code>{{ file.hash }}</code>
-                          </li>
-                        </ul>
-                      </details>
-                    </li>
-                  </ol>
-                </div>
-              </div>
-              <ng-template #awaitingProof>
-                <p class="pending-note">
-                  No confirmed Fabric transaction is available for this
-                  configuration yet.
-                </p>
-              </ng-template>
-            </div>
-          </div>
-          <p *ngIf="!example.artifacts.length" class="pending-note">
-            The curated measurements have not been registered yet.
+            The curated workflow has not been registered yet.
           </p>
         </div>
       </section>

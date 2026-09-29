@@ -41,4 +41,20 @@ describe('ShowcaseService', () => {
     expect(request.request.method).toBe('GET');
     request.flush({ items: [], count: 0, hasMore: false });
   });
+
+  it('loads all public research examples and their scoped history', () => {
+    service.examples().subscribe();
+    const examples = http.expectOne('/api/v1/showcase/examples');
+    expect(examples.request.headers.has('Authorization')).toBeFalse();
+    examples.flush({ examples: [] });
+
+    service
+      .exampleHistory('eeg-eye-state', 'artifacts', 'record-id')
+      .subscribe();
+    const history = http.expectOne(
+      '/api/v1/showcase/examples/eeg-eye-state/artifacts/record-id/history',
+    );
+    expect(history.request.method).toBe('GET');
+    history.flush({ items: [], count: 0, hasMore: false });
+  });
 });

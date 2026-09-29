@@ -2,7 +2,7 @@ export interface ShowcaseMeasurement {
   filename: string;
   hash: string;
   algorithm: 'sha256';
-  probe: 'RPA' | 'FC';
+  probe: 'RPA' | 'FC' | null;
   angleDegrees: number | null;
 }
 
@@ -45,11 +45,17 @@ export interface ShowcaseWorkflow {
 }
 
 export interface ShowcaseCatalog {
+  key: string;
   organization: string;
+  summary: string;
   source: ShowcaseSource;
   ready: boolean;
   artifacts: ShowcaseArtifact[];
   workflows: ShowcaseWorkflow[];
+}
+
+export interface ShowcaseExamples {
+  examples: ShowcaseCatalog[];
 }
 
 export interface ShowcaseHistory {

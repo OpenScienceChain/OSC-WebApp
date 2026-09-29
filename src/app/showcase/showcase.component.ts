@@ -15,6 +15,7 @@ import { ShowcaseService } from './showcase.service';
   styleUrl: './showcase.component.css',
 })
 export class ShowcaseComponent implements OnInit {
+  examples: ShowcaseCatalog[] = [];
   catalog: ShowcaseCatalog | null = null;
   selected: ShowcaseArtifact | null = null;
   artifactHistory: ShowcaseHistory | null = null;
@@ -37,17 +38,28 @@ export class ShowcaseComponent implements OnInit {
   load(): void {
     this.loading = true;
     this.error = '';
-    this.showcase.catalog().subscribe({
-      next: (catalog) => {
-        this.catalog = catalog;
+    this.showcase.examples().subscribe({
+      next: ({ examples }) => {
+        this.examples = examples;
         this.loading = false;
-        if (catalog.artifacts.length) this.select(catalog.artifacts[0]);
+        if (examples.length) this.selectExample(examples[0]);
       },
       error: () => {
         this.loading = false;
-        this.error = 'The research example is temporarily unavailable.';
+        this.error = 'The research examples are temporarily unavailable.';
       },
     });
+  }
+
+  selectExample(example: ShowcaseCatalog): void {
+    this.catalog = example;
+    this.selected = this.orderedArtifacts[0] || null;
+    this.artifactHistory = null;
+    this.workflowHistory = null;
+    this.historyError = '';
+    this.workflowHistoryError = '';
+    this.showHistory = false;
+    this.workflowHistoryVisible = false;
   }
 
   select(artifact: ShowcaseArtifact): void {
@@ -57,13 +69,50 @@ export class ShowcaseComponent implements OnInit {
     this.showHistory = false;
   }
 
-  get measurementCount(): number {
+  get fileCount(): number {
     return (
       this.catalog?.artifacts.reduce(
         (total, item) => total + item.manifest.length,
         0,
       ) || 0
     );
+  }
+
+  get maxArtifactFiles(): number {
+    return Math.max(
+      1,
+      ...(this.catalog?.artifacts.map((item) => item.manifest.length) || []),
+    );
+  }
+
+  get orderedArtifacts(): ShowcaseArtifact[] {
+    return [...(this.catalog?.artifacts || [])].sort((left, right) => {
+      if (this.catalog?.key === 'magnetic-arch') {
+        const configurationOrder = ['S0', 'S1', 'D0', 'DA', 'DB'];
+        const codeIndex = (artifact: ShowcaseArtifact) => {
+          const index = configurationOrder.findIndex((code) =>
+            artifact.title.startsWith(`${code} `),
+          );
+          return index === -1 ? configurationOrder.length : index;
+        };
+        return codeIndex(left) - codeIndex(right);
+      }
+      const priority = (artifact: ShowcaseArtifact) =>
+        artifact.manifest.length > 0 &&
+        artifact.manifest.every((file) =>
+          file.filename.toLowerCase().endsWith('.txt'),
+        )
+          ? 1
+          : 0;
+      return (
+        priority(left) - priority(right) ||
+        left.title.localeCompare(right.title)
+      );
+    });
+  }
+
+  barWidth(item: ShowcaseArtifact): string {
+    return `${Math.max(8, (item.manifest.length / this.maxArtifactFiles) * 100)}%`;
   }
 
   get workflow() {
@@ -81,14 +130,19 @@ export class ShowcaseComponent implements OnInit {
     this.historyLoading = true;
     this.historyError = '';
     const selectedId = this.selected.id;
-    this.showcase.history('artifacts', selectedId).subscribe({
+    const key = this.catalog?.key;
+    if (!key) return;
+    this.showcase.exampleHistory(key, 'artifacts', selectedId).subscribe({
       next: (history) => {
-        if (this.selected?.id === selectedId) this.artifactHistory = history;
+        if (this.catalog?.key === key && this.selected?.id === selectedId)
+          this.artifactHistory = history;
         this.historyLoading = false;
       },
       error: () => {
         this.historyLoading = false;
-        this.historyError = 'Fabric history is unavailable. Try again later.';
+        if (this.catalog?.key === key && this.selected?.id === selectedId) {
+          this.historyError = 'Fabric history is unavailable. Try again later.';
+        }
       },
     });
   }
@@ -102,16 +156,26 @@ export class ShowcaseComponent implements OnInit {
     )
       return;
     this.workflowHistoryLoading = true;
-    this.showcase.history('workflows', this.workflow.id).subscribe({
+    const key = this.catalog?.key;
+    const workflowId = this.workflow.id;
+    if (!key) return;
+    this.showcase.exampleHistory(key, 'workflows', workflowId).subscribe({
       next: (history) => {
-        this.workflowHistory = history;
+        if (this.catalog?.key === key && this.workflow?.id === workflowId)
+          this.workflowHistory = history;
         this.workflowHistoryLoading = false;
       },
       error: () => {
         this.workflowHistoryLoading = false;
-        this.workflowHistoryError = 'Fabric workflow history is unavailable.';
+        if (this.catalog?.key === key && this.workflow?.id === workflowId) {
+          this.workflowHistoryError = 'Fabric workflow history is unavailable.';
+        }
       },
     });
+  }
+
+  trackByExample(_index: number, example: ShowcaseCatalog): string {
+    return example.key;
   }
 
   trackByArtifact(_index: number, artifact: ShowcaseArtifact): string {
