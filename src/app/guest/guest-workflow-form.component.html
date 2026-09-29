@@ -4,34 +4,71 @@
     <div class="header-divider"></div>
   </header>
 
-  <app-guest-session-panel
-    *ngIf="!isEdit && !demo.session"
-    (started)="loadArtifacts()"
-  ></app-guest-session-panel>
   <section
-    *ngIf="isEdit && (!demo.session || accessDenied)"
-    class="guest-form-note"
+    *ngIf="!isEdit && !demo.session?.accountUsername"
+    class="workflow-access-note"
     role="status"
   >
-    <p>
-      {{
-        !demo.session
-          ? 'Sign in with the account that contributed this workflow to manage it.'
-          : 'This workflow is not available to manage from this account.'
-      }}
-    </p>
-    <a *ngIf="!demo.session" routerLink="/auth/sign-in">Sign in</a>
-    <a [routerLink]="['/workflows', id]">Back to workflow</a>
+    <i class="bi bi-person-lock" aria-hidden="true"></i>
+    <div>
+      <h2>Sign in to contribute</h2>
+      <p>Create an account or sign in to connect artifacts in a workflow.</p>
+      <div class="workflow-access-actions">
+        <a
+          routerLink="/auth/sign-in"
+          [queryParams]="{ returnUrl: '/create-workflow' }"
+          >Sign in or create an account</a
+        >
+      </div>
+    </div>
   </section>
-  <p *ngIf="demo.session" class="guest-form-note">
-    Link confirmed artifacts from {{ demo.session.organization }}.
+  <section
+    *ngIf="isEdit && (!demo.session?.accountUsername || accessDenied)"
+    class="workflow-access-note"
+    role="status"
+  >
+    <i class="bi bi-lock" aria-hidden="true"></i>
+    <div>
+      <h2>Workflow updates are restricted</h2>
+      <p>
+        {{
+          !demo.session?.accountUsername
+            ? 'Sign in with the account that contributed this workflow to manage it.'
+            : 'Only the contributing account can manage a confirmed workflow.'
+        }}
+      </p>
+      <div class="workflow-access-actions">
+        <a
+          *ngIf="!demo.session?.accountUsername"
+          routerLink="/auth/sign-in"
+          [queryParams]="{ returnUrl: '/update-workflow/' + id }"
+          >Sign in</a
+        >
+        <a [routerLink]="['/workflows', id]">
+          Back to workflow <i class="bi bi-arrow-right" aria-hidden="true"></i>
+        </a>
+      </div>
+    </div>
+  </section>
+  <p
+    *ngIf="
+      demo.session?.accountUsername && (!isEdit || editReady) && !accessDenied
+    "
+    class="workflow-guidance"
+  >
+    <i class="bi bi-info-circle" aria-hidden="true"></i>
+    <span>
+      Link up to three confirmed artifacts from
+      <strong>{{ organizationName }}</strong
+      >.
+    </span>
   </p>
   <p *ngIf="error" class="guest-form-note text-danger" role="alert">
     {{ error }}
   </p>
 
   <form
-    *ngIf="!isEdit || editReady"
+    *ngIf="(!isEdit && !!demo.session?.accountUsername) || editReady"
     class="workflow-form"
     (ngSubmit)="submit()"
     novalidate
@@ -134,7 +171,7 @@
 
         <div class="form-group" *ngIf="!isEdit">
           <label for="workflow-context" class="context-label"
-            >Research context</label
+            >Type of workflow (optional)</label
           >
           <select
             id="workflow-context"
@@ -143,9 +180,11 @@
             [(ngModel)]="context"
             (ngModelChange)="onChange()"
           >
+            <option value="">Not specified</option>
             <option value="REPRODUCIBLE_ANALYSIS">Reproducible analysis</option>
             <option value="RESEARCH_DATASET">Research dataset</option>
             <option value="SOFTWARE_RELEASE">Software release</option>
+            <option value="OTHER">Other</option>
           </select>
         </div>
       </div>
@@ -210,7 +249,10 @@
               </button>
             </div>
           </div>
-          <p *ngIf="demo.session && !artifacts.length" class="field-help">
+          <p
+            *ngIf="demo.session?.accountUsername && !artifacts.length"
+            class="field-help"
+          >
             No confirmed artifacts in this organization yet. Contribute an
             artifact first, then return here.
           </p>
@@ -342,11 +384,7 @@
       <a class="btn btn-secondary" routerLink="/list-workflows"
         >Cancel and Go Back</a
       >
-      <button
-        class="btn btn-primary"
-        type="submit"
-        [disabled]="busy || !demo.session || status?.state !== 'OPEN'"
-      >
+      <button class="btn btn-primary" type="submit" [disabled]="!canSubmit">
         {{
           busy
             ? 'Submitting...'

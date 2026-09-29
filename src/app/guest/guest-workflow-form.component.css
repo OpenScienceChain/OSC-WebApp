@@ -333,6 +333,86 @@ textarea.form-control {
   margin: 0 auto 1rem;
 }
 
+.workflow-access-note,
+.workflow-guidance {
+  width: min(80%, 1050px);
+  margin: 0 auto 1.5rem;
+  font-family: 'Open Sans', sans-serif;
+}
+
+.workflow-access-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  padding: 1rem 1.25rem;
+  border-left: 4px solid #1d3557;
+  background: #f2f6f8;
+  color: #29475a;
+}
+
+.workflow-access-note > i {
+  margin-top: 0.1rem;
+  color: #1d3557;
+  font-size: 1.2rem;
+}
+
+.workflow-access-note h2 {
+  margin: 0 0 0.3rem;
+  color: #1d3557;
+  font-size: 1.1rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.workflow-access-note p {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+.workflow-access-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.25rem;
+  margin-top: 0.7rem;
+}
+
+.workflow-access-actions a {
+  color: #0e665c;
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-underline-offset: 3px;
+}
+
+.workflow-guidance {
+  display: flex;
+  align-items: baseline;
+  gap: 0.45rem;
+  padding: 0.7rem 1rem;
+  border-left: 3px solid #1b7168;
+  background: #f2f8f7;
+  color: #355465;
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.workflow-guidance i {
+  flex: 0 0 auto;
+  color: #1b7168;
+}
+
+.workflow-guidance strong {
+  color: #1d3557;
+  font-weight: 700;
+}
+
+@media (max-width: 991.98px) {
+  .workflow-access-note,
+  .workflow-guidance {
+    width: 95%;
+  }
+}
+
 .context-label {
   display: block;
   color: #1d3557;

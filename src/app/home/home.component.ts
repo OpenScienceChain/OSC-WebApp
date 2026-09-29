@@ -3,6 +3,7 @@ import { Component } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { ArtifactsPreviewComponent } from '../components/artifacts-preview/artifacts-preview.component';
 import { WorkflowsPreviewComponent } from '../components/workflows-preview/workflows-preview.component';
+import { DemoService } from '../guest/demo.service';
 
 @Component({
   selector: 'app-home',
@@ -16,4 +17,6 @@ import { WorkflowsPreviewComponent } from '../components/workflows-preview/workf
   templateUrl: './home.component.html',
   styleUrl: './home.component.css',
 })
-export class HomeComponent {}
+export class HomeComponent {
+  constructor(public readonly demo: DemoService) {}
+}

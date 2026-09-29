@@ -8,30 +8,47 @@
     <div class="header-divider"></div>
   </header>
 
-  <app-guest-session-panel
-    *ngIf="!isEdit && !demo.session"
-    (started)="onSessionStarted()"
-  ></app-guest-session-panel>
   <section
-    *ngIf="isEdit && (!demo.session || accessDenied)"
+    *ngIf="!isEdit && !demo.session?.accountUsername"
+    class="form-note account-required"
+    role="status"
+  >
+    <h2>Sign in to contribute</h2>
+    <p>
+      Create an account or sign in to register an artifact for your
+      organization.
+    </p>
+    <a routerLink="/auth/sign-in" [queryParams]="{ returnUrl: '/contribute' }"
+      >Sign in or create an account</a
+    >
+  </section>
+  <section
+    *ngIf="isEdit && (!demo.session?.accountUsername || accessDenied)"
     class="form-note"
     role="status"
   >
     <p>
       {{
-        !demo.session
+        !demo.session?.accountUsername
           ? 'Sign in with the account that contributed this artifact to manage it.'
           : 'This artifact is not available to update from this account.'
       }}
     </p>
-    <a *ngIf="!demo.session" routerLink="/auth/sign-in">Sign in</a>
+    <a
+      *ngIf="!demo.session?.accountUsername"
+      routerLink="/auth/sign-in"
+      [queryParams]="{ returnUrl: '/update-artifact/' + id }"
+      >Sign in</a
+    >
     <a [routerLink]="['/artifacts', id]">Back to artifact</a>
   </section>
-  <p *ngIf="demo.session" class="form-note">
-    Contributing for {{ demo.session.organization }} as
-    {{ demo.session.contributorAlias }}.
-  </p>
-  <p *ngIf="isEdit" class="form-note">
+  <div
+    *ngIf="demo.session?.accountUsername && !accessDenied"
+    class="contribution-context"
+  >
+    <span>Organization</span><strong>{{ organizationName }}</strong>
+  </div>
+  <p *ngIf="isEdit && baseline" class="form-note">
     Title and description stay fixed. Metadata and the file fingerprint can be
     revised after ledger confirmation.
   </p>
@@ -40,7 +57,7 @@
   </p>
 
   <form
-    *ngIf="!isEdit || !!baseline"
+    *ngIf="(!isEdit && !!demo.session?.accountUsername) || !!baseline"
     class="artifact-form"
     (ngSubmit)="submit()"
   >
@@ -198,8 +215,12 @@
             (blur)="markTouched('links')"
             maxlength="2000"
             [class.is-invalid]="touched.has('links') && fieldError('links')"
-            placeholder="HTTPS URLs, separated by commas"
+            placeholder="fb.com, ucsd.edu, youtube.com"
+            aria-describedby="links-help"
           />
+          <p id="links-help" class="field-help">
+            Separate websites with commas. HTTPS is added to short addresses.
+          </p>
           <div
             *ngIf="touched.has('links') && fieldError('links')"
             class="error-message"
@@ -233,7 +254,7 @@
         </div>
         <div class="form-group" *ngIf="!isEdit">
           <label for="research-context" class="field-label"
-            >Research context</label
+            >Type of research output (optional)</label
           >
           <select
             id="research-context"
@@ -242,9 +263,11 @@
             [(ngModel)]="researchContext"
             (ngModelChange)="onChange()"
           >
+            <option value="">Not specified</option>
             <option value="RESEARCH_DATASET">Research dataset</option>
             <option value="REPRODUCIBLE_ANALYSIS">Reproducible analysis</option>
             <option value="SOFTWARE_RELEASE">Software release</option>
+            <option value="OTHER">Other</option>
           </select>
         </div>
       </div>
@@ -396,13 +419,32 @@
     <div class="file-upload-divider"></div>
     <section class="file-upload-section" aria-labelledby="file-heading">
       <h2 id="file-heading" class="section-title">
-        {{
-          isEdit
-            ? 'Replace folders or files (optional)'
-            : 'Select folders or files'
-        }}
+        {{ isEdit ? 'Files for this revision' : 'Select folders or files' }}
       </h2>
+      <div *ngIf="isEdit" class="form-check form-switch manifest-choice">
+        <input
+          id="keep-manifest"
+          name="keepManifestUnchanged"
+          class="form-check-input"
+          type="checkbox"
+          role="switch"
+          [(ngModel)]="keepManifestUnchanged"
+          (ngModelChange)="onManifestChoice()"
+          aria-describedby="keep-manifest-help"
+        />
+        <label class="form-check-label" for="keep-manifest"
+          >Keep current manifest and footprint</label
+        >
+        <p id="keep-manifest-help">
+          Turn on to revise metadata without choosing the same files again.
+        </p>
+      </div>
+      <p *ngIf="isEdit && keepManifestUnchanged" class="retained-footprint">
+        Current footprint (SHA-256):
+        <code class="text-break">{{ baseline?.footprint }}</code>
+      </p>
       <div
+        *ngIf="!isEdit || !keepManifestUnchanged"
         class="drop-zone"
         (dragover)="onDragOver($event)"
         (drop)="onDrop($event)"

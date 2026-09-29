@@ -36,6 +36,46 @@
     </div>
   </section>
 
+  <section class="demo-start" aria-labelledby="demo-start-heading">
+    <div class="content-width demo-start-layout">
+      <div>
+        <p class="eyebrow">Try the demo</p>
+        <h2 id="demo-start-heading">
+          {{
+            demo.session?.accountUsername
+              ? 'Ready to contribute'
+              : 'Start with one account'
+          }}
+        </h2>
+        <p *ngIf="!demo.session?.accountUsername">
+          Create an account in this app, choose an organization, then register
+          an artifact or connect artifacts in a workflow.
+        </p>
+        <p *ngIf="demo.session?.accountUsername">
+          Register an artifact or connect confirmed artifacts in a workflow.
+        </p>
+        <p class="demo-privacy">
+          Files are hashed in your browser. File bytes and original names are
+          not uploaded; file hashes, sizes, types, and the metadata you enter
+          are recorded by OSC.
+        </p>
+      </div>
+      <a
+        class="demo-start-link"
+        [routerLink]="
+          demo.session?.accountUsername ? '/contribute' : '/auth/sign-in'
+        "
+      >
+        {{
+          demo.session?.accountUsername
+            ? 'Register an artifact'
+            : 'Create an account'
+        }}
+        <i class="bi bi-arrow-right" aria-hidden="true"></i>
+      </a>
+    </div>
+  </section>
+
   <section id="audiences" class="audiences" aria-labelledby="audiences-heading">
     <div class="content-width">
       <div class="section-heading">

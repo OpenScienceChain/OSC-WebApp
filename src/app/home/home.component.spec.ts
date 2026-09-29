@@ -4,6 +4,7 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { ArtifactsPreviewComponent } from '../components/artifacts-preview/artifacts-preview.component';
 import { WorkflowsPreviewComponent } from '../components/workflows-preview/workflows-preview.component';
 import { HomeComponent } from './home.component';
+import { DemoService } from '../guest/demo.service';
 
 @Component({
   selector: 'app-artifacts-preview',
@@ -25,6 +26,7 @@ describe('HomeComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [HomeComponent, RouterTestingModule],
+      providers: [{ provide: DemoService, useValue: { session: null } }],
     })
       .overrideComponent(HomeComponent, {
         remove: {

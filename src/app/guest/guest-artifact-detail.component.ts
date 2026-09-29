@@ -27,12 +27,37 @@ import { printFileHashes } from '../shared/print-file-hashes';
           <header class="record-header">
             <div class="record-kicker">
               <span>Scientific Artifact</span
-              ><span *ngIf="!confirmed" class="record-state">{{
-                artifact.submissionState
-              }}</span>
+              ><span
+                *ngIf="!confirmed"
+                class="record-state"
+                [class.is-failed]="artifact.submissionState === 'FAILED'"
+                [class.is-pending]="artifact.submissionState === 'PENDING'"
+                >{{ artifact.submissionState }}</span
+              >
             </div>
             <h1>{{ artifact.title }}</h1>
           </header>
+          <div
+            *ngIf="artifact.submissionState === 'FAILED'"
+            class="submission-notice is-failed"
+            role="status"
+          >
+            <strong>Blockchain submission failed</strong>
+            <p>
+              {{
+                artifact.failureReason ||
+                  'Blockchain submission failed. No ledger confirmation was recorded.'
+              }}
+            </p>
+          </div>
+          <div
+            *ngIf="artifact.submissionState === 'PENDING'"
+            class="submission-notice is-pending"
+            role="status"
+          >
+            <strong>Blockchain confirmation pending</strong>
+            <p>This submission is still awaiting a ledger transaction.</p>
+          </div>
           <div class="record-layout artifact-body">
             <section
               class="description-col"
@@ -56,11 +81,27 @@ import { printFileHashes } from '../shared/print-file-hashes';
                         type="button"
                         class="copy-id"
                         (click)="copyId()"
-                        title="Copy artifact ID"
-                        aria-label="Copy artifact ID"
+                        [title]="
+                          copied ? 'Artifact ID copied' : 'Copy artifact ID'
+                        "
+                        [attr.aria-label]="
+                          copied ? 'Artifact ID copied' : 'Copy artifact ID'
+                        "
                       >
-                        <i class="bi bi-clipboard" aria-hidden="true"></i>
+                        <i
+                          [class]="
+                            copied ? 'bi bi-check-lg' : 'bi bi-clipboard'
+                          "
+                          [class.copied]="copied"
+                          aria-hidden="true"
+                        ></i>
                       </button>
+                      <span
+                        class="visually-hidden"
+                        role="status"
+                        aria-live="polite"
+                        >{{ copyMessage }}</span
+                      >
                     </td>
                   </tr>
                   <tr>
@@ -123,6 +164,12 @@ import { printFileHashes } from '../shared/print-file-hashes';
                       <span
                         class="record-state"
                         [class.is-confirmed]="confirmed"
+                        [class.is-failed]="
+                          artifact.submissionState === 'FAILED'
+                        "
+                        [class.is-pending]="
+                          artifact.submissionState === 'PENDING'
+                        "
                         >{{ artifact.submissionState }}</span
                       >
                     </td>
@@ -135,7 +182,13 @@ import { printFileHashes } from '../shared/print-file-hashes';
                   </tr>
                   <tr *ngIf="!confirmed">
                     <th scope="row">Provenance</th>
-                    <td>Awaiting blockchain confirmation</td>
+                    <td>
+                      {{
+                        artifact.submissionState === 'FAILED'
+                          ? 'Not confirmed on the blockchain'
+                          : 'Awaiting blockchain confirmation'
+                      }}
+                    </td>
                   </tr>
                   <tr *ngIf="artifact.acknowledgements">
                     <th scope="row">Acknowledgements</th>
@@ -231,6 +284,9 @@ export class GuestArtifactDetailComponent implements OnInit {
   isLoading = true;
   errorMessage = '';
   canEdit = false;
+  copied = false;
+  copyMessage = '';
+  private copyReset?: ReturnType<typeof setTimeout>;
   private id = '';
 
   constructor(
@@ -280,7 +336,19 @@ export class GuestArtifactDetailComponent implements OnInit {
   }
 
   async copyId(): Promise<void> {
-    await navigator.clipboard.writeText(this.id);
+    try {
+      await navigator.clipboard.writeText(this.id);
+      this.copied = true;
+      this.copyMessage = 'Artifact ID copied to clipboard.';
+      clearTimeout(this.copyReset);
+      this.copyReset = setTimeout(() => {
+        this.copied = false;
+        this.copyMessage = '';
+      }, 2500);
+    } catch {
+      this.copied = false;
+      this.copyMessage = 'Could not copy artifact ID.';
+    }
   }
   printManifest(): void {
     printFileHashes(this.artifact?.manifest ?? []);

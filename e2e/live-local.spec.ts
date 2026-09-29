@@ -17,7 +17,9 @@ async function api<T>(
   return page.evaluate(
     async ({ method, path, payload }) => {
       const session = JSON.parse(
-        sessionStorage.getItem('osc-usrse26-demo-session') || 'null',
+        localStorage.getItem('osc-usrse26-account-session') ||
+          sessionStorage.getItem('osc-usrse26-demo-session') ||
+          'null',
       );
       const response = await fetch(`/api/v1/demo${path}`, {
         method,
@@ -122,18 +124,23 @@ test('local account ownership and confirmed artifact/workflow revisions', async 
   await expect(
     page.getByRole('link', { name: /Update Artifact/i }),
   ).toBeVisible();
-  const artifactRevision = await api<{ id: string }>(
-    page,
-    'PATCH',
-    `/artifacts/${artifactId}`,
-    {
-      requestId: randomUUID(),
-      submissionComment:
-        'Revised synthetic artifact metadata from the owning account.',
-      keywords: ['local-e2e', 'artifact-revision'],
-    },
-  );
-  expect(artifactRevision.status).toBe(200);
+  const originalFootprint = (
+    await api<{ footprint: string }>(
+      page,
+      'GET',
+      `/public/artifacts/${artifactId}`,
+    )
+  ).body.footprint;
+  await page.goto(`/update-artifact/${artifactId}`);
+  await page
+    .getByRole('switch', { name: 'Keep current manifest and footprint' })
+    .check();
+  await page.getByLabel('Key Words').fill('local-e2e, artifact-revision');
+  await page
+    .getByLabel('Submission Comment')
+    .fill('Revised synthetic artifact metadata from the owning account.');
+  await page.getByRole('button', { name: 'Submit revision' }).click();
+  await expect(page).toHaveURL(new RegExp(`/artifacts/${artifactId}$`));
   await expect
     .poll(
       async () => {
@@ -160,6 +167,15 @@ test('local account ownership and confirmed artifact/workflow revisions', async 
       { timeout: 90_000, intervals: [1000, 2000, 3000] },
     )
     .toBeGreaterThanOrEqual(2);
+  expect(
+    (
+      await api<{ footprint: string }>(
+        page,
+        'GET',
+        `/public/artifacts/${artifactId}`,
+      )
+    ).body.footprint,
+  ).toBe(originalFootprint);
   const artifactHistory = await api<{
     items: { txId: string; revision: number }[];
   }>(page, 'GET', `/public/artifacts/${artifactId}/history`);

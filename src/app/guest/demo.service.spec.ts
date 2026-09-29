@@ -191,4 +191,25 @@ describe('DemoService', () => {
     expect(expiredService.session).toBeNull();
     expect(sessionStorage.getItem('osc-usrse26-demo-session')).toBeNull();
   });
+
+  it('shares a signed-in account across tabs but not a guest session', () => {
+    const account = { ...session, accountUsername: 'researcher' };
+    service
+      .signInAccount({
+        organization: 'neuroscience-gateway',
+        username: 'researcher',
+        pin: '123456',
+      })
+      .subscribe();
+    http.expectOne('/api/v1/demo/account/sign-in').flush(account);
+    expect(localStorage.getItem('osc-usrse26-account-session')).toContain(
+      'researcher',
+    );
+    expect(sessionStorage.getItem('osc-usrse26-demo-session')).toBeNull();
+
+    const otherTab = new DemoService(TestBed.inject(HttpClient));
+    expect(otherTab.session?.accountUsername).toBe('researcher');
+    service.clearSession();
+    expect(localStorage.getItem('osc-usrse26-account-session')).toBeNull();
+  });
 });

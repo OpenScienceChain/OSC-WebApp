@@ -21,6 +21,7 @@ import {
 } from './demo.models';
 
 const SESSION_STORAGE_KEY = 'osc-usrse26-demo-session';
+const ACCOUNT_STORAGE_KEY = 'osc-usrse26-account-session';
 
 @Injectable({ providedIn: 'root' })
 export class DemoService {
@@ -30,7 +31,15 @@ export class DemoService {
   );
   readonly sessionChanges$ = this.sessionSubject.asObservable();
 
-  constructor(private readonly http: HttpClient) {}
+  constructor(private readonly http: HttpClient) {
+    if (typeof window !== 'undefined') {
+      window.addEventListener('storage', (event) => {
+        if (event.key !== ACCOUNT_STORAGE_KEY) return;
+        this.currentSession = this.parseSession(event.newValue, true);
+        this.sessionSubject.next(this.currentSession);
+      });
+    }
+  }
 
   get session(): DemoSession | null {
     if (
@@ -260,6 +269,9 @@ export class DemoService {
     if (typeof sessionStorage !== 'undefined') {
       sessionStorage.removeItem(SESSION_STORAGE_KEY);
     }
+    if (typeof localStorage !== 'undefined') {
+      localStorage.removeItem(ACCOUNT_STORAGE_KEY);
+    }
   }
 
   private url(path: string): string {
@@ -290,17 +302,58 @@ export class DemoService {
     this.currentSession = session;
     this.sessionSubject.next(session);
     if (typeof sessionStorage !== 'undefined') {
-      sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(session));
+      if (session.accountUsername) {
+        sessionStorage.removeItem(SESSION_STORAGE_KEY);
+      } else {
+        sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(session));
+      }
+    }
+    if (typeof localStorage !== 'undefined') {
+      if (session.accountUsername) {
+        localStorage.setItem(ACCOUNT_STORAGE_KEY, JSON.stringify(session));
+      } else {
+        localStorage.removeItem(ACCOUNT_STORAGE_KEY);
+      }
     }
   }
 
   private readSession(): DemoSession | null {
-    if (typeof sessionStorage === 'undefined') return null;
-    try {
-      const value = sessionStorage.getItem(SESSION_STORAGE_KEY);
-      return value ? (JSON.parse(value) as DemoSession) : null;
-    } catch {
+    if (typeof localStorage !== 'undefined') {
+      const account = this.parseSession(
+        localStorage.getItem(ACCOUNT_STORAGE_KEY),
+        true,
+      );
+      if (account) return account;
+      localStorage.removeItem(ACCOUNT_STORAGE_KEY);
+    }
+    if (typeof sessionStorage !== 'undefined') {
+      const legacy = this.parseSession(
+        sessionStorage.getItem(SESSION_STORAGE_KEY),
+      );
+      if (legacy?.accountUsername) {
+        localStorage.setItem(ACCOUNT_STORAGE_KEY, JSON.stringify(legacy));
+        sessionStorage.removeItem(SESSION_STORAGE_KEY);
+        return legacy;
+      }
+      if (legacy) return legacy;
       sessionStorage.removeItem(SESSION_STORAGE_KEY);
+    }
+    return null;
+  }
+
+  private parseSession(
+    raw: string | null,
+    accountOnly = false,
+  ): DemoSession | null {
+    if (!raw) return null;
+    try {
+      const session = JSON.parse(raw) as DemoSession;
+      return session.csrfToken &&
+        (!accountOnly || session.accountUsername) &&
+        new Date(session.expiresAt).getTime() > Date.now()
+        ? session
+        : null;
+    } catch {
       return null;
     }
   }

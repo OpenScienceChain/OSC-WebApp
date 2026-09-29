@@ -8,7 +8,10 @@
     <dl>
       <div>
         <dt>Status</dt>
-        <dd>
+        <dd
+          [class.status-failed]="artifact.submissionState === 'FAILED'"
+          [class.status-pending]="artifact.submissionState === 'PENDING'"
+        >
           {{
             artifact.submissionState ||
               (artifact.verified ? 'Verified' : 'Recorded')

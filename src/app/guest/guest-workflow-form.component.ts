@@ -1,16 +1,15 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { forkJoin } from 'rxjs';
+import { forkJoin, Subscription } from 'rxjs';
 import {
   DemoCatalogArtifact,
   DemoResearchContext,
   DemoStatus,
 } from './demo.models';
 import { DemoService } from './demo.service';
-import { GuestSessionPanelComponent } from './guest-session-panel.component';
 import { ClampInputLengthDirective } from '../shared/clamp-input-length.directive';
 
 interface WorkflowRepository {
@@ -24,17 +23,11 @@ interface WorkflowRepository {
 
 @Component({
   standalone: true,
-  imports: [
-    CommonModule,
-    FormsModule,
-    RouterModule,
-    GuestSessionPanelComponent,
-    ClampInputLengthDirective,
-  ],
+  imports: [CommonModule, FormsModule, RouterModule, ClampInputLengthDirective],
   templateUrl: './guest-workflow-form.component.html',
   styleUrls: ['./guest-workflow-form.component.css'],
 })
-export class GuestWorkflowFormComponent implements OnInit {
+export class GuestWorkflowFormComponent implements OnInit, OnDestroy {
   readonly isEdit: boolean;
   readonly id: string;
   editReady = false;
@@ -42,7 +35,7 @@ export class GuestWorkflowFormComponent implements OnInit {
   status?: DemoStatus;
   artifacts: DemoCatalogArtifact[] = [];
   selectedIds = new Set<string>();
-  context: DemoResearchContext = 'REPRODUCIBLE_ANALYSIS';
+  context: DemoResearchContext | '' = '';
   title = '';
   description = '';
   keywords = '';
@@ -55,6 +48,8 @@ export class GuestWorkflowFormComponent implements OnInit {
   requestId = '';
   error = '';
   busy = false;
+  private sessionSubscription?: Subscription;
+  private activeAccount?: string;
 
   constructor(
     public readonly demo: DemoService,
@@ -71,10 +66,24 @@ export class GuestWorkflowFormComponent implements OnInit {
       next: (status) => (this.status = status),
       error: () => (this.error = 'Run status is unavailable.'),
     });
-    if (this.demo.session) {
-      this.loadArtifacts();
-      if (this.isEdit) this.loadEdit();
-    }
+    this.sessionSubscription = this.demo.sessionChanges$.subscribe(
+      (session) => {
+        if (session?.accountUsername === this.activeAccount) return;
+        this.activeAccount = session?.accountUsername;
+        if (this.activeAccount) {
+          this.accessDenied = false;
+          this.loadArtifacts();
+          if (this.isEdit) this.loadEdit();
+        } else {
+          this.artifacts = [];
+          this.editReady = false;
+        }
+      },
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.sessionSubscription?.unsubscribe();
   }
 
   private loadEdit(): void {
@@ -114,7 +123,7 @@ export class GuestWorkflowFormComponent implements OnInit {
 
   loadArtifacts(): void {
     const organization = this.demo.session?.organization;
-    if (!organization) return;
+    if (!organization || !this.demo.session?.accountUsername) return;
     this.demo.listArtifacts(organization).subscribe({
       next: (items) =>
         (this.artifacts = items.filter(
@@ -130,6 +139,12 @@ export class GuestWorkflowFormComponent implements OnInit {
     return this.artifacts.filter((artifact) =>
       this.selectedIds.has(artifact.id),
     );
+  }
+
+  get organizationName(): string {
+    return this.demo.session?.organization === 'citizen-science'
+      ? 'Citizen Science'
+      : 'Neuroscience Gateway';
   }
 
   get matchingArtifacts(): DemoCatalogArtifact[] {
@@ -163,7 +178,7 @@ export class GuestWorkflowFormComponent implements OnInit {
 
   get canSubmit(): boolean {
     return (
-      !!this.demo.session &&
+      !!this.demo.session?.accountUsername &&
       this.status?.state === 'OPEN' &&
       (!this.isEdit || this.editReady) &&
       this.formValid &&
@@ -358,7 +373,7 @@ export class GuestWorkflowFormComponent implements OnInit {
       ? this.demo.updateWorkflow(this.id, fields)
       : this.demo.createWorkflow({
           ...fields,
-          researchContext: this.context,
+          researchContext: this.context || 'OTHER',
           title: this.title.trim(),
           description: this.description.trim(),
         });

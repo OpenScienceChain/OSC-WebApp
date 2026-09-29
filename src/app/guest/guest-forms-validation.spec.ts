@@ -15,6 +15,8 @@ describe('Guest portal form boundaries', () => {
     expect(form.fieldError('keywords')).toContain('empty entries');
     form.links = 'http://example.com';
     expect(form.fieldError('links')).toContain('HTTPS');
+    form.links = `example.com/${'a'.repeat(381)}`;
+    expect(form.fieldError('links')).toContain('no longer than 400');
     form.dois = 'invalid-doi';
     expect(form.fieldError('dois')).toContain('10.xxxx');
     form.otherAgency = 'A, B';
@@ -26,7 +28,10 @@ describe('Guest portal form boundaries', () => {
 
   it('hashes a folder locally without sending original names or paths', async () => {
     const demo = {
-      session: { organization: 'neuroscience-gateway' },
+      session: {
+        organization: 'neuroscience-gateway',
+        accountUsername: 'researcher',
+      },
       createArtifact: jasmine
         .createSpy('createArtifact')
         .and.returnValue(of({ id: 'record-id' })),
@@ -59,8 +64,16 @@ describe('Guest portal form boundaries', () => {
     form.description =
       'This synthetic record checks the folder upload request without transmitting local file names.';
     form.submissionComment = 'Initial synthetic folder contribution.';
+    form.links = 'fb.com, ucsd.edu, youtube.com';
+    expect(form.fieldError('links')).toBe('');
     form.submit();
     const request = demo.createArtifact.calls.mostRecent().args[0];
+    expect(request.links).toEqual([
+      'https://fb.com',
+      'https://ucsd.edu',
+      'https://youtube.com',
+    ]);
+    expect(request.researchContext).toBe('OTHER');
     expect(request.files.length).toBe(2);
     expect(request.files[0]).toEqual(
       jasmine.objectContaining({
@@ -116,7 +129,7 @@ describe('Guest portal form boundaries', () => {
       artifact('other-org', 'citizen-science', 'SUCCESS'),
     ];
     const demo = {
-      session: { organization },
+      session: { organization, accountUsername: 'researcher' },
       listArtifacts: jasmine
         .createSpy('listArtifacts')
         .and.returnValue(of(records)),
@@ -132,5 +145,66 @@ describe('Guest portal form boundaries', () => {
     expect(form.matchingArtifacts.map((item) => item.id)).toEqual(['same-org']);
     form.selectArtifact('same-org');
     expect(form.selectedArtifacts.map((item) => item.id)).toEqual(['same-org']);
+  });
+
+  it('keeps the current manifest only when the explicit revision switch is on', () => {
+    const demo = {
+      session: {
+        organization: 'neuroscience-gateway',
+        accountUsername: 'researcher',
+      },
+      updateArtifact: jasmine
+        .createSpy('updateArtifact')
+        .and.returnValue(of({ id: 'artifact-1' })),
+    };
+    const form = new GuestArtifactFormComponent(
+      { snapshot: { paramMap: { get: () => 'artifact-1' } } } as any,
+      { navigate: jasmine.createSpy('navigate') } as any,
+      demo as any,
+      {
+        success: jasmine.createSpy('success'),
+        warning: jasmine.createSpy('warning'),
+      } as any,
+    );
+    form.status = { state: 'OPEN' } as any;
+    form.baseline = {
+      id: 'artifact-1',
+      footprint: 'a'.repeat(64),
+      keywords: [],
+      links: [],
+      dois: [],
+      fundingAgencies: [],
+    } as any;
+    form.submissionComment =
+      'A meaningful metadata revision for this artifact.';
+    form.keywords = 'provenance';
+    expect(form.canSubmit).toBeFalse();
+    form.keepManifestUnchanged = true;
+    expect(form.canSubmit).toBeTrue();
+    form.submit();
+    const request = demo.updateArtifact.calls.mostRecent().args[1];
+    expect(request.keywords).toEqual(['provenance']);
+    expect(request.fingerprint).toBeUndefined();
+    expect(request.files).toBeUndefined();
+  });
+
+  it('requires a changed file or metadata for a replacement revision', () => {
+    const form = new GuestArtifactFormComponent(
+      { snapshot: { paramMap: { get: () => 'artifact-1' } } } as any,
+      {} as any,
+      { session: { accountUsername: 'researcher' } } as any,
+      {} as any,
+    );
+    form.status = { state: 'OPEN' } as any;
+    form.baseline = { footprint: 'a'.repeat(64) } as any;
+    form.submissionComment = 'A meaningful file revision for this artifact.';
+    form.fingerprint = 'a'.repeat(64);
+    expect(form.canSubmit).toBeFalse();
+    form.fingerprint = 'b'.repeat(64);
+    expect(form.canSubmit).toBeTrue();
+    form.keepManifestUnchanged = true;
+    form.onManifestChoice();
+    expect(form.fingerprint).toBe('');
+    expect(form.canSubmit).toBeFalse();
   });
 });

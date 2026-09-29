@@ -59,6 +59,44 @@ code {
   color: #0b5a50;
 }
 
+.record-state.is-failed {
+  border-color: #b53945;
+  background: #fbe4e6;
+  color: #8b1e2b;
+}
+
+.record-state.is-pending {
+  border-color: #b48400;
+  background: #fff0bf;
+  color: #624900;
+}
+
+.submission-notice {
+  margin: 0 0 20px;
+  padding: 12px 16px;
+  border-left: 4px solid;
+}
+
+.submission-notice p {
+  margin: 4px 0 0;
+}
+
+.submission-notice.is-failed {
+  border-color: #b53945;
+  background: #fff0f1;
+  color: #7c1e2a;
+}
+
+.submission-notice.is-pending {
+  border-color: #b48400;
+  background: #fff6d9;
+  color: #624900;
+}
+
+.copy-id .copied {
+  color: #13804d;
+}
+
 .record-header h1 {
   margin: 0;
   color: #163a59;

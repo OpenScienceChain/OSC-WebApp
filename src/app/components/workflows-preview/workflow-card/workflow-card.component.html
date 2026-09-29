@@ -8,7 +8,12 @@
     <dl>
       <div>
         <dt>Status</dt>
-        <dd>{{ workflow.submissionState || 'Recorded' }}</dd>
+        <dd
+          [class.status-failed]="workflow.submissionState === 'FAILED'"
+          [class.status-pending]="workflow.submissionState === 'PENDING'"
+        >
+          {{ workflow.submissionState || 'Recorded' }}
+        </dd>
       </div>
       <div>
         <dt>Last activity</dt>

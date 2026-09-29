@@ -165,6 +165,64 @@ async function checkPage(page: Page): Promise<void> {
 }
 
 test.describe('public views', () => {
+  test('failed and pending records explain state and copying confirms success', async ({
+    page,
+  }) => {
+    await mockDemo(page);
+    await page
+      .context()
+      .grantPermissions(['clipboard-read', 'clipboard-write']);
+    let state = 'FAILED';
+    await page.route(
+      `**/api/v1/demo/public/artifacts/${artifactId}`,
+      async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            ...artifact,
+            submissionState: state,
+            blockchainTxId: null,
+            manifest: undefined,
+            footprint: undefined,
+            failureReason:
+              state === 'FAILED'
+                ? 'The blockchain network was unavailable during submission. No ledger confirmation was recorded.'
+                : undefined,
+          }),
+        });
+      },
+    );
+    await page.goto(`/artifacts/${artifactId}`);
+    await expect(page.getByText('Blockchain submission failed')).toBeVisible();
+    await expect(
+      page.getByText('Not confirmed on the blockchain'),
+    ).toBeVisible();
+    await checkPage(page);
+    await page.getByRole('button', { name: 'Copy artifact ID' }).click();
+    await expect(
+      page.getByRole('button', { name: 'Artifact ID copied' }),
+    ).toBeVisible();
+    await expect(
+      page
+        .getByRole('status')
+        .filter({ hasText: 'Artifact ID copied to clipboard.' }),
+    ).toBeAttached();
+    expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(
+      artifactId,
+    );
+
+    state = 'PENDING';
+    await page.reload();
+    await expect(
+      page.getByText('Blockchain confirmation pending'),
+    ).toBeVisible();
+    await expect(
+      page.getByText('Awaiting blockchain confirmation'),
+    ).toBeVisible();
+    await checkPage(page);
+  });
+
   const paths = [
     '/',
     '/list-artifacts',
@@ -209,6 +267,137 @@ test.describe('public views', () => {
 });
 
 test.describe('owner views', () => {
+  test('signed-in account is available in another tab', async ({
+    page,
+  }, testInfo) => {
+    const waitingTab = await page.context().newPage();
+    await mockDemo(waitingTab);
+    await waitingTab.goto('/create-workflow');
+    await expect(waitingTab.getByText('Sign in to contribute')).toBeVisible();
+
+    await mockDemo(page, true);
+    await page.goto('/');
+    await expect(page.getByText('Ready to contribute')).toBeVisible();
+    await expect(
+      page.getByRole('link', { name: 'Register an artifact' }),
+    ).toBeVisible();
+    await expect(waitingTab.getByText('Sign in to contribute')).toHaveCount(0);
+    await expect(
+      waitingTab.getByPlaceholder(
+        'Search confirmed artifacts in your organization',
+      ),
+    ).toBeVisible();
+    await waitingTab.close();
+
+    const secondTab = await page.context().newPage();
+    await mockDemo(secondTab);
+    await secondTab.goto('/contribute');
+    await expect(secondTab.getByText('Sign in to contribute')).toHaveCount(0);
+    await expect(secondTab.getByLabel('Title', { exact: true })).toBeVisible();
+    if (testInfo.project.name !== 'desktop') {
+      await secondTab
+        .getByRole('button', { name: 'Open navigation menu' })
+        .click();
+    }
+    await expect(
+      secondTab.getByRole('button', { name: 'Sign out' }),
+    ).toBeVisible();
+    await secondTab.close();
+  });
+
+  test('workflow access notice replaces editing guidance for another account', async ({
+    page,
+  }) => {
+    await mockDemo(page, true);
+    await page.route('**/api/v1/demo/mine/workflows', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: '[]',
+      }),
+    );
+    await page.goto(`/update-workflow/${workflowId}`);
+    await expect(
+      page.getByText('Workflow updates are restricted'),
+    ).toBeVisible();
+    await expect(
+      page.getByText(
+        'Only the contributing account can manage a confirmed workflow.',
+      ),
+    ).toBeVisible();
+    await expect(
+      page.getByText('Link up to three confirmed artifacts from'),
+    ).toHaveCount(0);
+    await expect(
+      page.getByRole('link', { name: 'Back to workflow' }),
+    ).toBeVisible();
+    await checkPage(page);
+  });
+
+  test('workflow submit follows form validity', async ({ page }) => {
+    await mockDemo(page, true);
+    await page.goto('/create-workflow');
+    const submit = page.getByRole('button', { name: 'Submit workflow' });
+    await expect(submit).toBeDisabled();
+
+    await page
+      .getByLabel('Title', { exact: true })
+      .fill('Microscopy review workflow');
+    await page
+      .getByLabel('Description', { exact: true })
+      .fill(
+        'This workflow documents a reproducible review of the linked microscopy dataset and its analysis steps.',
+      );
+    await page
+      .getByLabel('Submission Comment')
+      .fill('Initial workflow contribution for the microscopy review.');
+    await expect(submit).toBeDisabled();
+
+    await page
+      .getByPlaceholder('Search confirmed artifacts in your organization')
+      .click();
+    await page.getByRole('button', { name: /Microscopy dataset/ }).click();
+    await expect(submit).toBeEnabled();
+
+    await page.getByRole('button', { name: '+ Add Repository' }).click();
+    await expect(submit).toBeDisabled();
+    await page.getByRole('button', { name: 'Remove', exact: true }).click();
+    await expect(submit).toBeEnabled();
+
+    await page
+      .getByRole('button', { name: 'Remove Microscopy dataset' })
+      .click();
+    await expect(submit).toBeDisabled();
+  });
+
+  test('artifact revision can retain its manifest without selecting files', async ({
+    page,
+  }) => {
+    await mockDemo(page, true);
+    await page.goto(`/update-artifact/${artifactId}`);
+    const keepManifest = page.getByRole('switch', {
+      name: 'Keep current manifest and footprint',
+    });
+    await expect(keepManifest).toBeVisible();
+    await expect(keepManifest).not.toBeChecked();
+    await expect(
+      page.getByRole('button', { name: 'Submit revision' }),
+    ).toBeDisabled();
+    await keepManifest.check();
+    await expect(page.getByText('Current footprint (SHA-256):')).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: 'Select a File' }),
+    ).toHaveCount(0);
+    await page.getByLabel('Key Words').fill('provenance');
+    await page
+      .getByLabel('Submission Comment')
+      .fill('A documented metadata revision for this artifact.');
+    await expect(
+      page.getByRole('button', { name: 'Submit revision' }),
+    ).toBeEnabled();
+    await checkPage(page);
+  });
+
   for (const path of [
     `/update-artifact/${artifactId}`,
     `/update-workflow/${workflowId}`,

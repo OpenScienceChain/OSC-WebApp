@@ -37,3 +37,8 @@
   font-weight: 700;
   text-decoration: underline;
 }
+.organization-select {
+  appearance: auto;
+  cursor: pointer;
+  padding-right: 2.5rem;
+}

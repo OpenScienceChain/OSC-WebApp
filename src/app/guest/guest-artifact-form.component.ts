@@ -1,8 +1,14 @@
 import { CommonModule } from '@angular/common';
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  OnDestroy,
+  OnInit,
+  ViewChild,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { forkJoin } from 'rxjs';
+import { forkJoin, Subscription } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
 import {
   DemoArtifactEditRequest,
@@ -13,7 +19,6 @@ import {
   DemoStatus,
 } from './demo.models';
 import { DemoService } from './demo.service';
-import { GuestSessionPanelComponent } from './guest-session-panel.component';
 import { ClampInputLengthDirective } from '../shared/clamp-input-length.directive';
 
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
@@ -32,17 +37,11 @@ const ALLOWED_EXTENSIONS = new Set([
 
 @Component({
   standalone: true,
-  imports: [
-    CommonModule,
-    FormsModule,
-    RouterModule,
-    GuestSessionPanelComponent,
-    ClampInputLengthDirective,
-  ],
+  imports: [CommonModule, FormsModule, RouterModule, ClampInputLengthDirective],
   templateUrl: './guest-artifact-form.component.html',
   styleUrls: ['./guest-artifact-form.component.css'],
 })
-export class GuestArtifactFormComponent implements OnInit {
+export class GuestArtifactFormComponent implements OnInit, OnDestroy {
   readonly isEdit: boolean;
   readonly id: string;
   baseline?: DemoCatalogArtifact;
@@ -65,8 +64,9 @@ export class GuestArtifactFormComponent implements OnInit {
   nasa = false;
   acknowledgement = '';
   submissionComment = '';
-  researchContext: DemoResearchContext = 'RESEARCH_DATASET';
+  researchContext: DemoResearchContext | '' = '';
   fingerprint = '';
+  keepManifestUnchanged = false;
   sizeBytes = 0;
   extension = '';
   selectedFiles: (DemoFileEntry & { name: string })[] = [];
@@ -74,6 +74,8 @@ export class GuestArtifactFormComponent implements OnInit {
   @ViewChild('folderInput') folderInput?: ElementRef<HTMLInputElement>;
   touched = new Set<string>();
   lengthWarnings: Record<string, string> = {};
+  private sessionSubscription?: Subscription;
+  private activeAccount?: string;
 
   constructor(
     private readonly route: ActivatedRoute,
@@ -90,11 +92,28 @@ export class GuestArtifactFormComponent implements OnInit {
       next: (status) => (this.status = status),
       error: () => (this.error = 'Run status is unavailable.'),
     });
-    if (this.isEdit && this.demo.session) this.loadEdit();
+    this.sessionSubscription = this.demo.sessionChanges$.subscribe(
+      (session) => {
+        if (session?.accountUsername === this.activeAccount) return;
+        this.activeAccount = session?.accountUsername;
+        if (this.isEdit && this.activeAccount) {
+          this.accessDenied = false;
+          this.loadEdit();
+        } else if (this.isEdit) {
+          this.baseline = undefined;
+        }
+      },
+    );
   }
 
-  onSessionStarted(): void {
-    if (this.isEdit) this.loadEdit();
+  ngOnDestroy(): void {
+    this.sessionSubscription?.unsubscribe();
+  }
+
+  get organizationName(): string {
+    return this.demo.session?.organization === 'citizen-science'
+      ? 'Citizen Science'
+      : 'Neuroscience Gateway';
   }
 
   private loadEdit(): void {
@@ -126,7 +145,7 @@ export class GuestArtifactFormComponent implements OnInit {
 
   get canSubmit(): boolean {
     return (
-      !!this.demo.session &&
+      !!this.demo.session?.accountUsername &&
       this.status?.state === 'OPEN' &&
       !this.busy &&
       !this.hashing &&
@@ -138,8 +157,23 @@ export class GuestArtifactFormComponent implements OnInit {
           this.description.trim().length <= 3000)) &&
       this.submissionComment.trim().length >= 20 &&
       this.submissionComment.trim().length <= 1000 &&
-      !this.metadataError()
+      !this.metadataError() &&
+      (!this.isEdit ||
+        (this.keepManifestUnchanged
+          ? Object.keys(this.editChanges(this.metadata())).length > 0
+          : !!this.fingerprint &&
+            (this.fingerprint !== this.baseline?.footprint ||
+              Object.keys(this.editChanges(this.metadata())).some(
+                (key) =>
+                  !['fingerprint', 'sizeBytes', 'extension', 'files'].includes(
+                    key,
+                  ),
+              ))))
     );
+  }
+
+  onManifestChoice(): void {
+    this.resetFiles();
   }
 
   onChange(field?: string): void {
@@ -195,20 +229,32 @@ export class GuestArtifactFormComponent implements OnInit {
       otherAgency: [5, 100, 'funding agencies'],
     };
     const [count, length, label] = limits[field];
-    if (items.length > count || items.some((item) => item.length > length))
+    if (
+      items.length > count ||
+      items.some(
+        (item) =>
+          (field === 'links' ? this.normalizedLink(item) : item).length >
+          length,
+      )
+    )
       return `Use at most ${count} ${label}, each no longer than ${length} characters.`;
     if (
       field === 'links' &&
       items.some((link) => {
         try {
-          const url = new URL(link);
-          return url.protocol !== 'https:' || !url.hostname.includes('.');
+          const url = new URL(this.normalizedLink(link));
+          return (
+            url.protocol !== 'https:' ||
+            !url.hostname.includes('.') ||
+            !!url.username ||
+            !!url.password
+          );
         } catch {
           return true;
         }
       })
     )
-      return 'Enter valid HTTPS links, separated by commas.';
+      return 'Enter valid HTTPS website links, separated by commas. HTTP is not supported.';
     if (
       field === 'dois' &&
       items.some((doi) => !/^10\.\d{4,9}\/[-_.;()/:A-Za-z0-9]+$/.test(doi))
@@ -332,7 +378,7 @@ export class GuestArtifactFormComponent implements OnInit {
   }
 
   submit(): void {
-    if (!this.demo.session) {
+    if (!this.demo.session?.accountUsername) {
       this.error = 'Sign in to your contributor account before submitting.';
       return;
     }
@@ -372,7 +418,7 @@ export class GuestArtifactFormComponent implements OnInit {
           title: this.title.trim(),
           description: this.description.trim(),
           submissionComment: comment,
-          researchContext: this.researchContext,
+          researchContext: this.researchContext || 'OTHER',
           fingerprint: this.fingerprint,
           sizeBytes: this.sizeBytes,
           extension: this.extension,
@@ -419,6 +465,10 @@ export class GuestArtifactFormComponent implements OnInit {
       .filter(Boolean);
   }
 
+  private normalizedLink(link: string): string {
+    return /^[a-z][a-z\d+.-]*:\/\//i.test(link) ? link : `https://${link}`;
+  }
+
   private agencies(): string[] {
     return [
       ...(this.nsf ? ['NSF'] : []),
@@ -431,7 +481,9 @@ export class GuestArtifactFormComponent implements OnInit {
 
   private metadata(): DemoArtifactMetadata {
     const keywords = this.list(this.keywords);
-    const links = this.list(this.links);
+    const links = this.list(this.links).map((link) =>
+      this.normalizedLink(link),
+    );
     const dois = this.list(this.dois);
     const fundingAgencies = this.agencies();
     return {
@@ -464,7 +516,7 @@ export class GuestArtifactFormComponent implements OnInit {
     const acknowledgement = this.acknowledgement.trim();
     if (acknowledgement !== (baseline.acknowledgements || ''))
       changes.acknowledgements = acknowledgement;
-    if (this.fingerprint) {
+    if (!this.keepManifestUnchanged && this.fingerprint) {
       changes.fingerprint = this.fingerprint;
       changes.sizeBytes = this.sizeBytes;
       changes.extension = this.extension;

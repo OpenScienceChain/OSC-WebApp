@@ -4,7 +4,7 @@ export type DemoLifecycleState =
 export type DemoOrganizationSlug = 'neuroscience-gateway' | 'citizen-science';
 
 export type DemoResearchContext =
-  'REPRODUCIBLE_ANALYSIS' | 'RESEARCH_DATASET' | 'SOFTWARE_RELEASE';
+  'REPRODUCIBLE_ANALYSIS' | 'RESEARCH_DATASET' | 'SOFTWARE_RELEASE' | 'OTHER';
 
 export interface DemoStatus {
   state: DemoLifecycleState;
@@ -155,6 +155,7 @@ export interface DemoCatalogArtifact extends DemoArtifactMetadata {
   researchContext: string | null;
   verified: boolean;
   submissionState: string;
+  failureReason?: string;
   submittedAt: string;
   lastUpdatedAt?: string;
   blockchainTxId?: string | null;
@@ -175,6 +176,7 @@ export interface DemoCatalogWorkflow {
   researchContext: string | null;
   artifactIds: string[];
   submissionState: string;
+  failureReason?: string;
   submittedAt: string;
   blockchainTxId?: string | null;
 }

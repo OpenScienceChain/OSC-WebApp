@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { DemoOrganizationSlug, DemoStatus } from '../../guest/demo.models';
 import { DemoService } from '../../guest/demo.service';
 
@@ -27,6 +27,7 @@ export class ContributorAuthComponent implements OnInit {
   constructor(
     public readonly demo: DemoService,
     private readonly router: Router,
+    private readonly route: ActivatedRoute,
   ) {}
 
   ngOnInit(): void {
@@ -69,7 +70,15 @@ export class ContributorAuthComponent implements OnInit {
       next: () => {
         this.pin = '';
         this.busy = false;
-        this.router.navigate(['/']);
+        const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+        this.router.navigateByUrl(
+          returnUrl &&
+            /^\/(?:contribute|create-workflow|update-artifact\/[a-f\d-]{36}|update-workflow\/[a-f\d-]{36})$/i.test(
+              returnUrl,
+            )
+            ? returnUrl
+            : '/',
+        );
       },
       error: (response) => {
         this.busy = false;

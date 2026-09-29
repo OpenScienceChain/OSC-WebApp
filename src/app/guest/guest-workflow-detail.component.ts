@@ -26,12 +26,37 @@ import { DemoService } from './demo.service';
           <header class="record-header">
             <div class="record-kicker">
               <span>Scientific Workflow</span
-              ><span class="record-state" [class.is-confirmed]="confirmed">{{
-                workflow.submissionState
-              }}</span>
+              ><span
+                class="record-state"
+                [class.is-confirmed]="confirmed"
+                [class.is-failed]="workflow.submissionState === 'FAILED'"
+                [class.is-pending]="workflow.submissionState === 'PENDING'"
+                >{{ workflow.submissionState }}</span
+              >
             </div>
             <h1>{{ workflow.title }}</h1>
           </header>
+          <div
+            *ngIf="workflow.submissionState === 'FAILED'"
+            class="submission-notice is-failed"
+            role="status"
+          >
+            <strong>Blockchain submission failed</strong>
+            <p>
+              {{
+                workflow.failureReason ||
+                  'Blockchain submission failed. No ledger confirmation was recorded.'
+              }}
+            </p>
+          </div>
+          <div
+            *ngIf="workflow.submissionState === 'PENDING'"
+            class="submission-notice is-pending"
+            role="status"
+          >
+            <strong>Blockchain confirmation pending</strong>
+            <p>This submission is still awaiting a ledger transaction.</p>
+          </div>
           <div class="record-layout workflow-body">
             <section
               class="description-col"
@@ -71,6 +96,12 @@ import { DemoService } from './demo.service';
                       <span
                         class="record-state"
                         [class.is-confirmed]="confirmed"
+                        [class.is-failed]="
+                          workflow.submissionState === 'FAILED'
+                        "
+                        [class.is-pending]="
+                          workflow.submissionState === 'PENDING'
+                        "
                         >{{ workflow.submissionState }}</span
                       >
                     </td>
@@ -83,7 +114,13 @@ import { DemoService } from './demo.service';
                   </tr>
                   <tr *ngIf="!confirmed">
                     <th scope="row">Provenance</th>
-                    <td>Awaiting blockchain confirmation</td>
+                    <td>
+                      {{
+                        workflow.submissionState === 'FAILED'
+                          ? 'Not confirmed on the blockchain'
+                          : 'Awaiting blockchain confirmation'
+                      }}
+                    </td>
                   </tr>
                 </tbody>
               </table>
