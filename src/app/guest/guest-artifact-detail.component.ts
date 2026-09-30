@@ -3,6 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { DemoCatalogArtifact } from './demo.models';
 import { DemoService } from './demo.service';
+import { PublicCatalogService } from './public-catalog.service';
 import { printFileHashes } from '../shared/print-file-hashes';
 
 @Component({
@@ -295,6 +296,7 @@ export class GuestArtifactDetailComponent implements OnInit {
   constructor(
     private readonly route: ActivatedRoute,
     public readonly demo: DemoService,
+    private readonly catalog: PublicCatalogService,
   ) {}
 
   ngOnInit(): void {
@@ -313,7 +315,7 @@ export class GuestArtifactDetailComponent implements OnInit {
     this.isLoading = true;
     this.errorMessage = '';
     this.canEdit = false;
-    this.demo.getPublicArtifact(this.id).subscribe({
+    this.catalog.artifact(this.id).subscribe({
       next: (artifact) => {
         this.artifact = artifact;
         this.isLoading = false;

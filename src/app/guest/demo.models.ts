@@ -85,7 +85,7 @@ export interface DemoFileEntry {
 export interface DemoManifestEntry {
   filename: string;
   hash: string;
-  algorithm: 'sha256';
+  algorithm: string;
 }
 
 export interface DemoArtifactMetadata {
@@ -150,7 +150,7 @@ export interface DemoCatalogArtifact extends DemoArtifactMetadata {
   title: string;
   description: string;
   organization: string;
-  organizationSlug: DemoOrganizationSlug;
+  organizationSlug: string;
   contributorAlias: string;
   researchContext: string | null;
   verified: boolean;
@@ -171,7 +171,7 @@ export interface DemoCatalogWorkflow {
   submissionComment?: string;
   githubRepositories?: { url: string; description: string; gitHash: string }[];
   organization: string;
-  organizationSlug: DemoOrganizationSlug;
+  organizationSlug: string;
   contributorAlias: string;
   researchContext: string | null;
   artifactIds: string[];

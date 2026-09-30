@@ -1,13 +1,9 @@
-import { Component, Injector, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ArtifactService } from '../services/artifact.service';
 import { Artifact } from '../../models/artifact.model';
 import { ArtifactCardComponent } from '../../components/artifacts-preview/artifact-card/artifact-card.component';
 import { FormsModule } from '@angular/forms';
-import { map } from 'rxjs/operators';
-import { Observable } from 'rxjs';
-import { AuthService } from '../../auth/auth.service';
-import { DemoService } from '../../guest/demo.service';
 
 @Component({
   selector: 'app-list-artifact',
@@ -30,10 +26,7 @@ export class ListArtifactComponent implements OnInit {
   currentPage = 1;
   itemsPerPage = 6;
 
-  constructor(
-    private readonly artifactService: ArtifactService,
-    private readonly injector: Injector,
-  ) {}
+  constructor(private readonly artifactService: ArtifactService) {}
 
   ngOnInit(): void {
     this.loadArtifacts();
@@ -42,32 +35,14 @@ export class ListArtifactComponent implements OnInit {
   loadArtifacts(): void {
     this.isLoading = true;
     this.errorMessage = '';
-    const source: Observable<Artifact[]> = this.injector
-      .get(AuthService)
-      .isAuthenticated()
-      ? this.artifactService.getArtifacts()
-      : this.injector
-          .get(DemoService)
-          .listArtifacts()
-          .pipe(
-            map((items) =>
-              items.map((item) => ({
-                id: item.id,
-                title: item.title,
-                description: item.description,
-                keywords: item.keywords || [],
-                submittedAt: item.submittedAt,
-                verified: false,
-                submissionState: item.submissionState,
-                lastTimeVerified: null,
-                lastTimeUpdated: null,
-              })),
-            ),
-          );
-    source.subscribe({
+    this.artifactService.getArtifacts().subscribe({
       next: (artifacts) => {
-        this.allArtifacts = artifacts;
-        this.filteredArtifacts = artifacts;
+        this.allArtifacts = [...artifacts].sort(
+          (a, b) =>
+            new Date(b.submittedAt).getTime() -
+            new Date(a.submittedAt).getTime(),
+        );
+        this.filteredArtifacts = this.allArtifacts;
         this.isLoading = false;
         this.refreshView();
       },

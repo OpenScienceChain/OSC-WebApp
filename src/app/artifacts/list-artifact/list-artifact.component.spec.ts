@@ -6,8 +6,6 @@ import { of } from 'rxjs';
 import { ListArtifactComponent } from './list-artifact.component';
 import { ArtifactService } from '../services/artifact.service';
 import { Artifact } from '../../models/artifact.model';
-import { AuthService } from '../../auth/auth.service';
-import { DemoService } from '../../guest/demo.service';
 
 // Helper to create mock artifacts
 const createMockArtifacts = (count: number): Artifact[] => {
@@ -27,26 +25,17 @@ describe('ListArtifactComponent', () => {
   let component: ListArtifactComponent;
   let fixture: ComponentFixture<ListArtifactComponent>;
   let artifactService: ArtifactService;
-  let authService: jasmine.SpyObj<AuthService>;
-  let demoService: jasmine.SpyObj<DemoService>;
 
   const mockArtifacts = createMockArtifacts(20); // Create 20 mock artifacts for testing
 
   beforeEach(async () => {
-    authService = jasmine.createSpyObj('AuthService', ['isAuthenticated']);
-    authService.isAuthenticated.and.returnValue(true);
-    demoService = jasmine.createSpyObj('DemoService', ['listArtifacts']);
     await TestBed.configureTestingModule({
       imports: [
         ListArtifactComponent,
         HttpClientTestingModule,
         RouterTestingModule,
       ],
-      providers: [
-        ArtifactService,
-        { provide: AuthService, useValue: authService },
-        { provide: DemoService, useValue: demoService },
-      ],
+      providers: [ArtifactService],
     }).compileComponents();
 
     fixture = TestBed.createComponent(ListArtifactComponent);
@@ -66,25 +55,10 @@ describe('ListArtifactComponent', () => {
     expect(component.paginatedArtifacts.length).toBe(component.itemsPerPage);
   });
 
-  it('uses the public guest projection in the same catalog when signed out', () => {
-    authService.isAuthenticated.and.returnValue(false);
-    demoService.listArtifacts.and.returnValue(
-      of([
-        {
-          id: 'guest-1',
-          title: 'Public guest artifact',
-          description: 'Safe public projection',
-          keywords: ['provenance'],
-          submittedAt: new Date().toISOString(),
-          submissionState: 'SUCCESS',
-        } as any,
-      ]),
-    );
+  it('uses the public catalog without an authenticated session', () => {
     fixture.detectChanges();
-    expect(demoService.listArtifacts).toHaveBeenCalled();
-    expect(artifactService.getArtifacts).not.toHaveBeenCalled();
-    expect(component.paginatedArtifacts[0].title).toBe('Public guest artifact');
-    expect(component.paginatedArtifacts[0].submissionState).toBe('SUCCESS');
+    expect(artifactService.getArtifacts).toHaveBeenCalled();
+    expect(component.allArtifacts.length).toBe(20);
   });
 
   describe('onSearch', () => {
@@ -96,7 +70,9 @@ describe('ListArtifactComponent', () => {
       component.titleSearchTerm = 'Artifact 1'; // This should match Artifact 1, 10, 11...19
       component.onSearch();
       expect(component.filteredArtifacts.length).toBe(11);
-      expect(component.filteredArtifacts[0].title).toBe('Artifact 1');
+      expect(component.filteredArtifacts.map((item) => item.title)).toContain(
+        'Artifact 1',
+      );
     });
 
     it('should reset to full list when search term is empty', () => {

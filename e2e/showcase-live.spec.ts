@@ -123,3 +123,57 @@ test('landing footer connects to the research examples accessibly', async ({
     page.getByRole('heading', { level: 1, name: 'Follow the evidence' }),
   ).toBeVisible();
 });
+
+test('public catalogs include curated records outside the demo feed', async ({
+  page,
+}) => {
+  await page.goto('/list-artifacts');
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'Artifacts Vault' }),
+  ).toBeVisible();
+  await page.getByLabel('Title contains').fill('EEG Eye State');
+  await page.getByRole('button', { name: 'Search' }).click();
+  const eeg = page.locator('app-artifact-card').filter({
+    hasText: 'EEG Eye State - original recording',
+  });
+  await expect(eeg).toHaveCount(1);
+  await eeg.getByRole('link', { name: /View/ }).click();
+  await expect(page.getByRole('heading', { level: 1 })).toContainText(
+    'EEG Eye State',
+  );
+  await page.getByRole('link', { name: 'History' }).click();
+  await expect(page.getByText('Showing 1 public ledger events')).toBeVisible();
+
+  await page.goto('/list-artifacts');
+  await page.getByLabel('Title contains').fill('Snapshot Serengeti');
+  await page.getByRole('button', { name: 'Search' }).click();
+  await expect(page.locator('app-artifact-card')).toHaveCount(2);
+
+  await page.goto('/list-workflows');
+  await expect(
+    page.getByRole('heading', {
+      name: 'EEG Eye State source provenance collection',
+    }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('heading', {
+      name: 'Snapshot Serengeti classification source collection',
+    }),
+  ).toBeVisible();
+  await page
+    .getByRole('link', {
+      name: /View workflow EEG Eye State source provenance collection/,
+    })
+    .click();
+  await expect(page.getByRole('heading', { level: 1 })).toContainText(
+    'EEG Eye State source provenance collection',
+  );
+  const horizontalOverflow = await page.evaluate(
+    () => document.documentElement.scrollWidth > window.innerWidth + 1,
+  );
+  expect(horizontalOverflow).toBe(false);
+  const accessibility = await new AxeBuilder({ page })
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+    .analyze();
+  expect(accessibility.violations).toEqual([]);
+});

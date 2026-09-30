@@ -4,6 +4,7 @@ import { ActivatedRoute, RouterModule } from '@angular/router';
 import { Observable } from 'rxjs';
 import { DemoHistoryItem } from './demo.models';
 import { DemoService } from './demo.service';
+import { PublicCatalogService } from './public-catalog.service';
 import { printFileHashes } from '../shared/print-file-hashes';
 
 @Component({
@@ -198,7 +199,11 @@ import { printFileHashes } from '../shared/print-file-hashes';
                       </tr>
                     </thead>
                     <tbody>
-                      <tr *ngFor="let file of item.snapshot?.manifest | slice: 0 : 10">
+                      <tr
+                        *ngFor="
+                          let file of item.snapshot?.manifest | slice: 0 : 10
+                        "
+                      >
                         <td>{{ file.filename }}</td>
                         <td>
                           <code class="text-break">{{ file.hash }}</code>
@@ -209,7 +214,8 @@ import { printFileHashes } from '../shared/print-file-hashes';
                   </table>
                 </div>
                 <p *ngIf="(item.snapshot?.manifest?.length ?? 0) > 10">
-                  and {{ (item.snapshot?.manifest?.length ?? 0) - 10 }} more files
+                  and {{ (item.snapshot?.manifest?.length ?? 0) - 10 }} more
+                  files
                 </p>
                 <p>
                   <strong>Footprint (SHA-256)</strong>
@@ -358,6 +364,7 @@ export class GuestHistoryComponent implements OnInit {
   constructor(
     private readonly route: ActivatedRoute,
     private readonly demo: DemoService,
+    private readonly catalog: PublicCatalogService,
   ) {}
   ngOnInit(): void {
     this.type = this.route.snapshot.data['recordType'];
@@ -370,8 +377,8 @@ export class GuestHistoryComponent implements OnInit {
       contributorAlias?: string;
     }> =
       this.type === 'artifact'
-        ? this.demo.getPublicArtifact(this.id)
-        : this.demo.getPublicWorkflow(this.id);
+        ? this.catalog.artifact(this.id)
+        : this.catalog.workflow(this.id);
     detail.subscribe({
       next: (record) => {
         this.recordTitle = record.title;
@@ -414,10 +421,7 @@ export class GuestHistoryComponent implements OnInit {
   load(): void {
     this.isLoading = true;
     this.errorMessage = '';
-    const request =
-      this.type === 'artifact'
-        ? this.demo.getPublicArtifactHistory(this.id)
-        : this.demo.getPublicWorkflowHistory(this.id);
+    const request = this.catalog.history(this.type, this.id);
     request.subscribe({
       next: (history) => {
         this.items = history.items || history.history || [];

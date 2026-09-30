@@ -3,6 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { DemoCatalogArtifact, DemoCatalogWorkflow } from './demo.models';
 import { DemoService } from './demo.service';
+import { PublicCatalogService } from './public-catalog.service';
 
 @Component({
   standalone: true,
@@ -220,6 +221,7 @@ export class GuestWorkflowDetailComponent implements OnInit {
   constructor(
     private readonly route: ActivatedRoute,
     public readonly demo: DemoService,
+    private readonly catalog: PublicCatalogService,
   ) {}
   ngOnInit(): void {
     this.id = this.route.snapshot.paramMap.get('id') || '';
@@ -235,12 +237,12 @@ export class GuestWorkflowDetailComponent implements OnInit {
     this.isLoading = true;
     this.errorMessage = '';
     this.canEdit = false;
-    this.demo.getPublicWorkflow(this.id).subscribe({
+    this.catalog.workflow(this.id).subscribe({
       next: (workflow) => {
         this.workflow = workflow;
         this.linkedArtifacts = {};
         for (const artifactId of workflow.artifactIds) {
-          this.demo.getPublicArtifact(artifactId).subscribe({
+          this.catalog.artifact(artifactId).subscribe({
             next: (artifact) => (this.linkedArtifacts[artifactId] = artifact),
           });
         }
