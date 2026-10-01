@@ -1,4 +1,4 @@
-FROM node:20-alpine@sha256:fb4cd12c85ee03686f6af5362a0b0d56d50c58a04632e6c0fb8363f609372293 AS build
+FROM node:24.20.0-alpine3.24@sha256:e67514e5d0f6c46656005e1b693b2ec9d52e80b641307de684d4a015ba7a4eaf AS build
 
 WORKDIR /app
 RUN apk add --no-cache python3
@@ -8,7 +8,6 @@ COPY security/npm-malware-blocklist.csv security/npm-lifecycle-allowlist.json ./
 RUN python3 scripts/security/check_npm_supply_chain.py --repo . --offline-reviewed --skip-installed \
     && npm ci --ignore-scripts --no-audit --fund=false \
     && npm audit signatures \
-    && npm rebuild @parcel/watcher@2.5.6 cypress@14.5.4 esbuild@0.25.4 esbuild@0.25.12 lmdb@3.2.6 msgpackr-extract@3.0.3 --ignore-scripts=false \
     && python3 scripts/security/check_npm_supply_chain.py --repo . --offline-reviewed
 COPY . .
 RUN npm run build:production

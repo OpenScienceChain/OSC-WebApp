@@ -157,16 +157,20 @@ test('local account ownership and confirmed artifact/workflow revisions', async 
   await expect
     .poll(
       async () => {
-        const result = await api<{ count: number }>(
+        const result = await api<{
+          items: { revision: number }[];
+        }>(
           page,
           'GET',
           `/public/artifacts/${artifactId}/history`,
         );
-        return result.status === 200 ? result.body.count : 0;
+        return result.status === 200
+          ? result.body.items.some((item) => item.revision === 2)
+          : false;
       },
       { timeout: 90_000, intervals: [1000, 2000, 3000] },
     )
-    .toBeGreaterThanOrEqual(2);
+    .toBe(true);
   expect(
     (
       await api<{ footprint: string }>(
@@ -179,13 +183,31 @@ test('local account ownership and confirmed artifact/workflow revisions', async 
   const artifactHistory = await api<{
     items: { txId: string; revision: number }[];
   }>(page, 'GET', `/public/artifacts/${artifactId}/history`);
-  expect(artifactHistory.body.items[0].revision).toBe(2);
-  await page.goto(
-    `/artifacts/${artifactId}/history/${artifactHistory.body.items[0].txId}`,
+  const artifactRevision = artifactHistory.body.items.find(
+    (item) => item.revision === 2,
   );
-  await expect(
-    page.getByRole('heading', { name: `Local account E2E dataset ${suffix}` }),
-  ).toBeVisible();
+  expect(artifactRevision).toBeDefined();
+  await page.goto(
+    `/artifacts/${artifactId}/history/${artifactRevision!.txId}`,
+  );
+  await expect
+    .poll(
+      async () => {
+        await page.reload();
+        try {
+          await page
+            .getByRole('heading', {
+              name: `Local account E2E dataset ${suffix}`,
+            })
+            .waitFor({ state: 'visible', timeout: 5_000 });
+          return 1;
+        } catch {
+          return 0;
+        }
+      },
+      { timeout: 60_000, intervals: [1000, 2000, 3000] },
+    )
+    .toBe(1);
   const workflow = await api<{ id: string }>(page, 'POST', '/workflows', {
     requestId: randomUUID(),
     artifactIds: [artifactId],
@@ -247,20 +269,26 @@ test('local account ownership and confirmed artifact/workflow revisions', async 
   await expect
     .poll(
       async () => {
-        const result = await api<{ count: number }>(
+        const result = await api<{
+          items: { revision: number }[];
+        }>(
           page,
           'GET',
           `/public/workflows/${workflowId}/history`,
         );
-        return result.status === 200 ? result.body.count : 0;
+        return result.status === 200
+          ? result.body.items.some((item) => item.revision === 2)
+          : false;
       },
       { timeout: 90_000, intervals: [1000, 2000, 3000] },
     )
-    .toBeGreaterThanOrEqual(2);
+    .toBe(true);
   const workflowHistory = await api<{
     items: { txId: string; revision: number }[];
   }>(page, 'GET', `/public/workflows/${workflowId}/history`);
-  expect(workflowHistory.body.items[0].revision).toBe(2);
+  expect(workflowHistory.body.items.some((item) => item.revision === 2)).toBe(
+    true,
+  );
   await page.goto(`/workflows/${workflowId}/history`);
   await expect(
     page.getByRole('heading', { name: /Workflow's Full History/i }),

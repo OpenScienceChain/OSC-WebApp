@@ -2,7 +2,8 @@
   "packages": {
     "@parcel/watcher": {
       "versions": [
-        "2.5.6"
+        "2.5.6",
+        "2.6.0"
       ],
       "execute": true,
       "scripts": {
@@ -21,7 +22,8 @@
     "esbuild": {
       "versions": [
         "0.25.4",
-        "0.25.12"
+        "0.25.12",
+        "0.28.1"
       ],
       "execute": true,
       "scripts": {
@@ -37,7 +39,8 @@
     },
     "lmdb": {
       "versions": [
-        "3.2.6"
+        "3.2.6",
+        "3.4.2"
       ],
       "execute": true,
       "scripts": {
@@ -46,7 +49,8 @@
     },
     "msgpackr-extract": {
       "versions": [
-        "3.0.3"
+        "3.0.3",
+        "3.0.4"
       ],
       "execute": true,
       "scripts": {

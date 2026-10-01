@@ -4,6 +4,7 @@ import { ActivatedRoute, RouterModule } from '@angular/router';
 import { DemoCatalogArtifact, DemoCatalogWorkflow } from './demo.models';
 import { DemoService } from './demo.service';
 import { PublicCatalogService } from './public-catalog.service';
+import { safeExternalUrl } from '../shared/safe-external-url';
 
 @Component({
   standalone: true,
@@ -174,10 +175,17 @@ import { PublicCatalogService } from './public-catalog.service';
             >
               <h3>
                 <a
-                  [href]="repository.url"
+                  *ngIf="
+                    safeExternalUrl(repository.url) as href;
+                    else plainRepository
+                  "
+                  [href]="href"
                   target="_blank"
                   rel="noopener noreferrer"
                   >{{ repository.url }}</a
+                >
+                <ng-template #plainRepository
+                  ><span>{{ repository.url }}</span></ng-template
                 >
               </h3>
               <p *ngIf="repository.description">{{ repository.description }}</p>
@@ -212,6 +220,7 @@ import { PublicCatalogService } from './public-catalog.service';
   styleUrls: ['./guest-workflow-detail.component.css'],
 })
 export class GuestWorkflowDetailComponent implements OnInit {
+  readonly safeExternalUrl = safeExternalUrl;
   workflow?: DemoCatalogWorkflow;
   linkedArtifacts: Record<string, DemoCatalogArtifact> = {};
   isLoading = true;

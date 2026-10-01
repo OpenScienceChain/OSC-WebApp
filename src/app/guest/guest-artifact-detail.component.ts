@@ -5,6 +5,7 @@ import { DemoCatalogArtifact } from './demo.models';
 import { DemoService } from './demo.service';
 import { PublicCatalogService } from './public-catalog.service';
 import { printFileHashes } from '../shared/print-file-hashes';
+import { safeExternalUrl } from '../shared/safe-external-url';
 
 @Component({
   standalone: true,
@@ -134,13 +135,18 @@ import { printFileHashes } from '../shared/print-file-hashes';
                   <tr *ngIf="artifact.links?.length">
                     <th scope="row">Links</th>
                     <td>
-                      <a
-                        *ngFor="let link of artifact.links"
-                        [href]="link"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        >{{ link }}</a
-                      >
+                      <ng-container *ngFor="let link of artifact.links">
+                        <a
+                          *ngIf="safeExternalUrl(link) as href; else plainLink"
+                          [href]="href"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          >{{ link }}</a
+                        >
+                        <ng-template #plainLink
+                          ><span>{{ link }}</span></ng-template
+                        >
+                      </ng-container>
                     </td>
                   </tr>
                   <tr>
@@ -284,6 +290,7 @@ import { printFileHashes } from '../shared/print-file-hashes';
   styleUrls: ['./guest-artifact-detail.component.css'],
 })
 export class GuestArtifactDetailComponent implements OnInit {
+  readonly safeExternalUrl = safeExternalUrl;
   artifact?: DemoCatalogArtifact;
   isLoading = true;
   errorMessage = '';

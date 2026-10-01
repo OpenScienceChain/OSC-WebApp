@@ -163,12 +163,17 @@
               <dt>DOI</dt>
               <dd>
                 <a
-                  [href]="example.source.url"
+                  *ngIf="
+                    safeExternalUrl(example.source.url) as href;
+                    else plainSource
+                  "
+                  [href]="href"
                   target="_blank"
                   rel="noopener noreferrer"
                   >{{ example.source.doi }}
                   <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i
                 ></a>
+                <ng-template #plainSource>{{ example.source.doi }}</ng-template>
               </dd>
             </div>
           </dl>

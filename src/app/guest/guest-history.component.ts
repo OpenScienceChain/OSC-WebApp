@@ -1,11 +1,12 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
-import { Observable } from 'rxjs';
+import { Observable, concatMap, last, take, takeWhile, timer } from 'rxjs';
 import { DemoHistoryItem } from './demo.models';
 import { DemoService } from './demo.service';
 import { PublicCatalogService } from './public-catalog.service';
 import { printFileHashes } from '../shared/print-file-hashes';
+import { safeExternalUrl } from '../shared/safe-external-url';
 
 @Component({
   standalone: true,
@@ -333,10 +334,14 @@ import { printFileHashes } from '../shared/print-file-hashes';
                 <ul *ngIf="snapshot.links?.length">
                   <li *ngFor="let link of snapshot.links">
                     <a
-                      [href]="link"
+                      *ngIf="safeExternalUrl(link) as href; else plainLink"
+                      [href]="href"
                       target="_blank"
                       rel="noopener noreferrer"
                       >{{ link }}</a
+                    >
+                    <ng-template #plainLink
+                      ><span>{{ link }}</span></ng-template
                     >
                   </li>
                 </ul>
@@ -350,6 +355,7 @@ import { printFileHashes } from '../shared/print-file-hashes';
   styleUrls: ['./guest-history.component.css'],
 })
 export class GuestHistoryComponent implements OnInit {
+  readonly safeExternalUrl = safeExternalUrl;
   type: 'artifact' | 'workflow' = 'artifact';
   id = '';
   selectedTxId = '';
@@ -421,7 +427,19 @@ export class GuestHistoryComponent implements OnInit {
   load(): void {
     this.isLoading = true;
     this.errorMessage = '';
-    const request = this.catalog.history(this.type, this.id);
+    const request = timer(0, 1000).pipe(
+      take(this.selectedTxId ? 5 : 1),
+      concatMap(() => this.catalog.history(this.type, this.id)),
+      takeWhile(
+        (history) =>
+          !!this.selectedTxId &&
+          !(history.items || history.history || []).some(
+            (item) => (item.txId || item.transactionId) === this.selectedTxId,
+          ),
+        true,
+      ),
+      last(),
+    );
     request.subscribe({
       next: (history) => {
         this.items = history.items || history.history || [];

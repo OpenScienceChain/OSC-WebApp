@@ -145,6 +145,7 @@ async function mockDemo(page: Page, owner = false): Promise<void> {
 }
 
 async function checkPage(page: Page): Promise<void> {
+  await page.evaluate(() => window.scrollTo(0, 0));
   await expect(page.locator('h1').first()).toBeVisible();
   await expect
     .poll(async () =>

@@ -7,6 +7,7 @@ import {
   ShowcaseHistory,
 } from './showcase.models';
 import { ShowcaseService } from './showcase.service';
+import { safeExternalUrl } from '../shared/safe-external-url';
 
 @Component({
   standalone: true,
@@ -15,6 +16,7 @@ import { ShowcaseService } from './showcase.service';
   styleUrl: './showcase.component.css',
 })
 export class ShowcaseComponent implements OnInit {
+  readonly safeExternalUrl = safeExternalUrl;
   examples: ShowcaseCatalog[] = [];
   catalog: ShowcaseCatalog | null = null;
   selected: ShowcaseArtifact | null = null;
