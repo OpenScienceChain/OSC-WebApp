@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { WorkflowsPreviewComponent } from './workflows-preview.component';
-import { WorkflowService } from '../../services/workflow.service';
+import { PublicCatalogService } from '../../guest/public-catalog.service';
 import { WorkflowListItem } from '../../models/workflow.model';
 import { of } from 'rxjs';
 import { Component, Input } from '@angular/core';
@@ -39,8 +39,8 @@ const mockWorkflows: WorkflowListItem[] = [
   },
 ];
 
-class MockWorkflowService {
-  getWorkflows() {
+class MockCatalogService {
+  listWorkflows() {
     return of(mockWorkflows);
   }
 }
@@ -48,7 +48,7 @@ class MockWorkflowService {
 describe('WorkflowsPreviewComponent', () => {
   let component: WorkflowsPreviewComponent;
   let fixture: ComponentFixture<WorkflowsPreviewComponent>;
-  let workflowService: WorkflowService;
+  let catalog: PublicCatalogService;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -59,14 +59,14 @@ describe('WorkflowsPreviewComponent', () => {
         MockWorkflowCardComponent,
       ],
       providers: [
-        { provide: WorkflowService, useClass: MockWorkflowService },
+        { provide: PublicCatalogService, useClass: MockCatalogService },
         { provide: AuthService, useValue: { isAuthenticated: () => true } },
       ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(WorkflowsPreviewComponent);
     component = fixture.componentInstance;
-    workflowService = TestBed.inject(WorkflowService);
+    catalog = TestBed.inject(PublicCatalogService);
     fixture.detectChanges();
   });
 
@@ -111,8 +111,8 @@ describe('WorkflowsPreviewComponent', () => {
     expect(textContent).toContain('Test Workflow 2');
   });
 
-  it('should call getWorkflows from the service', () => {
-    const spy = spyOn(workflowService, 'getWorkflows').and.callThrough();
+  it('should call listWorkflows from the public catalog', () => {
+    const spy = spyOn(catalog, 'listWorkflows').and.callThrough();
     component.ngOnInit();
     expect(spy).toHaveBeenCalled();
   });

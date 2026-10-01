@@ -1,7 +1,9 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable, catchError, map, of, switchMap, throwError } from 'rxjs';
+import { Observable, catchError, forkJoin, map, of, switchMap, throwError } from 'rxjs';
 import { ArtifactService } from '../artifacts/services/artifact.service';
+import { Artifact } from '../models/artifact.model';
+import { WorkflowListItem } from '../models/workflow.model';
 import { WorkflowService } from '../services/workflow.service';
 import { ShowcaseService } from '../showcase/showcase.service';
 import { ShowcaseCatalog, ShowcaseHistory } from '../showcase/showcase.models';
@@ -20,6 +22,62 @@ export class PublicCatalogService {
     private readonly artifacts: ArtifactService,
     private readonly workflows: WorkflowService,
   ) {}
+
+  listArtifacts(): Observable<Artifact[]> {
+    return forkJoin([this.demo.listArtifacts(), this.showcase.examples()]).pipe(
+      map(([demoRecords, { examples }]) => [
+        ...demoRecords.map((record) => ({
+          id: record.id,
+          title: record.title,
+          description: record.description,
+          keywords: record.keywords ?? [],
+          submittedAt: record.submittedAt,
+          verified: record.verified,
+          submissionState: record.submissionState,
+          lastTimeVerified: null,
+          lastTimeUpdated: record.lastUpdatedAt ?? null,
+          updatedAt: record.lastUpdatedAt ?? null,
+        })),
+        ...examples.flatMap((example) => example.artifacts.map((record) => ({
+          id: record.id,
+          title: record.title,
+          description: record.description,
+          keywords: record.keywords,
+          submittedAt: record.submittedAt,
+          verified: false,
+          submissionState: record.submissionState,
+          lastTimeVerified: null,
+          lastTimeUpdated: record.updatedAt,
+          updatedAt: record.updatedAt,
+        }))),
+      ]),
+    );
+  }
+
+  listWorkflows(): Observable<WorkflowListItem[]> {
+    return forkJoin([this.demo.listWorkflows(), this.showcase.examples()]).pipe(
+      map(([demoRecords, { examples }]) => [
+        ...demoRecords.map((record) => ({
+          id: record.id,
+          title: record.title,
+          description: record.description,
+          keywords: record.keywords ?? [],
+          submissionState: record.submissionState,
+          submittedAt: new Date(record.submittedAt),
+          updatedAt: new Date(record.submittedAt),
+        })),
+        ...examples.flatMap((example) => example.workflows.map((record) => ({
+          id: record.id,
+          title: record.title,
+          description: record.description,
+          keywords: [],
+          submissionState: record.submissionState,
+          submittedAt: new Date(record.submittedAt),
+          updatedAt: new Date(record.updatedAt ?? record.submittedAt),
+        }))),
+      ]),
+    );
+  }
 
   artifact(id: string): Observable<DemoCatalogArtifact> {
     return this.demo.getPublicArtifact(id).pipe(

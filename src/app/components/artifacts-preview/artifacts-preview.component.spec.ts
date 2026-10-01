@@ -5,7 +5,7 @@ import { By } from '@angular/platform-browser';
 import { RouterTestingModule } from '@angular/router/testing';
 
 import { ArtifactsPreviewComponent } from './artifacts-preview.component';
-import { ArtifactService } from '../../artifacts/services/artifact.service';
+import { PublicCatalogService } from '../../guest/public-catalog.service';
 import { Artifact } from '../../models/artifact.model';
 import { AuthService } from '../../auth/auth.service';
 
@@ -46,14 +46,14 @@ const mockArtifacts: Artifact[] = [
 describe('ArtifactsPreviewComponent', () => {
   let component: ArtifactsPreviewComponent;
   let fixture: ComponentFixture<ArtifactsPreviewComponent>;
-  let mockArtifactService: jasmine.SpyObj<ArtifactService>;
+  let mockCatalog: jasmine.SpyObj<PublicCatalogService>;
 
   beforeEach(async () => {
     // Create a spy object for the service
-    mockArtifactService = jasmine.createSpyObj('ArtifactService', [
-      'getArtifacts',
+    mockCatalog = jasmine.createSpyObj('PublicCatalogService', [
+      'listArtifacts',
     ]);
-    mockArtifactService.getArtifacts.and.returnValue(of(mockArtifacts));
+    mockCatalog.listArtifacts.and.returnValue(of(mockArtifacts));
 
     await TestBed.configureTestingModule({
       imports: [
@@ -62,7 +62,7 @@ describe('ArtifactsPreviewComponent', () => {
         RouterTestingModule,
       ],
       providers: [
-        { provide: ArtifactService, useValue: mockArtifactService },
+        { provide: PublicCatalogService, useValue: mockCatalog },
         { provide: AuthService, useValue: { isAuthenticated: () => true } },
       ],
     }).compileComponents();
@@ -77,7 +77,7 @@ describe('ArtifactsPreviewComponent', () => {
   });
 
   it('should fetch and display a preview of artifacts on init', () => {
-    expect(mockArtifactService.getArtifacts).toHaveBeenCalled();
+    expect(mockCatalog.listArtifacts).toHaveBeenCalled();
     expect(component.artifacts.length).toEqual(2);
     expect(component.artifacts[0].title).toEqual('Test Artifact 1');
   });

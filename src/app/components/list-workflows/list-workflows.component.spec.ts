@@ -3,7 +3,7 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { of } from 'rxjs';
 import { AuthService } from '../../auth/auth.service';
 import { WorkflowListItem } from '../../models/workflow.model';
-import { WorkflowService } from '../../services/workflow.service';
+import { PublicCatalogService } from '../../guest/public-catalog.service';
 import { ListWorkflowsComponent } from './list-workflows.component';
 
 describe('ListWorkflowsComponent', () => {
@@ -22,7 +22,7 @@ describe('ListWorkflowsComponent', () => {
       imports: [ListWorkflowsComponent, RouterTestingModule],
       providers: [
         { provide: AuthService, useValue: { isAuthenticated: () => true } },
-        { provide: WorkflowService, useValue: { getWorkflows: () => of(workflows) } },
+        { provide: PublicCatalogService, useValue: { listWorkflows: () => of(workflows) } },
       ],
     }).compileComponents();
   });

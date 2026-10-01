@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ArtifactCardComponent } from './artifact-card/artifact-card.component';
 import { Artifact } from '../../models/artifact.model';
-import { ArtifactService } from '../../artifacts/services/artifact.service';
+import { PublicCatalogService } from '../../guest/public-catalog.service';
 import { RouterModule } from '@angular/router';
 
 @Component({
@@ -17,7 +17,7 @@ export class ArtifactsPreviewComponent implements OnInit {
   isLoading = true;
   hasError = false;
 
-  constructor(private readonly artifactService: ArtifactService) {}
+  constructor(private readonly catalog: PublicCatalogService) {}
 
   ngOnInit(): void {
     this.loadArtifacts();
@@ -26,7 +26,7 @@ export class ArtifactsPreviewComponent implements OnInit {
   loadArtifacts(): void {
     this.isLoading = true;
     this.hasError = false;
-    this.artifactService.getArtifacts().subscribe({
+    this.catalog.listArtifacts().subscribe({
       next: (artifacts) => {
         this.artifacts = [...artifacts]
           .sort(

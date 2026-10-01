@@ -4,7 +4,7 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { of } from 'rxjs';
 
 import { ListArtifactComponent } from './list-artifact.component';
-import { ArtifactService } from '../services/artifact.service';
+import { PublicCatalogService } from '../../guest/public-catalog.service';
 import { Artifact } from '../../models/artifact.model';
 
 // Helper to create mock artifacts
@@ -24,7 +24,7 @@ const createMockArtifacts = (count: number): Artifact[] => {
 describe('ListArtifactComponent', () => {
   let component: ListArtifactComponent;
   let fixture: ComponentFixture<ListArtifactComponent>;
-  let artifactService: ArtifactService;
+  let catalog: PublicCatalogService;
 
   const mockArtifacts = createMockArtifacts(20); // Create 20 mock artifacts for testing
 
@@ -35,21 +35,23 @@ describe('ListArtifactComponent', () => {
         HttpClientTestingModule,
         RouterTestingModule,
       ],
-      providers: [ArtifactService],
+      providers: [
+        { provide: PublicCatalogService, useValue: { listArtifacts: () => of(mockArtifacts) } },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(ListArtifactComponent);
     component = fixture.componentInstance;
-    artifactService = TestBed.inject(ArtifactService);
+    catalog = TestBed.inject(PublicCatalogService);
 
     // Spy on the service and return our mock data
-    spyOn(artifactService, 'getArtifacts').and.returnValue(of(mockArtifacts));
+    spyOn(catalog, 'listArtifacts').and.returnValue(of(mockArtifacts));
   });
 
   it('should create and load initial artifacts', () => {
     fixture.detectChanges(); // Trigger ngOnInit
     expect(component).toBeTruthy();
-    expect(artifactService.getArtifacts).toHaveBeenCalled();
+    expect(catalog.listArtifacts).toHaveBeenCalled();
     expect(component.allArtifacts.length).toBe(20);
     expect(component.filteredArtifacts.length).toBe(20);
     expect(component.paginatedArtifacts.length).toBe(component.itemsPerPage);
@@ -57,7 +59,7 @@ describe('ListArtifactComponent', () => {
 
   it('uses the public catalog without an authenticated session', () => {
     fixture.detectChanges();
-    expect(artifactService.getArtifacts).toHaveBeenCalled();
+    expect(catalog.listArtifacts).toHaveBeenCalled();
     expect(component.allArtifacts.length).toBe(20);
   });
 

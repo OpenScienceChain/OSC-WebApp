@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { WorkflowCardComponent } from './workflow-card/workflow-card.component';
 import { WorkflowListItem } from '../../models/workflow.model';
-import { WorkflowService } from '../../services/workflow.service';
+import { PublicCatalogService } from '../../guest/public-catalog.service';
 
 @Component({
   selector: 'app-workflows-preview',
@@ -17,7 +17,7 @@ export class WorkflowsPreviewComponent implements OnInit {
   isLoading = true;
   hasError = false;
 
-  constructor(private readonly workflowService: WorkflowService) {}
+  constructor(private readonly catalog: PublicCatalogService) {}
 
   ngOnInit(): void {
     this.loadWorkflows();
@@ -26,7 +26,7 @@ export class WorkflowsPreviewComponent implements OnInit {
   loadWorkflows(): void {
     this.isLoading = true;
     this.hasError = false;
-    this.workflowService.getWorkflows().subscribe({
+    this.catalog.listWorkflows().subscribe({
       next: (workflows) => {
         this.workflows = [...workflows]
           .sort(

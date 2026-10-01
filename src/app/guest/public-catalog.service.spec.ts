@@ -59,6 +59,8 @@ describe('PublicCatalogService', () => {
 
   beforeEach(() => {
     demo = jasmine.createSpyObj('DemoService', [
+      'listArtifacts',
+      'listWorkflows',
       'getPublicArtifact',
       'getPublicWorkflow',
       'getPublicArtifactHistory',
@@ -81,6 +83,58 @@ describe('PublicCatalogService', () => {
       ],
     });
     service = TestBed.inject(PublicCatalogService);
+  });
+
+  it('combines demo and curated artifacts without calling legacy catalog routes', () => {
+    demo.listArtifacts.and.returnValue(of([{
+      id: 'demo-1',
+      title: 'Member artifact',
+      description: 'Member-submitted record',
+      keywords: ['member'],
+      submittedAt: '2026-09-30T00:00:00Z',
+      verified: false,
+      submissionState: 'SUCCESS',
+    } as any]));
+    service.listArtifacts().subscribe((records) => {
+      expect(records.map((record) => record.title)).toEqual([
+        'Member artifact',
+        'EEG Eye State - original recording',
+      ]);
+      expect(records[1].submissionState).toBe('SUCCESS');
+    });
+    expect(artifacts.getArtifactById).not.toHaveBeenCalled();
+  });
+
+  it('combines demo and curated workflows without calling legacy catalog routes', () => {
+    demo.listWorkflows.and.returnValue(of([{
+      id: 'demo-workflow',
+      title: 'Member workflow',
+      description: 'Member-submitted workflow',
+      submittedAt: '2026-09-30T00:00:00Z',
+      submissionState: 'SUCCESS',
+    } as any]));
+    showcase.examples.and.returnValue(of({ examples: [{
+      ...curated,
+      workflows: [{
+        id: 'curated-workflow',
+        title: 'EEG source provenance',
+        description: 'Curated source grouping',
+        organizationSlug: 'neuroscience-gateway',
+        submissionState: 'SUCCESS',
+        blockchainTxId: 'tx-2',
+        artifactIds: ['artifact-1'],
+        submittedAt: '2026-09-29T00:00:00Z',
+        updatedAt: null,
+      }],
+    }] }));
+    service.listWorkflows().subscribe((records) => {
+      expect(records.map((record) => record.title)).toEqual([
+        'Member workflow',
+        'EEG source provenance',
+      ]);
+      expect(records[1].submittedAt).toEqual(new Date('2026-09-29T00:00:00Z'));
+    });
+    expect(workflows.getWorkflow).not.toHaveBeenCalled();
   });
 
   it('keeps demo records on the demo public read path', () => {

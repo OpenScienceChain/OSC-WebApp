@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ArtifactService } from '../services/artifact.service';
+import { PublicCatalogService } from '../../guest/public-catalog.service';
 import { Artifact } from '../../models/artifact.model';
 import { ArtifactCardComponent } from '../../components/artifacts-preview/artifact-card/artifact-card.component';
 import { FormsModule } from '@angular/forms';
@@ -26,7 +26,7 @@ export class ListArtifactComponent implements OnInit {
   currentPage = 1;
   itemsPerPage = 6;
 
-  constructor(private readonly artifactService: ArtifactService) {}
+  constructor(private readonly catalog: PublicCatalogService) {}
 
   ngOnInit(): void {
     this.loadArtifacts();
@@ -35,7 +35,7 @@ export class ListArtifactComponent implements OnInit {
   loadArtifacts(): void {
     this.isLoading = true;
     this.errorMessage = '';
-    this.artifactService.getArtifacts().subscribe({
+    this.catalog.listArtifacts().subscribe({
       next: (artifacts) => {
         this.allArtifacts = [...artifacts].sort(
           (a, b) =>
