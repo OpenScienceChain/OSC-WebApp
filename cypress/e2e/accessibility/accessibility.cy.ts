@@ -1,94 +1,14 @@
 /// <reference types="cypress" />
 
-const artifacts = [
-  {
-    id: 'artifact-nsg-001',
-    title: 'Neuroscience image segmentation dataset',
-    description:
-      'Curated imaging data and metadata used to validate a reproducible segmentation workflow.',
-    keywords: ['neuroscience', 'imaging'],
-    submittedAt: '2026-07-28T12:00:00.000Z',
-    verified: true,
-    lastTimeVerified: '2026-07-29T12:00:00.000Z',
-    lastTimeUpdated: null,
-  },
-  {
-    id: 'artifact-cs-001',
-    title: 'Citizen Science coastal observations',
-    description:
-      'A community-contributed collection of coastal observations with collection context.',
-    keywords: ['citizen-science', 'coastal'],
-    submittedAt: '2026-07-27T12:00:00.000Z',
-    verified: false,
-    lastTimeVerified: null,
-    lastTimeUpdated: '2026-07-30T12:00:00.000Z',
-  },
-];
-
-const workflows = [
-  {
-    id: 'workflow-nsg-001',
-    title: 'Reproducible neuroimaging preparation',
-    description:
-      'A documented process for preparing, validating, and publishing neuroimaging inputs.',
-    keywords: ['neuroscience', 'workflow'],
-    submissionState: 'recorded',
-    submittedAt: '2026-07-28T12:00:00.000Z',
-    updatedAt: '2026-07-29T12:00:00.000Z',
-  },
-];
-
-const artifactDetail = {
-  ...artifacts[0],
-  links: [],
-  dois: [],
-  fundingAgencies: ['National Science Foundation'],
-  acknowledgements: 'Prepared for reproducibility testing.',
-  submission_comment: 'Initial research release.',
-  footprint: 'b731d8f7cc8d9463a5ab13c6bbef70f5103e398ad001aaf52c91a2fb94d6397e',
-  manifest: [
-    {
-      filename: 'dataset_description.json',
-      hash: 'f32b925cf835fd2606575a746dad693e3b1b06be81b74135ab9c8027218d63e7',
-      algorithm: 'sha256',
-    },
-  ],
-  submissionState: 'CONFIRMED',
-  submitterEmail: 'researcher@example.test',
-  submitterUsername: 'nsg-researcher',
-  blockchainTxId:
-    '7c6f65d972d80f65af0f817cbc6f9b5f7bd86e3377bfd593962804afbff02822',
-  peerId: 'peer0.nsg.osc.example',
-  submissionError: null,
-  organization: { name: 'Neuroscience Gateway' },
-};
-
-const workflowDetail = {
-  ...workflows[0],
-  githubRepositories: [],
-  artifacts: [
-    {
-      id: artifactDetail.id,
-      title: artifactDetail.title,
-      description: artifactDetail.description,
-    },
-  ],
-  submitterEmail: 'researcher@example.test',
-  submitterUsername: 'nsg-researcher',
-  submission_comment: 'Records the reproducible preparation sequence.',
-  blockchainTxId:
-    'd4ca802d8b18353f9b538f65f52293a556aa245ff3777bba516f32c27655ee40',
-  peerId: 'peer0.nsg.osc.example',
-  organization: { name: 'Neuroscience Gateway' },
-};
-
-function stubCatalogs(
-  artifactResponse: Cypress.StaticResponse = { body: artifacts },
-  workflowResponse: Cypress.StaticResponse = { body: workflows },
-): void {
-  cy.intercept('GET', '**/api/v1/artifacts', artifactResponse).as('artifacts');
-  cy.intercept('GET', '**/api/v1/workflows', workflowResponse).as('workflows');
-}
+import {
+  demoArtifactDetail,
+  demoArtifactHistory,
+  demoArtifacts,
+  demoWorkflowDetail,
+  demoWorkflows,
+  installDemoCatalogIntercepts,
+  installDemoSession,
+} from '../../support/usrse26-demo';
 
 function checkWcag(): void {
   cy.injectAxe();
@@ -101,9 +21,7 @@ function checkWcag(): void {
       },
     },
     (violations) => {
-      if (violations.length === 0) {
-        return;
-      }
+      if (violations.length === 0) return;
 
       const details = violations
         .map((violation) => {
@@ -119,38 +37,69 @@ function checkWcag(): void {
   );
 }
 
+function assertNoHorizontalOverflow(): void {
+  cy.document().then((document) => {
+    expect(document.documentElement.scrollWidth).to.be.at.most(
+      document.documentElement.clientWidth + 1,
+    );
+  });
+}
+
+function visitAuthenticated(url: string): void {
+  cy.intercept('GET', '**/api/v1/users/validate-token', {
+    body: { valid: true },
+  }).as('validateToken');
+  cy.visit(url, { onBeforeLoad: installDemoSession });
+}
+
 describe('WCAG 2.2 AA regression checks', () => {
-  it('checks the landing page and desktop contribution menu', () => {
+  it('checks the provenance-led landing page and desktop contribution menu', () => {
     cy.viewport(1440, 900);
-    stubCatalogs();
+    installDemoCatalogIntercepts();
     cy.visit('/');
     cy.wait(['@artifacts', '@workflows']);
-    cy.get('h1').should('have.attr', 'aria-label', 'Open Science Chain');
+    cy.contains('h1', 'Open Science Chain').should('be.visible');
+    cy.contains('Demonstration data, not researcher submissions').should(
+      'be.visible',
+    );
     checkWcag();
+    assertNoHorizontalOverflow();
 
     cy.contains('button', 'Contribute').click();
-    cy.get('[role="menu"]').should('be.visible');
+    cy.get('#contribute-options').should('be.visible');
     checkWcag();
   });
 
-  it('checks keyboard access and mobile navigation', () => {
+  it('checks keyboard access and mobile navigation at 390 pixels', () => {
     cy.viewport(390, 844);
-    stubCatalogs();
+    installDemoCatalogIntercepts();
     cy.visit('/');
     cy.wait(['@artifacts', '@workflows']);
     cy.get('h1').should('be.visible');
-    cy.get('.navigation-toggle').click();
+    cy.get('.navigation-toggle').focus().should('have.focus').click();
     cy.get('#primary-navigation-links').should('be.visible');
     cy.contains('button', 'Contribute').click();
-    cy.get('[role="menu"]').should('be.visible');
+    cy.get('#contribute-options').should('be.visible');
     checkWcag();
+    assertNoHorizontalOverflow();
 
-    cy.get('body').type('{esc}');
+    cy.get('#contribute-options button').first().focus().type('{esc}');
+    cy.get('#contribute-options').should('not.exist');
+    cy.contains('button', 'Contribute')
+      .should('have.focus')
+      .and('have.attr', 'aria-expanded', 'false')
+      .type('{esc}');
     cy.get('#primary-navigation-links').should('not.be.visible');
+    cy.get('.navigation-toggle').should('have.focus');
   });
 
-  it('checks the sign-in form and its validation messages', () => {
-    cy.visit('/auth/sign-in');
+  it('checks sign-in validation and expired-session recovery', () => {
+    cy.visit(
+      '/auth/sign-in?reason=expired&returnUrl=%2Fartifacts%2Fartifact-nsg-001%2Fhistory',
+    );
+    cy.get('[data-cy="session-expired"]')
+      .should('be.visible')
+      .and('contain.text', 'Your session ended');
     checkWcag();
 
     cy.get('#username').focus().blur();
@@ -158,13 +107,14 @@ describe('WCAG 2.2 AA regression checks', () => {
     cy.get('#username-error').should('be.visible');
     cy.get('#password-error').should('be.visible');
     checkWcag();
+    assertNoHorizontalOverflow();
   });
 
   it('checks artifact results, empty search, and API failure states', () => {
-    stubCatalogs();
+    installDemoCatalogIntercepts();
     cy.visit('/list-artifacts');
     cy.wait('@artifacts');
-    cy.get('app-artifact-card').should('have.length', artifacts.length);
+    cy.get('app-artifact-card').should('have.length', demoArtifacts.length);
     checkWcag();
 
     cy.get('#artifact-title-search').type('no matching title');
@@ -183,10 +133,10 @@ describe('WCAG 2.2 AA regression checks', () => {
   });
 
   it('checks workflow results and API failure states', () => {
-    stubCatalogs();
+    installDemoCatalogIntercepts();
     cy.visit('/list-workflows');
     cy.wait('@workflows');
-    cy.get('app-workflow-card').should('have.length', workflows.length);
+    cy.get('app-workflow-card').should('have.length', demoWorkflows.length);
     checkWcag();
 
     cy.intercept('GET', '**/api/v1/workflows', {
@@ -199,9 +149,9 @@ describe('WCAG 2.2 AA regression checks', () => {
     checkWcag();
   });
 
-  it('checks blockchain provenance on artifact and workflow details', () => {
+  it('checks blockchain evidence on artifact and workflow details', () => {
     cy.intercept('GET', '**/api/v1/artifacts/artifact-nsg-001', {
-      body: artifactDetail,
+      body: demoArtifactDetail,
     }).as('artifactDetail');
     cy.visit('/artifacts/artifact-nsg-001');
     cy.wait('@artifactDetail');
@@ -209,9 +159,10 @@ describe('WCAG 2.2 AA regression checks', () => {
       'be.visible',
     );
     checkWcag();
+    assertNoHorizontalOverflow();
 
     cy.intercept('GET', '**/api/v1/workflows/workflow-nsg-001', {
-      body: workflowDetail,
+      body: demoWorkflowDetail,
     }).as('workflowDetail');
     cy.visit('/workflows/workflow-nsg-001');
     cy.wait('@workflowDetail');
@@ -219,6 +170,74 @@ describe('WCAG 2.2 AA regression checks', () => {
       'h2',
       'Workflow relationships committed as a ledger event',
     ).should('be.visible');
+    checkWcag();
+    assertNoHorizontalOverflow();
+  });
+
+  it('keeps a route heading when artifact and workflow APIs fail', () => {
+    cy.intercept('GET', '**/api/v1/artifacts/artifact-nsg-001', {
+      statusCode: 503,
+      body: { message: 'simulated outage' },
+    }).as('artifactDetailFailure');
+    cy.visit('/artifacts/artifact-nsg-001');
+    cy.wait('@artifactDetailFailure');
+    cy.contains('h1', 'Artifact unavailable').should('be.visible');
+    checkWcag();
+
+    cy.intercept('GET', '**/api/v1/workflows/workflow-nsg-001', {
+      statusCode: 503,
+      body: { message: 'simulated outage' },
+    }).as('workflowDetailFailure');
+    cy.visit('/workflows/workflow-nsg-001');
+    cy.wait('@workflowDetailFailure');
+    cy.contains('h1', 'Workflow unavailable').should('be.visible');
+    checkWcag();
+  });
+
+  it('checks accepted provenance history on desktop and mobile', () => {
+    cy.intercept('GET', '**/api/v1/artifacts/artifact-nsg-001', {
+      body: demoArtifactDetail,
+    }).as('artifactDetail');
+    cy.intercept('GET', '**/api/v1/artifacts/artifact-nsg-001/history*', {
+      body: demoArtifactHistory,
+    }).as('artifactHistory');
+    visitAuthenticated('/artifacts/artifact-nsg-001/history');
+    cy.wait(['@artifactDetail', '@artifactHistory']);
+    cy.contains('h2', 'Accepted ledger events').should('be.visible');
+    cy.get('.history-card').should(
+      'have.length',
+      demoArtifactHistory.items.length,
+    );
+    cy.contains('Version 3').should('be.visible');
+    cy.contains('Verified fingerprint').should('be.visible');
+    checkWcag();
+    assertNoHorizontalOverflow();
+
+    cy.viewport(390, 844);
+    assertNoHorizontalOverflow();
+    checkWcag();
+  });
+
+  it('checks empty and unavailable provenance history states', () => {
+    cy.intercept('GET', '**/api/v1/artifacts/artifact-nsg-001', {
+      body: demoArtifactDetail,
+    });
+    cy.intercept('GET', '**/api/v1/artifacts/artifact-nsg-001/history*', {
+      body: { ...demoArtifactHistory, items: [], total: 0 },
+    }).as('emptyHistory');
+    visitAuthenticated('/artifacts/artifact-nsg-001/history');
+    cy.wait('@emptyHistory');
+    cy.contains('No accepted history yet').should('be.visible');
+    checkWcag();
+
+    cy.intercept('GET', '**/api/v1/artifacts/artifact-nsg-001/history*', {
+      statusCode: 503,
+      body: { message: 'simulated ledger outage' },
+    }).as('historyFailure');
+    visitAuthenticated('/artifacts/artifact-nsg-001/history');
+    cy.wait('@historyFailure');
+    cy.contains('History is temporarily unavailable').should('be.visible');
+    cy.contains('button', 'Try again').should('be.visible');
     checkWcag();
   });
 });

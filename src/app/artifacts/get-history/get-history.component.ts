@@ -12,7 +12,7 @@ import { switchMap } from 'rxjs/operators';
   standalone: true,
   imports: [CommonModule, RouterModule],
   templateUrl: './get-history.component.html',
-  styleUrls: ['./get-history.component.css']
+  styleUrls: ['./get-history.component.css'],
 })
 export class GetHistoryComponent implements OnInit {
   artifactId?: string;
@@ -33,7 +33,11 @@ export class GetHistoryComponent implements OnInit {
   isLastPage = false;
 
   // Header index (sorted globally by timestamp desc)
-  private headers: Array<{ txId: string; timestamp: string; isDelete: boolean }> = [];
+  private headers: Array<{
+    txId: string;
+    timestamp: string;
+    isDelete: boolean;
+  }> = [];
 
   // Cache by txId for full items
   private readonly txIdToItem = new Map<string, ArtifactHistoryItem>();
@@ -46,33 +50,44 @@ export class GetHistoryComponent implements OnInit {
 
   constructor(
     private readonly route: ActivatedRoute,
-    private readonly artifactService: ArtifactService
+    private readonly artifactService: ArtifactService,
   ) {}
 
   ngOnInit(): void {
     this.artifactId = this.route.snapshot.paramMap.get('id') ?? undefined;
     if (!this.artifactId) {
+      this.errorMessage = 'The artifact identifier is missing.';
       this.isLoading = false;
       return;
     }
 
     // Fetch title (detail) for header display and first history page
-    this.artifactService.getArtifactById(this.artifactId).pipe(
-      switchMap((detail: ArtifactDetail) => {
-        this.artifactTitle = detail?.title ?? '';
-        this.artifactDescription = detail?.description ?? '';
-        return of(true);
-      })
-    ).subscribe({
-      next: () => {
-        this.loadAllHeaders()
-          .then(() => this.loadUiPage(1));
-      },
-      error: () => {
-        this.loadAllHeaders()
-          .then(() => this.loadUiPage(1));
-      }
-    });
+    this.artifactService
+      .getArtifactById(this.artifactId)
+      .pipe(
+        switchMap((detail: ArtifactDetail) => {
+          this.artifactTitle = detail?.title ?? '';
+          this.artifactDescription = detail?.description ?? '';
+          return of(true);
+        }),
+      )
+      .subscribe({
+        next: () => {
+          this.loadInitialHistory();
+        },
+        error: () => {
+          this.loadInitialHistory();
+        },
+      });
+  }
+
+  private loadInitialHistory(): void {
+    this.loadAllHeaders()
+      .then(() => this.loadUiPage(1))
+      .catch(() => {
+        this.errorMessage = 'Unable to load artifact history.';
+        this.isLoading = false;
+      });
   }
 
   // UI events
@@ -81,8 +96,12 @@ export class GetHistoryComponent implements OnInit {
     this.loadUiPage(page);
   }
 
-  onPrev(): void { this.onGoToPage(this.uiPage - 1); }
-  onNext(): void { this.onGoToPage(this.uiPage + 1); }
+  onPrev(): void {
+    this.onGoToPage(this.uiPage - 1);
+  }
+  onNext(): void {
+    this.onGoToPage(this.uiPage + 1);
+  }
 
   async onRefresh(): Promise<void> {
     if (!this.artifactId) return;
@@ -90,10 +109,12 @@ export class GetHistoryComponent implements OnInit {
     this.errorMessage = '';
     try {
       await firstValueFrom(
-        this.artifactService.refreshArtifactHistory(
-          this.artifactId,
-          { offset: 0, limit: 500, order: 'desc', includeValue: true }
-        )
+        this.artifactService.refreshArtifactHistory(this.artifactId, {
+          offset: 0,
+          limit: 500,
+          order: 'desc',
+          includeValue: true,
+        }),
       );
       // Clear caches
       this.serverPageCache.clear();
@@ -109,25 +130,74 @@ export class GetHistoryComponent implements OnInit {
     }
   }
 
+  onRetry(): void {
+    if (!this.artifactId) return;
+    this.errorMessage = '';
+    this.isLoading = true;
+    this.loadAllHeaders()
+      .then(() => this.loadUiPage(this.uiPage || 1))
+      .catch(() => {
+        this.errorMessage = 'Unable to load artifact history.';
+        this.isLoading = false;
+      });
+  }
+
+  getVersionNumber(index: number): number {
+    return Math.max(this.totalItems - (this.globalStartIndex + index), 1);
+  }
+
+  getEventLabel(item: ArtifactHistoryItem, index: number): string {
+    if (item.isDelete) return 'Deleted';
+    if (this.isFirstPage && index === 0) return 'Current version';
+    if (this.isLastPage && index === this.displayedItems.length - 1) {
+      return 'Initial registration';
+    }
+    return 'Accepted revision';
+  }
+
+  getStatusClass(state?: string): string {
+    const normalized = state?.toUpperCase();
+    if (['SUCCESS', 'CONFIRMED', 'APPROVED'].includes(normalized ?? '')) {
+      return 'status-confirmed';
+    }
+    if (normalized === 'PENDING') return 'status-pending';
+    if (['FAILED', 'REJECTED'].includes(normalized ?? '')) {
+      return 'status-failed';
+    }
+    return 'status-neutral';
+  }
+
+  shortIdentifier(value?: string | null): string {
+    if (!value) return 'Not available';
+    return value.length > 22
+      ? `${value.slice(0, 12)}...${value.slice(-8)}`
+      : value;
+  }
+
+  trackByTxId(_index: number, item: ArtifactHistoryItem): string {
+    return item.txId;
+  }
+
   // Core paging logic
   private loadUiPage(page: number): void {
     if (!this.artifactId) return;
     this.isLoading = true;
+    this.errorMessage = '';
     this.uiPage = page;
     this.isFirstPage = this.uiPage === 1;
     this.globalStartIndex = (this.uiPage - 1) * this.uiPageSize;
     const globalEnd = this.globalStartIndex + this.uiPageSize;
 
     const neededHeaders = this.headers.slice(this.globalStartIndex, globalEnd);
-    const neededTxIds = new Set(neededHeaders.map(h => h.txId));
+    const neededTxIds = new Set(neededHeaders.map((h) => h.txId));
 
     this.ensureItemsForTxIds(Array.from(neededTxIds))
       .then(() => {
         // Build displayed items in the same order as headers
         this.displayedItems = neededHeaders
-          .map(h => this.txIdToItem.get(h.txId))
+          .map((h) => this.txIdToItem.get(h.txId))
           .filter((it): it is ArtifactHistoryItem => !!it);
-        this.isLastPage = (this.uiPage === this.totalUiPages);
+        this.isLastPage = this.uiPage === this.totalUiPages;
         this.isLoading = false;
       })
       .catch(() => {
@@ -136,7 +206,9 @@ export class GetHistoryComponent implements OnInit {
       });
   }
 
-  private async getServerPage(serverPageIndex: number): Promise<ArtifactHistoryItem[]> {
+  private async getServerPage(
+    serverPageIndex: number,
+  ): Promise<ArtifactHistoryItem[]> {
     const cached = this.serverPageCache.get(serverPageIndex);
     if (cached) {
       this.touchRecency(serverPageIndex);
@@ -146,10 +218,12 @@ export class GetHistoryComponent implements OnInit {
     const offset = serverPageIndex * this.serverPageSize;
 
     const res = await firstValueFrom(
-      this.artifactService.getArtifactHistory(
-        this.artifactId!,
-        { offset, limit: this.serverPageSize, order: 'desc', includeValue: true }
-      )
+      this.artifactService.getArtifactHistory(this.artifactId!, {
+        offset,
+        limit: this.serverPageSize,
+        order: 'desc',
+        includeValue: true,
+      }),
     );
 
     const items = (res?.items ?? []).slice().sort((a, b) => {
@@ -160,7 +234,10 @@ export class GetHistoryComponent implements OnInit {
 
     if (!this.totalItems && res) {
       this.totalItems = res.total ?? items.length;
-      this.totalUiPages = Math.max(1, Math.ceil(this.totalItems / this.uiPageSize));
+      this.totalUiPages = Math.max(
+        1,
+        Math.ceil(this.totalItems / this.uiPageSize),
+      );
     }
 
     this.putInCache(serverPageIndex, items);
@@ -194,40 +271,54 @@ export class GetHistoryComponent implements OnInit {
   // Load only headers (no values) and build global timestamp order
   private async loadAllHeaders(): Promise<void> {
     if (!this.artifactId) return;
-    const headers: Array<{ txId: string; timestamp: string; isDelete: boolean }> = [];
+    const headers: Array<{
+      txId: string;
+      timestamp: string;
+      isDelete: boolean;
+    }> = [];
     let offset = 0;
     let total = 0;
-    let absoluteIndex = 0;
     do {
       const res = await firstValueFrom(
-        this.artifactService.getArtifactHistory(
-          this.artifactId,
-          { offset, limit: this.serverPageSize, order: 'desc', includeValue: false }
-        )
+        this.artifactService.getArtifactHistory(this.artifactId, {
+          offset,
+          limit: this.serverPageSize,
+          order: 'desc',
+          includeValue: false,
+        }),
       );
       const items = res?.items ?? [];
       total = res?.total ?? total;
       for (let i = 0; i < items.length; i++) {
         const it = items[i];
-        headers.push({ txId: it.txId, timestamp: it.timestamp, isDelete: it.isDelete });
+        headers.push({
+          txId: it.txId,
+          timestamp: it.timestamp,
+          isDelete: it.isDelete,
+        });
         const serverPageIndex = Math.floor((offset + i) / this.serverPageSize);
         if (it?.txId) this.txIdToServerPage.set(it.txId, serverPageIndex);
-        absoluteIndex++;
       }
       offset += this.serverPageSize;
       if (!res || items.length === 0) break;
     } while (offset < (total || Number.MAX_SAFE_INTEGER));
 
-    headers.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    headers.sort(
+      (a, b) =>
+        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
+    );
 
     this.headers = headers;
     this.totalItems = headers.length;
-    this.totalUiPages = Math.max(1, Math.ceil(this.totalItems / this.uiPageSize));
+    this.totalUiPages = Math.max(
+      1,
+      Math.ceil(this.totalItems / this.uiPageSize),
+    );
   }
 
   // Ensure we have full items (with value) for the given txIds
   private async ensureItemsForTxIds(txIds: string[]): Promise<void> {
-    const missing = txIds.filter(tx => !this.txIdToItem.has(tx));
+    const missing = txIds.filter((tx) => !this.txIdToItem.has(tx));
     if (missing.length === 0) return;
 
     const indices = new Set<number>();
@@ -238,7 +329,7 @@ export class GetHistoryComponent implements OnInit {
     // Fallback: if some have no index (shouldn't happen), check the first few pages
     if (indices.size === 0) indices.add(0);
 
-    await Promise.all(Array.from(indices).map(i => this.getServerPage(i)));
+    await Promise.all(Array.from(indices).map((i) => this.getServerPage(i)));
   }
 
   // Pager helper to show at most 10 pages with ellipsis
@@ -259,11 +350,17 @@ export class GetHistoryComponent implements OnInit {
     for (let i = left; i <= right; i++) pages.add(i);
 
     // Fill near left
-    while (pages.size < Math.min(maxShown - 2, total - 2) && Math.min(...pages) > 2) {
+    while (
+      pages.size < Math.min(maxShown - 2, total - 2) &&
+      Math.min(...pages) > 2
+    ) {
       pages.add(Math.min(...pages) - 1);
     }
     // Fill near right
-    while (pages.size < Math.min(maxShown - 2, total - 2) && Math.max(...pages) < total - 1) {
+    while (
+      pages.size < Math.min(maxShown - 2, total - 2) &&
+      Math.max(...pages) < total - 1
+    ) {
       pages.add(Math.max(...pages) + 1);
     }
 
@@ -281,5 +378,3 @@ export class GetHistoryComponent implements OnInit {
     return result;
   }
 }
-
-

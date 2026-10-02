@@ -12,7 +12,9 @@ export const authGuard: CanActivateFn = (route, state) => {
     return true;
   }
 
-  toastr.info("Please sign in to access this page", "Authentication Required");
-  router.navigate(['/auth/sign-in']);
+  toastr.info('Please sign in to access this page', 'Authentication Required');
+  router.navigate(['/auth/sign-in'], {
+    queryParams: { reason: 'required', returnUrl: state.url },
+  });
   return false;
-}; 
+};

@@ -1,0 +1,64 @@
+
+
+DevTools listening on ws://127.0.0.1:54040/devtools/browser/04d73ab2-3837-47de-8acb-c009bb856dc6
+Missing baseUrl in compilerOptions. tsconfig-paths will be skipped
+
+====================================================================================================
+
+  (Run Starting)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Cypress:        14.5.4                                                                         │
+  │ Browser:        Chrome 152 (headless)                                                          │
+  │ Node Version:   v20.18.3 (C:\nvm4w\nodejs\node.exe)                                            │
+  │ Specs:          1 found (accessibility.cy.ts)                                                  │
+  │ Searched:       C:\Users\ofgar\Projects\GithubProjects\OSC-IS\.codex-tmp\OSC-WebApp-accessibil │
+  │                 ity-evidence-20260902\cypress\e2e\accessibility\accessibility.cy.ts            │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+
+  Running:  accessibility.cy.ts                                                             (1 of 1)
+
+
+  WCAG 2.2 AA regression checks
+    √ checks the provenance-led landing page and desktop contribution menu (2937ms)
+    √ checks keyboard access and mobile navigation at 390 pixels (1422ms)
+    √ checks sign-in validation and expired-session recovery (778ms)
+    √ checks artifact results, empty search, and API failure states (1727ms)
+    √ checks workflow results and API failure states (993ms)
+    √ checks blockchain evidence on artifact and workflow details (1393ms)
+    √ keeps a route heading when artifact and workflow APIs fail (946ms)
+    √ checks accepted provenance history on desktop and mobile (1140ms)
+    √ checks empty and unavailable provenance history states (1123ms)
+
+
+  9 passing (13s)
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        9                                                                                │
+  │ Passing:      9                                                                                │
+  │ Failing:      0                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  0                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     12 seconds                                                                       │
+  │ Spec Ran:     accessibility.cy.ts                                                              │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+====================================================================================================
+
+  (Run Finished)
+
+
+       Spec                                              Tests  Passing  Failing  Pending  Skipped
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ √  accessibility.cy.ts                      00:12        9        9        -        -        - │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+    √  All specs passed!                        00:12        9        9        -        -        -

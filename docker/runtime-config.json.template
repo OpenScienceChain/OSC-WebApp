@@ -1,0 +1,4 @@
+{
+  "API_BASE_URL": "${WEBAPP_API_BASE_URL}",
+  "DEMO_MODE": ${DEMO_MODE}
+}

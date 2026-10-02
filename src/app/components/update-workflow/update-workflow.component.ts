@@ -1,13 +1,23 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
-import { FormBuilder, FormGroup, FormArray, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  FormBuilder,
+  FormGroup,
+  FormArray,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { ToastrService } from 'ngx-toastr';
 import { WorkflowService } from '../../services/workflow.service';
 import { ArtifactService } from '../../artifacts/services/artifact.service';
 import { Artifact } from '../../models/artifact.model';
-import { Workflow, UpdateWorkflowDTO, GitHubRepository } from '../../models/workflow.model';
+import {
+  Workflow,
+  UpdateWorkflowDTO,
+  GitHubRepository,
+} from '../../models/workflow.model';
 import { switchMap } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { ClampInputLengthDirective } from '../../shared/clamp-input-length.directive';
@@ -17,7 +27,7 @@ import { ClampInputLengthDirective } from '../../shared/clamp-input-length.direc
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterModule, ClampInputLengthDirective],
   templateUrl: './update-workflow.component.html',
-  styleUrls: ['./update-workflow.component.css']
+  styleUrls: ['./update-workflow.component.css'],
 })
 export class UpdateWorkflowComponent implements OnInit {
   workflowForm: FormGroup;
@@ -33,7 +43,8 @@ export class UpdateWorkflowComponent implements OnInit {
   showArtifactDropdown = false;
 
   // GitHub repo fetching state
-  repoFetchingState: Map<number, { loading: boolean; error: string }> = new Map();
+  repoFetchingState: Map<number, { loading: boolean; error: string }> =
+    new Map();
   expandedRepoContents: Set<number> = new Set();
 
   toggleContentsExpand(repoIndex: number): void {
@@ -56,32 +67,41 @@ export class UpdateWorkflowComponent implements OnInit {
     private readonly toastr: ToastrService,
     private readonly route: ActivatedRoute,
     private readonly router: Router,
-    private readonly http: HttpClient
+    private readonly http: HttpClient,
   ) {
     this.workflowForm = this.fb.group({
       title: [{ value: '', disabled: true }],
       description: [{ value: '', disabled: true }],
       keywords: ['', [Validators.maxLength(1000)]],
-      submission_comment: ['', [Validators.required, Validators.minLength(20), Validators.maxLength(1000)]],
+      submission_comment: [
+        '',
+        [
+          Validators.required,
+          Validators.minLength(20),
+          Validators.maxLength(1000),
+        ],
+      ],
       githubRepositories: this.fb.array([]),
     });
   }
 
   ngOnInit(): void {
-    this.artifactService.getArtifacts().subscribe(artifacts => {
+    this.artifactService.getArtifacts().subscribe((artifacts) => {
       this.availableArtifacts = artifacts;
     });
 
-    this.route.paramMap.pipe(
-      switchMap(params => {
-        const id = params.get('id');
-        return id ? this.workflowService.getWorkflow(id) : of(null);
-      })
-    ).subscribe(detail => {
-      if (!detail) return;
-      this.workflow = detail;
-      this.prefillForm(detail);
-    });
+    this.route.paramMap
+      .pipe(
+        switchMap((params) => {
+          const id = params.get('id');
+          return id ? this.workflowService.getWorkflow(id) : of(null);
+        }),
+      )
+      .subscribe((detail) => {
+        if (!detail) return;
+        this.workflow = detail;
+        this.prefillForm(detail);
+      });
   }
 
   private prefillForm(detail: Workflow): void {
@@ -91,26 +111,35 @@ export class UpdateWorkflowComponent implements OnInit {
       keywords: detail.keywords?.join(', ') ?? '',
     });
 
-    this.selectedArtifacts = (detail.artifacts || []).map(a => ({
-      id: a.id,
-      title: a.title,
-      description: a.description,
-    } as Artifact));
+    this.selectedArtifacts = (detail.artifacts || []).map(
+      (a) =>
+        ({
+          id: a.id,
+          title: a.title,
+          description: a.description,
+        }) as Artifact,
+    );
 
     this.repoForms.clear();
     for (const repo of detail.githubRepositories || []) {
       const repoGroup = this.fb.group({
-        url: [repo.url, [Validators.required, Validators.pattern(/^https:\/\/github\.com\/[^/]+\/[^/]+/)]],
+        url: [
+          repo.url,
+          [
+            Validators.required,
+            Validators.pattern(/^https:\/\/github\.com\/[^/]+\/[^/]+/),
+          ],
+        ],
         description: [repo.description || ''],
         gitHash: [repo.gitHash || ''],
         contents: this.fb.array(
-          (repo.contents || []).map(c => {
+          (repo.contents || []).map((c) => {
             const isDir = c.filename?.endsWith('/');
             return this.fb.group({
               filename: [c.filename, Validators.required],
-              hash: [c.hash || '', isDir ? [] : Validators.required]
+              hash: [c.hash || '', isDir ? [] : Validators.required],
             });
-          })
+          }),
         ),
       });
       this.repoForms.push(repoGroup);
@@ -122,12 +151,20 @@ export class UpdateWorkflowComponent implements OnInit {
   }
 
   addRepository(): void {
-    this.repoForms.push(this.fb.group({
-      url: ['', [Validators.required, Validators.pattern(/^https:\/\/github\.com\/[^/]+\/[^/]+/)]],
-      description: [''],
-      gitHash: [''],
-      contents: this.fb.array([]),
-    }));
+    this.repoForms.push(
+      this.fb.group({
+        url: [
+          '',
+          [
+            Validators.required,
+            Validators.pattern(/^https:\/\/github\.com\/[^/]+\/[^/]+/),
+          ],
+        ],
+        description: [''],
+        gitHash: [''],
+        contents: this.fb.array([]),
+      }),
+    );
   }
 
   removeRepository(index: number): void {
@@ -140,10 +177,12 @@ export class UpdateWorkflowComponent implements OnInit {
   }
 
   addContent(repoIndex: number): void {
-    this.getContents(repoIndex).push(this.fb.group({
-      filename: ['', Validators.required],
-      hash: ['', Validators.required],
-    }));
+    this.getContents(repoIndex).push(
+      this.fb.group({
+        filename: ['', Validators.required],
+        hash: ['', Validators.required],
+      }),
+    );
   }
 
   removeContent(repoIndex: number, contentIndex: number): void {
@@ -179,7 +218,7 @@ export class UpdateWorkflowComponent implements OnInit {
               repoGroup.get('gitHash')?.setValue(commits[0].sha);
             }
           },
-          error: () => {}
+          error: () => {},
         });
         this.http.get<any[]>(`${apiBase}/contents/`).subscribe({
           next: (items) => {
@@ -187,25 +226,42 @@ export class UpdateWorkflowComponent implements OnInit {
             if (contentsArray.length === 0 && items?.length > 0) {
               for (const item of items) {
                 const isDir = item.type === 'dir';
-                contentsArray.push(this.fb.group({
-                  filename: [isDir ? item.name + '/' : item.name, Validators.required],
-                  hash: [isDir ? '' : (item.sha || ''), isDir ? [] : Validators.required],
-                }));
+                contentsArray.push(
+                  this.fb.group({
+                    filename: [
+                      isDir ? item.name + '/' : item.name,
+                      Validators.required,
+                    ],
+                    hash: [
+                      isDir ? '' : item.sha || '',
+                      isDir ? [] : Validators.required,
+                    ],
+                  }),
+                );
               }
             }
-            this.repoFetchingState.set(repoIndex, { loading: false, error: '' });
+            this.repoFetchingState.set(repoIndex, {
+              loading: false,
+              error: '',
+            });
           },
           error: () => {
-            this.repoFetchingState.set(repoIndex, { loading: false, error: '' });
-          }
+            this.repoFetchingState.set(repoIndex, {
+              loading: false,
+              error: '',
+            });
+          },
         });
       },
       error: (err) => {
-        const msg = err.status === 404 ? 'Repository not found or is private'
-          : err.status === 403 ? 'GitHub API rate limit reached'
-          : 'Could not fetch repository info';
+        const msg =
+          err.status === 404
+            ? 'Repository not found or is private'
+            : err.status === 403
+              ? 'GitHub API rate limit reached'
+              : 'Could not fetch repository info';
         this.repoFetchingState.set(repoIndex, { loading: false, error: msg });
-      }
+      },
     });
   }
 
@@ -216,19 +272,24 @@ export class UpdateWorkflowComponent implements OnInit {
   // Artifact picker
   onArtifactSearchFocus(): void {
     this.showArtifactDropdown = true;
-    if (!this.artifactSearchQuery || this.artifactSearchQuery.trim().length < 2) {
+    if (
+      !this.artifactSearchQuery ||
+      this.artifactSearchQuery.trim().length < 2
+    ) {
       this.showRecentArtifacts();
     }
   }
 
   onArtifactSearchBlur(): void {
-    setTimeout(() => { this.showArtifactDropdown = false; }, 200);
+    setTimeout(() => {
+      this.showArtifactDropdown = false;
+    }, 200);
   }
 
   private showRecentArtifacts(): void {
-    const selectedIds = new Set(this.selectedArtifacts.map(a => a.id));
+    const selectedIds = new Set(this.selectedArtifacts.map((a) => a.id));
     this.filteredArtifacts = this.availableArtifacts
-      .filter(a => !selectedIds.has(a.id))
+      .filter((a) => !selectedIds.has(a.id))
       .slice(0, 3);
   }
 
@@ -240,14 +301,16 @@ export class UpdateWorkflowComponent implements OnInit {
       return;
     }
     const lower = query.toLowerCase();
-    const selectedIds = new Set(this.selectedArtifacts.map(a => a.id));
+    const selectedIds = new Set(this.selectedArtifacts.map((a) => a.id));
     this.filteredArtifacts = this.availableArtifacts
-      .filter(a => !selectedIds.has(a.id) && a.title.toLowerCase().includes(lower))
+      .filter(
+        (a) => !selectedIds.has(a.id) && a.title.toLowerCase().includes(lower),
+      )
       .slice(0, 10);
   }
 
   selectArtifact(artifact: Artifact): void {
-    if (!this.selectedArtifacts.find(a => a.id === artifact.id)) {
+    if (!this.selectedArtifacts.find((a) => a.id === artifact.id)) {
       this.selectedArtifacts.push(artifact);
     }
     this.filteredArtifacts = [];
@@ -256,7 +319,7 @@ export class UpdateWorkflowComponent implements OnInit {
   }
 
   removeArtifact(id: string): void {
-    this.selectedArtifacts = this.selectedArtifacts.filter(a => a.id !== id);
+    this.selectedArtifacts = this.selectedArtifacts.filter((a) => a.id !== id);
   }
 
   goBack(): void {
@@ -264,37 +327,44 @@ export class UpdateWorkflowComponent implements OnInit {
   }
 
   onSubmit(): void {
-    if (!this.workflow || this.workflowForm.invalid || this.isSubmitting) return;
+    if (!this.workflow || this.workflowForm.invalid || this.isSubmitting)
+      return;
     this.isSubmitting = true;
 
     const formValues = this.workflowForm.getRawValue();
 
     const keywords = formValues.keywords
-      ? formValues.keywords.split(',').map((k: string) => k.trim()).filter((k: string) => k.length > 0)
+      ? formValues.keywords
+          .split(',')
+          .map((k: string) => k.trim())
+          .filter((k: string) => k.length > 0)
       : [];
 
-    const githubRepositories: GitHubRepository[] = (formValues.githubRepositories || []).map((r: any) => ({
+    const githubRepositories: GitHubRepository[] = (
+      formValues.githubRepositories || []
+    ).map((r: any) => ({
       url: r.url,
       description: r.description || '',
       gitHash: r.gitHash || '',
-      contents: (r.contents || []).map((c: any) => ({ filename: c.filename, hash: c.hash })),
+      contents: (r.contents || []).map((c: any) => ({
+        filename: c.filename,
+        hash: c.hash,
+      })),
     }));
 
     const dto: UpdateWorkflowDTO = {
       keywords,
       githubRepositories,
-      artifactIds: this.selectedArtifacts.map(a => a.id),
+      artifactIds: this.selectedArtifacts.map((a) => a.id),
       submission_comment: formValues.submission_comment,
     };
 
     this.workflowService.updateWorkflow(this.workflow.id, dto).subscribe({
       next: () => {
         this.updateSuccess = true;
-        this.toastr.success(
-          'Workflow updated successfully!',
-          'Success!',
-          { timeOut: 5000 }
-        );
+        this.toastr.success('Workflow updated successfully!', 'Success!', {
+          timeOut: 5000,
+        });
         this.isSubmitting = false;
       },
       error: (err) => {

@@ -68,6 +68,7 @@
   </p>
 
   <form
+    data-ux-submit="SUBMISSION_ATTEMPT"
     *ngIf="(!isEdit && !!demo.session?.accountUsername) || editReady"
     class="workflow-form"
     (ngSubmit)="submit()"

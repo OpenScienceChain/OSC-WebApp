@@ -1,11 +1,21 @@
 import { CommonModule, Location } from '@angular/common';
-import { Component, HostListener, OnInit } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  HostListener,
+  OnInit,
+  ViewChild,
+} from '@angular/core';
 import { NavigationEnd, Router, RouterModule } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { filter } from 'rxjs/operators';
 import { AuthService } from './auth/auth.service';
 import { getRuntimeConfig } from './config/runtime-config';
 import { DemoService } from './guest/demo.service';
+import {
+  AnalyticsEventType,
+  UxAnalyticsService,
+} from './analytics/ux-analytics.service';
 
 @Component({
   selector: 'app-root',
@@ -15,6 +25,12 @@ import { DemoService } from './guest/demo.service';
   styleUrls: ['./app.component.css'],
 })
 export class AppComponent implements OnInit {
+  @ViewChild('navigationToggle')
+  private navigationToggle?: ElementRef<HTMLButtonElement>;
+
+  @ViewChild('contributeButton')
+  private contributeButton?: ElementRef<HTMLButtonElement>;
+
   readonly mockPreview = getRuntimeConfig()?.MOCK_PREVIEW === true;
   isAuthenticated = false;
   contributorSignedIn = false;
@@ -32,6 +48,7 @@ export class AppComponent implements OnInit {
     private readonly authService: AuthService,
     private readonly demo: DemoService,
     private readonly toastr: ToastrService,
+    public readonly analytics: UxAnalyticsService,
   ) {
     this.authService.isAuthenticated$.subscribe(
       (isAuthenticated) => (this.isAuthenticated = isAuthenticated),
@@ -44,9 +61,10 @@ export class AppComponent implements OnInit {
   ngOnInit(): void {
     this.router.events
       .pipe(filter((event) => event instanceof NavigationEnd))
-      .subscribe(() => {
+      .subscribe((event) => {
         this.updateBackButtonVisibility();
         this.closeNavigation();
+        this.trackRoute((event as NavigationEnd).urlAfterRedirects);
       });
 
     this.updateBackButtonVisibility();
@@ -54,7 +72,72 @@ export class AppComponent implements OnInit {
 
   @HostListener('document:keydown.escape')
   onEscape(): void {
-    this.closeNavigation();
+    if (this.contributeMenuOpen) {
+      this.contributeMenuOpen = false;
+      this.contributeButton?.nativeElement.focus();
+      return;
+    }
+
+    if (this.mobileNavigationOpen) {
+      this.mobileNavigationOpen = false;
+      this.navigationToggle?.nativeElement.focus();
+    }
+  }
+
+  @HostListener('document:click', ['$event'])
+  onTrackedClick(event: MouseEvent): void {
+    const element =
+      event.target instanceof Element
+        ? event.target.closest('[data-ux-click]')
+        : null;
+    const eventType = element?.getAttribute('data-ux-click');
+    if (eventType === 'CONTRIBUTE_CLICK' || eventType === 'AUTH_ACTION') {
+      this.trackAction(eventType);
+    }
+  }
+
+  @HostListener('document:change', ['$event'])
+  onTrackedChange(event: Event): void {
+    const element =
+      event.target instanceof Element
+        ? event.target.closest('[data-ux-change]')
+        : null;
+    const eventType = element?.getAttribute('data-ux-change');
+    if (eventType === 'CATALOG_SEARCH' || eventType === 'CATALOG_FILTER') {
+      this.trackAction(eventType);
+    }
+  }
+
+  @HostListener('document:submit', ['$event'])
+  onTrackedSubmit(event: Event): void {
+    const element =
+      event.target instanceof Element
+        ? event.target.closest('[data-ux-submit]')
+        : null;
+    const eventType = element?.getAttribute('data-ux-submit');
+    if (eventType === 'CATALOG_SEARCH' || eventType === 'SUBMISSION_ATTEMPT') {
+      this.trackAction(eventType);
+    }
+  }
+
+  acceptAnalytics(): void {
+    this.analytics.accept(() => this.trackRoute(this.router.url));
+  }
+
+  private trackRoute(url: string): void {
+    const route = this.analytics.routeTemplate(url);
+    if (!route) return;
+    const eventType: AnalyticsEventType = route.includes('/history')
+      ? 'HISTORY_VIEW'
+      : route === '/artifacts/:id' || route === '/workflows/:id'
+        ? 'RECORD_VIEW'
+        : 'PAGE_VIEW';
+    this.analytics.track(eventType, route);
+  }
+
+  private trackAction(eventType: AnalyticsEventType): void {
+    const route = this.analytics.routeTemplate(this.router.url);
+    if (route) this.analytics.track(eventType, route);
   }
 
   private updateBackButtonVisibility(): void {
@@ -66,6 +149,13 @@ export class AppComponent implements OnInit {
 
   isAuthRoute(): boolean {
     return this.router.url.startsWith('/auth');
+  }
+
+  isDemoExperience(): boolean {
+    return (
+      this.router.url.startsWith('/demo') ||
+      getRuntimeConfig()?.DEMO_MODE === true
+    );
   }
 
   goBack(): void {

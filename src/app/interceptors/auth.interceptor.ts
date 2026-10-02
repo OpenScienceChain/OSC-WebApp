@@ -5,9 +5,9 @@ import {
   HttpInterceptorFn,
 } from '@angular/common/http';
 import { inject } from '@angular/core';
+import { Router } from '@angular/router';
 import { catchError } from 'rxjs/operators';
 import { throwError } from 'rxjs';
-import { Router } from '@angular/router';
 import { AuthService } from '../auth/auth.service';
 import { ToastrService } from 'ngx-toastr';
 
@@ -16,8 +16,8 @@ export const authInterceptor: HttpInterceptorFn = (
   next: HttpHandlerFn,
 ) => {
   const authService = inject(AuthService);
-  const router = inject(Router);
   const toastr = inject(ToastrService);
+  const router = inject(Router);
 
   // Only attach token and handle 401 for our own API
   const apiBaseUrl = (window as any).__RUNTIME_CONFIG__?.['API_BASE_URL'] as

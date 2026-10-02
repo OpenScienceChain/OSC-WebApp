@@ -70,7 +70,7 @@ export class AuthService {
       // Check local expiration
       if (this.isTokenExpiredLocally(storedData)) {
         console.log('Token expired locally, cleaning up session');
-        this.cleanupSession();
+        this.cleanupSession('expired');
         return;
       }
 
@@ -78,7 +78,7 @@ export class AuthService {
       const payload = this.decodeToken();
       if (!payload) {
         console.log('Token could not be decoded, cleaning up session');
-        this.cleanupSession();
+        this.cleanupSession('expired');
         return;
       }
 
@@ -87,7 +87,7 @@ export class AuthService {
         console.log(
           'JWT token is missing an expiration or has expired, cleaning up session',
         );
-        this.cleanupSession();
+        this.cleanupSession('expired');
         return;
       }
 
@@ -98,12 +98,12 @@ export class AuthService {
       this.validateTokenWithBackend().subscribe({
         error: (err) => {
           console.error('Backend token validation failed:', err);
-          this.cleanupSession();
+          this.cleanupSession('expired');
         },
       });
     } catch (error) {
       console.error('Error initializing auth state:', error);
-      this.cleanupSession();
+      this.cleanupSession('expired');
     }
   }
 
@@ -142,13 +142,13 @@ export class AuthService {
     const storedData = this.getStoredTokenData();
 
     if (!storedData || this.isTokenExpiredLocally(storedData)) {
-      this.cleanupSession();
+      this.cleanupSession('expired');
       return;
     }
 
     // Then check with backend if available
     this.validateTokenWithBackend().subscribe({
-      error: () => this.cleanupSession(),
+      error: () => this.cleanupSession('expired'),
     });
   }
 
@@ -331,10 +331,28 @@ export class AuthService {
     );
   }
 
-  private cleanupSession(): void {
+  expireSession(): void {
+    this.cleanupSession('expired');
+  }
+
+  private cleanupSession(reason: 'expired' | 'logout' = 'logout'): void {
     localStorage.removeItem('token');
     localStorage.removeItem('tokenData');
+    localStorage.removeItem('user');
     this.isAuthenticatedSubject.next(false);
+    if (reason === 'expired') {
+      const currentUrl = this.router.url;
+      const returnUrl =
+        currentUrl.startsWith('/') &&
+        !currentUrl.startsWith('//') &&
+        !currentUrl.startsWith('/auth/sign-in')
+          ? currentUrl
+          : '/';
+      this.router.navigate(['/auth/sign-in'], {
+        queryParams: { reason: 'expired', returnUrl },
+      });
+      return;
+    }
     this.router.navigate(['/']);
   }
 
@@ -343,7 +361,7 @@ export class AuthService {
     if (!storedData) {
       // Old unbounded sessions are intentionally invalidated.
       if (localStorage.getItem('token')) {
-        this.cleanupSession();
+        this.cleanupSession('expired');
       }
       return null;
     }
@@ -355,7 +373,7 @@ export class AuthService {
       !payload?.exp ||
       this.isJwtTokenExpired(payload)
     ) {
-      this.cleanupSession();
+      this.cleanupSession('expired');
       return null;
     }
 

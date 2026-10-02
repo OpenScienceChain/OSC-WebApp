@@ -54,7 +54,8 @@ jobs:
           BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
         run: |
           if [ -z "$BASE_SHA" ] || ! git cat-file -e "$BASE_SHA^{commit}" 2>/dev/null; then
-            BASE_SHA="$(git merge-base HEAD origin/master 2>/dev/null || git rev-parse HEAD^)"
+            base_ref="${GITHUB_BASE_REF:-develop}"
+            BASE_SHA="$(git merge-base HEAD "origin/$base_ref" 2>/dev/null || git rev-parse HEAD^)"
           fi
           mapfile -t formatted < <(git diff --name-only --diff-filter=ACMR "$BASE_SHA" "$GITHUB_SHA" -- 'src/**/*.ts' 'src/**/*.html' 'src/**/*.css' 'src/**/*.scss' 'cypress/**/*.ts')
           mapfile -t linted < <(git diff --name-only --diff-filter=ACMR "$BASE_SHA" "$GITHUB_SHA" -- 'src/**/*.ts' 'cypress/**/*.ts')

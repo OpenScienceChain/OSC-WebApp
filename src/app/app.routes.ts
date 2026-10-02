@@ -2,9 +2,20 @@ import { Routes } from '@angular/router';
 import { canCreateArtifactGuard } from './guards/role.guard';
 import { authGuard } from './guards/auth.guard';
 import { guestModeMatch } from './guest/guest-mode.match';
+import { getRuntimeConfig } from './config/runtime-config';
 
 // Componente vacío para la ruta raíz
 export const routes: Routes = [
+  {
+    path: 'feedback',
+    loadComponent: () =>
+      import('./feedback/feedback.component').then((m) => m.FeedbackComponent),
+  },
+  {
+    path: 'interactive-demo',
+    loadComponent: () =>
+      import('./demo/demo.component').then((m) => m.DemoComponent),
+  },
   {
     path: 'research-example',
     loadComponent: () =>
@@ -98,7 +109,9 @@ export const routes: Routes = [
     path: '',
     pathMatch: 'full',
     loadComponent: () =>
-      import('./home/home.component').then((m) => m.HomeComponent),
+      getRuntimeConfig()?.DEMO_MODE
+        ? import('./demo/demo.component').then((m) => m.DemoComponent)
+        : import('./home/home.component').then((m) => m.HomeComponent),
   },
 
   // Módulo de autenticación

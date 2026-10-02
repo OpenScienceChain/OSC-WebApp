@@ -28,4 +28,4 @@ export interface ArtifactDetail {
   organization: {
     name: string;
   };
-} 
+}

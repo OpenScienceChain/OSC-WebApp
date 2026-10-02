@@ -8,7 +8,7 @@
     <div *ngIf="isLoading" class="state-panel" role="status" aria-live="polite">
       <span class="spinner-border" aria-hidden="true"></span>
       <div>
-        <strong>Loading workflow record</strong>
+        <h1>Loading workflow record</h1>
         <p>
           Retrieving linked artifacts, repositories, and provenance evidence.
         </p>
@@ -22,7 +22,7 @@
     >
       <i class="bi bi-exclamation-circle" aria-hidden="true"></i>
       <div>
-        <strong>Workflow unavailable</strong>
+        <h1>Workflow unavailable</h1>
         <p>{{ errorMessage }}</p>
         <button type="button" (click)="loadWorkflow()">Try again</button>
       </div>

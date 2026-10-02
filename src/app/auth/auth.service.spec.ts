@@ -446,6 +446,36 @@ describe('AuthService', () => {
     });
   });
 
+  describe('expireSession', () => {
+    beforeEach(() => {
+      service = TestBed.inject(AuthService);
+      router = TestBed.inject(Router);
+      setValidTokenData();
+      localStorage.setItem('user', JSON.stringify({ id: 'test-user' }));
+      service['isAuthenticatedSubject'].next(true);
+    });
+
+    it('should clear all session state and preserve a safe return route', () => {
+      spyOnProperty(router, 'url', 'get').and.returnValue(
+        '/artifacts/artifact-nsg-001/history',
+      );
+      spyOn(router, 'navigate');
+
+      service.expireSession();
+
+      expect(localStorage.getItem('token')).toBeNull();
+      expect(localStorage.getItem('tokenData')).toBeNull();
+      expect(localStorage.getItem('user')).toBeNull();
+      expect(service.isAuthenticated()).toBeFalse();
+      expect(router.navigate).toHaveBeenCalledWith(['/auth/sign-in'], {
+        queryParams: {
+          reason: 'expired',
+          returnUrl: '/artifacts/artifact-nsg-001/history',
+        },
+      });
+    });
+  });
+
   describe('getToken', () => {
     beforeEach(() => {
       service = TestBed.inject(AuthService);

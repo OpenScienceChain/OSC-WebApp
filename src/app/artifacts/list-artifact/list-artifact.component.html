@@ -5,7 +5,12 @@
     </div>
   </header>
 
-  <form class="search-panel" role="search" (ngSubmit)="onSearch()">
+  <form
+    class="search-panel"
+    role="search"
+    data-ux-submit="CATALOG_SEARCH"
+    (ngSubmit)="onSearch()"
+  >
     <div class="search-field">
       <label for="artifact-title-search">Title contains</label>
       <input
@@ -23,6 +28,7 @@
       <label for="artifact-search-operator">Match</label>
       <select
         id="artifact-search-operator"
+        data-ux-change="CATALOG_FILTER"
         class="search-operator"
         [(ngModel)]="searchOperator"
         name="searchOperator"
@@ -53,7 +59,9 @@
 
   <section class="results" aria-labelledby="artifact-results-heading">
     <div class="results-heading">
-      <h2 id="artifact-results-heading">Discover, Search &amp; Explore Artifacts</h2>
+      <h2 id="artifact-results-heading">
+        Discover, Search &amp; Explore Artifacts
+      </h2>
       <p *ngIf="!isLoading && !errorMessage" role="status" aria-live="polite">
         {{ filteredArtifacts.length }}
         {{ filteredArtifacts.length === 1 ? 'artifact' : 'artifacts' }} found

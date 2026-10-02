@@ -1,3 +1,4 @@
 {
-  "API_BASE_URL": "/api/v1"
+  "API_BASE_URL": "/api/v1",
+  "DEMO_MODE": false
 }

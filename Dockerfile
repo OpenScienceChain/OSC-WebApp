@@ -17,13 +17,22 @@ FROM nginx:1.29-alpine@sha256:5616878291a2eed594aee8db4dade5878cf7edcb475e591939
 RUN apk upgrade --no-cache
 
 ENV API_UPSTREAM=http://api-gateway:3000
+ENV WEBAPP_API_BASE_URL=/api/v1
+ENV DEMO_MODE=false
 ENV NGINX_ENVSUBST_FILTER=API_UPSTREAM
 
 COPY docker/nginx.conf.template /etc/nginx/templates/default.conf.template
 COPY --from=build /app/dist/osc-web-app/browser/ /usr/share/nginx/html/
-COPY docker/runtime-config.json /usr/share/nginx/html/assets/runtime-config.json
+COPY docker/runtime-config.json.template /opt/osc/runtime-config.json.template
+COPY docker/40-runtime-config.sh /docker-entrypoint.d/40-runtime-config.sh
+RUN apk upgrade --no-cache libuuid \
+    && chmod 0555 /docker-entrypoint.d/40-runtime-config.sh \
+    && sed -i 's#pid .*#pid /tmp/nginx.pid;#' /etc/nginx/nginx.conf \
+    && chown -R nginx:nginx /etc/nginx/conf.d /usr/share/nginx/html /var/cache/nginx
+
+USER nginx
 
 HEALTHCHECK --interval=10s --timeout=3s --start-period=5s --retries=5 \
-  CMD wget -qO- http://127.0.0.1/healthz >/dev/null || exit 1
+  CMD wget -qO- http://127.0.0.1:8080/healthz >/dev/null || exit 1
 
-EXPOSE 80
+EXPOSE 8080

@@ -1,22 +1,43 @@
 <div class="container py-4" *ngIf="!isLoading; else loadingTpl">
   <div class="mb-3 intro">
-    <p class="mb-1"><strong>Artifact ID:</strong> {{ 'osc-is-artifact-' + artifactId }}</p>
+    <p class="mb-1">
+      <strong>Artifact ID:</strong> {{ 'osc-is-artifact-' + artifactId }}
+    </p>
     <p class="mb-1">
       <strong>Tx ID:</strong> <span class="monospace">{{ txId }}</span>
-      <span class="ms-2 badge" *ngIf="item" [ngClass]="isCurrent ? 'tag-current' : (isInitial ? 'tag-initial' : 'tag-update')">
-        {{ isCurrent ? 'Current State' : (isInitial ? 'Initial State' : 'Snapshot') }}
+      <span
+        class="ms-2 badge"
+        *ngIf="item"
+        [ngClass]="
+          isCurrent ? 'tag-current' : isInitial ? 'tag-initial' : 'tag-update'
+        "
+      >
+        {{
+          isCurrent ? 'Current State' : isInitial ? 'Initial State' : 'Snapshot'
+        }}
       </span>
     </p>
-    <p class="mb-1" *ngIf="item"><strong>Timestamp:</strong> {{ item.timestamp | date:'medium' }}</p>
+    <p class="mb-1" *ngIf="item">
+      <strong>Timestamp:</strong> {{ item.timestamp | date: 'medium' }}
+    </p>
     <div class="mt-2 d-flex gap-2">
-      <a class="btn btn-outline-primary" [routerLink]="['/artifacts', artifactId, 'history']">Go back to History</a>
-      <a class="btn btn-primary" [routerLink]="['/update-artifact', artifactId]">Update this Artifact</a>
-      <a class="btn btn-outline-primary" [routerLink]="['/artifacts', artifactId]">See Artifact's Detail</a>
+      <a
+        class="btn btn-outline-primary"
+        [routerLink]="['/artifacts', artifactId, 'history']"
+        >Go back to History</a
+      >
+      <a class="btn btn-primary" [routerLink]="['/update-artifact', artifactId]"
+        >Update this Artifact</a
+      >
+      <a
+        class="btn btn-outline-primary"
+        [routerLink]="['/artifacts', artifactId]"
+        >See Artifact's Detail</a
+      >
     </div>
   </div>
-</div>
 
-<div *ngIf="item as it; else notFoundTpl">
+  <div *ngIf="item as it; else notFoundTpl">
     <div class="artifact-wrapper container">
       <div class="artifact-header">
         <h1 class="artifact-title">{{ it.value?.title }}</h1>
@@ -35,55 +56,83 @@
               <tbody>
                 <tr>
                   <th>ID</th>
-                  <td>{{ 'osc-is-artifact-' + (it.value?.id || artifactId) }}</td>
+                  <td>
+                    {{ 'osc-is-artifact-' + (it.value?.id || artifactId) }}
+                  </td>
                 </tr>
                 <tr>
                   <th>Timestamp</th>
-                  <td>{{ it.timestamp | date:'medium' }}</td>
+                  <td>{{ it.timestamp | date: 'medium' }}</td>
                 </tr>
                 <tr *ngIf="it.value?.submitterUsername">
                   <th>Contributor</th>
                   <td>{{ it.value?.submitterUsername }}</td>
                 </tr>
                 <tr>
-                    <th>Contributor's email</th>
-                    <td>{{ it.value?.submitterEmail }}</td>
-                  </tr>
+                  <th>Contributor's email</th>
+                  <td>{{ it.value?.submitterEmail }}</td>
+                </tr>
                 <tr *ngIf="(it.value?.keywords || []).length">
                   <th>Keywords</th>
                   <td>
-                    <span *ngFor="let k of (it.value?.keywords || [])" class="badge bg-primary-subtle text-dark me-1 mb-1 keyword-badge">{{ k }}</span>
+                    <span
+                      *ngFor="let k of it.value?.keywords || []"
+                      class="badge bg-primary-subtle text-dark me-1 mb-1 keyword-badge"
+                      >{{ k }}</span
+                    >
                   </td>
                 </tr>
                 <tr *ngIf="(it.value?.links || []).length">
                   <th>Links</th>
                   <td>
-                    <div *ngFor="let link of (it.value?.links || [])"><a [href]="link" target="_blank">{{ link }}</a></div>
+                    <div *ngFor="let link of it.value?.links || []">
+                      <a [href]="link" target="_blank">{{ link }}</a>
+                    </div>
                   </td>
                 </tr>
                 <tr>
                   <th>Funding Agencies</th>
                   <td>
-                    {{ (it.value?.fundingAgencies || []).length > 0 ? (it.value?.fundingAgencies!.join(', ')) : '—' }}
+                    {{
+                      (it.value?.fundingAgencies || []).length > 0
+                        ? it.value?.fundingAgencies!.join(', ')
+                        : '—'
+                    }}
                   </td>
                 </tr>
                 <tr>
                   <th>DOIs</th>
                   <td>
-                    {{ (it.value?.dois || []).length > 0 ? (it.value?.dois!.join(', ')) : '—' }}
+                    {{
+                      (it.value?.dois || []).length > 0
+                        ? it.value?.dois!.join(', ')
+                        : '—'
+                    }}
                   </td>
                 </tr>
 
                 <tr>
                   <th>State</th>
                   <td>
-                    <span class="badge"
-                          [ngClass]="{
-                            'bg-warning': it.value?.submissionState === 'PENDING',
-                            'bg-success': it.value?.submissionState === 'CONFIRMED' || it.value?.submissionState === 'APPROVED' || it.value?.submissionState === 'SUCCESS',
-                            'bg-danger': it.value?.submissionState === 'FAILED' || it.value?.submissionState === 'REJECTED',
-                            'bg-secondary': it.value?.submissionState !== 'PENDING' && it.value?.submissionState !== 'CONFIRMED' && it.value?.submissionState !== 'APPROVED' && it.value?.submissionState !== 'FAILED' && it.value?.submissionState !== 'REJECTED'
-                          }">
+                    <span
+                      class="badge"
+                      [ngClass]="{
+                        'bg-warning': it.value?.submissionState === 'PENDING',
+                        'bg-success':
+                          it.value?.submissionState === 'CONFIRMED' ||
+                          it.value?.submissionState === 'APPROVED' ||
+                          it.value?.submissionState === 'SUCCESS',
+                        'bg-danger':
+                          it.value?.submissionState === 'FAILED' ||
+                          it.value?.submissionState === 'REJECTED',
+                        'bg-secondary':
+                          it.value?.submissionState !== 'PENDING' &&
+                          it.value?.submissionState !== 'CONFIRMED' &&
+                          it.value?.submissionState !== 'APPROVED' &&
+                          it.value?.submissionState !== 'FAILED' &&
+                          it.value?.submissionState !== 'REJECTED',
+                      }"
+                    >
                       {{ it.value?.submissionState }}
                     </span>
                   </td>
@@ -98,12 +147,22 @@
           </div>
         </div>
 
-        <div class="manifest-section mt-3" *ngIf="(it.value?.manifest || []).length">
+        <div
+          class="manifest-section mt-3"
+          *ngIf="(it.value?.manifest || []).length"
+        >
           <h4 class="section-heading mb-2 d-inline-flex align-items-center">
             Manifest
-            <button class="btn btn-primary btn-sm ms-2" (click)="printManifest()">Print file hashes</button>
+            <button
+              class="btn btn-primary btn-sm ms-2"
+              (click)="printManifest()"
+            >
+              Print file hashes
+            </button>
           </h4>
-          <p class="small text-muted">{{ it.value?.manifest?.length }} files total, showing only 10</p>
+          <p class="small text-muted">
+            {{ it.value?.manifest?.length }} files total, showing only 10
+          </p>
           <div class="table-responsive">
             <table class="table table-sm manifest-table align-middle">
               <thead class="table-light">
@@ -114,7 +173,7 @@
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let m of (it.value?.manifest || []) | slice:0:10">
+                <tr *ngFor="let m of it.value?.manifest || [] | slice: 0 : 10">
                   <td class="filename">{{ m.filename }}</td>
                   <td class="hash text-truncate">{{ m.hash }}</td>
                   <td class="algorithm">{{ m.algorithm }}</td>
@@ -130,22 +189,186 @@
         </div>
       </div>
       <div class="mt-2 d-flex justify-content-center gap-2">
-        <a class="btn btn-outline-primary" [routerLink]="['/artifacts', artifactId, 'history']">Go back to History</a>
-        <a class="btn btn-primary" [routerLink]="['/update-artifact', artifactId]">Update this Artifact</a>
-        <a class="btn btn-outline-primary" [routerLink]="['/artifacts', artifactId]">See Artifact's Detail</a>
+        <a
+          class="btn btn-outline-primary"
+          [routerLink]="['/artifacts', artifactId, 'history']"
+          >Go back to History</a
+        >
+        <a
+          class="btn btn-primary"
+          [routerLink]="['/update-artifact', artifactId]"
+          >Update this Artifact</a
+        >
+        <a
+          class="btn btn-outline-primary"
+          [routerLink]="['/artifacts', artifactId]"
+          >See Artifact's Detail</a
+        >
       </div>
     </div>
 
-   
+    <div class="artifact-body">
+      <div class="row g-4">
+        <div class="col-lg-6 description-col">
+          <h4 class="section-heading">Description</h4>
+          <p class="pre-wrap">{{ it.value?.description }}</p>
+        </div>
+
+        <div class="col-lg-6 details-col">
+          <h4 class="section-heading">Details</h4>
+          <table class="table table-borderless artifact-meta">
+            <tbody>
+              <tr>
+                <th>ID</th>
+                <td>{{ 'osc-is-artifact-' + (it.value?.id || artifactId) }}</td>
+              </tr>
+              <tr>
+                <th>Timestamp</th>
+                <td>{{ it.timestamp | date: 'medium' }}</td>
+              </tr>
+              <tr *ngIf="it.value?.submitterUsername">
+                <th>Contributor</th>
+                <td>{{ it.value?.submitterUsername }}</td>
+              </tr>
+              <tr>
+                <th>Contributor's email</th>
+                <td>{{ it.value?.submitterEmail }}</td>
+              </tr>
+              <tr *ngIf="(it.value?.keywords || []).length">
+                <th>Keywords</th>
+                <td>
+                  <span
+                    *ngFor="let k of it.value?.keywords || []"
+                    class="badge bg-primary-subtle text-dark me-1 mb-1 keyword-badge"
+                    >{{ k }}</span
+                  >
+                </td>
+              </tr>
+              <tr *ngIf="(it.value?.links || []).length">
+                <th>Links</th>
+                <td>
+                  <div *ngFor="let link of it.value?.links || []">
+                    <a [href]="link" target="_blank">{{ link }}</a>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <th>Funding Agencies</th>
+                <td>
+                  {{
+                    (it.value?.fundingAgencies || []).length > 0
+                      ? it.value?.fundingAgencies!.join(', ')
+                      : '—'
+                  }}
+                </td>
+              </tr>
+              <tr>
+                <th>DOIs</th>
+                <td>
+                  {{
+                    (it.value?.dois || []).length > 0
+                      ? it.value?.dois!.join(', ')
+                      : '—'
+                  }}
+                </td>
+              </tr>
+
+              <tr>
+                <th>State</th>
+                <td>
+                  <span
+                    class="badge"
+                    [ngClass]="{
+                      'bg-warning': it.value?.submissionState === 'PENDING',
+                      'bg-success':
+                        it.value?.submissionState === 'CONFIRMED' ||
+                        it.value?.submissionState === 'APPROVED' ||
+                        it.value?.submissionState === 'SUCCESS',
+                      'bg-danger':
+                        it.value?.submissionState === 'FAILED' ||
+                        it.value?.submissionState === 'REJECTED',
+                      'bg-secondary':
+                        it.value?.submissionState !== 'PENDING' &&
+                        it.value?.submissionState !== 'CONFIRMED' &&
+                        it.value?.submissionState !== 'APPROVED' &&
+                        it.value?.submissionState !== 'FAILED' &&
+                        it.value?.submissionState !== 'REJECTED',
+                    }"
+                  >
+                    {{ it.value?.submissionState }}
+                  </span>
+                </td>
+              </tr>
+
+              <tr *ngIf="it.value?.acknowledgements">
+                <th>Acknowledgements</th>
+                <td>{{ it.value?.acknowledgements }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div
+        class="manifest-section mt-3"
+        *ngIf="(it.value?.manifest || []).length"
+      >
+        <h4 class="section-heading mb-2 d-inline-flex align-items-center">
+          Manifest
+          <button class="btn btn-primary btn-sm ms-2" (click)="printManifest()">
+            Print full Manifest
+          </button>
+        </h4>
+        <p class="small text-muted">
+          {{ it.value?.manifest?.length }} files total, showing only 10
+        </p>
+        <div class="table-responsive">
+          <table class="table table-sm manifest-table align-middle">
+            <thead class="table-light">
+              <tr>
+                <th scope="col">Filename</th>
+                <th scope="col">Hash</th>
+                <th scope="col">Alg.</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let m of it.value?.manifest || [] | slice: 0 : 10">
+                <td class="filename">{{ m.filename }}</td>
+                <td class="hash text-truncate">{{ m.hash }}</td>
+                <td class="algorithm">{{ m.algorithm }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div *ngIf="it.value?.footprint" class="mt-2">
+        <div class="section-heading mb-2">Footprint (SHA-256)</div>
+        <code class="text-break">{{ it.value?.footprint }}</code>
+      </div>
+    </div>
+    <div class="mt-2 d-flex justify-content-center gap-2">
+      <a
+        class="btn btn-outline-primary"
+        [routerLink]="['/artifacts', artifactId, 'history']"
+        >Go back to History</a
+      >
+      <a class="btn btn-primary" [routerLink]="['/update-artifact', artifactId]"
+        >Update this Artifact</a
+      >
+      <a
+        class="btn btn-outline-primary"
+        [routerLink]="['/artifacts', artifactId]"
+        >See Artifact's Detail</a
+      >
+    </div>
+  </div>
 </div>
 
-  <ng-template #notFoundTpl>
-    <div class="text-danger">Snapshot not found.</div>
-  </ng-template>
-
+<ng-template #notFoundTpl>
+  <div class="text-danger">Snapshot not found.</div>
+</ng-template>
 
 <ng-template #loadingTpl>
   <div class="text-center">Loading snapshot…</div>
-  </ng-template>
-
-
+</ng-template>

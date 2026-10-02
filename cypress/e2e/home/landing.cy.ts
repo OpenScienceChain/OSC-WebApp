@@ -1,45 +1,53 @@
 describe('OSC-IS landing page', () => {
   beforeEach(() => {
+    cy.intercept('GET', '**/api/v1/artifacts', { body: [] }).as('artifacts');
+    cy.intercept('GET', '**/api/v1/workflows', { body: [] }).as('workflows');
     cy.visit('/');
+    cy.wait(['@artifacts', '@workflows']);
   });
 
-  it('introduces provenance and the three audience paths', () => {
-    cy.get('h1').should('have.attr', 'aria-label', 'Open Science Chain');
-    cy.contains('h3', 'Discover research').should('be.visible');
-    cy.contains('h3', 'Share your work').should('be.visible');
-    cy.contains('h3', 'Reproduce a process').should('be.visible');
-    cy.contains('h2', 'Evidence that travels with the work').should(
+  it('introduces the product and its permissioned provenance value', () => {
+    cy.contains('h1', 'Open Science Chain').should('be.visible');
+    cy.contains('Scientific outputs, with their history intact.').should(
       'be.visible',
     );
-    cy.contains('h2', 'Trust infrastructure that stays out of the way').should(
-      'be.visible',
-    );
-    cy.contains('Permissioned Hyperledger Fabric').should('be.visible');
+    cy.contains(
+      'h2',
+      'Storage preserves a file. OSC-IS preserves its context.',
+    ).should('be.visible');
+    cy.contains('Hyperledger Fabric').should('be.visible');
+    cy.contains('Research files remain off-chain').should('be.visible');
   });
 
-  it('provides working routes to artifacts, workflows, and sign in', () => {
-    cy.contains('a', 'Explore artifacts').should(
-      'have.attr',
-      'href',
-      '/list-artifacts',
+  it('provides honest representative artifact and workflow records', () => {
+    cy.contains('Demonstration data, not researcher submissions').should(
+      'be.visible',
     );
-    cy.contains('a', 'Explore workflows').should(
-      'have.attr',
-      'href',
-      '/list-workflows',
+    cy.contains('h3', 'Neuroscience image segmentation dataset').should(
+      'be.visible',
     );
-    cy.contains('a', 'Sign in to contribute').should(
+    cy.contains('h3', 'Reproducible neuroimaging preparation').should(
+      'be.visible',
+    );
+    cy.contains('a', 'Inspect sample artifact').should(
       'have.attr',
       'href',
-      '/auth/sign-in',
+      '/artifacts/artifact-nsg-001',
+    );
+    cy.contains('a', 'Inspect sample workflow').should(
+      'have.attr',
+      'href',
+      '/workflows/workflow-nsg-001',
     );
   });
 
   it('keeps the primary actions visible on a narrow mobile viewport', () => {
     cy.viewport(320, 700);
     cy.get('h1').should('be.visible');
-    cy.contains('a', 'Explore artifacts').should('be.visible');
-    cy.contains('a', 'See how it works').should('be.visible');
-    cy.contains('p', 'Choose your path').should('be.visible');
+    cy.contains('a', 'Explore records').should('be.visible');
+    cy.contains('a', 'View sample records').should('be.visible');
+    cy.get('body').then(($body) => {
+      expect($body[0].scrollWidth).to.be.at.most($body[0].clientWidth + 1);
+    });
   });
 });

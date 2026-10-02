@@ -15,7 +15,7 @@ describe('getApiBaseUrl', () => {
   const setRuntimeConfig = (apiUrl: string) => {
     Object.defineProperty(window as any, '__RUNTIME_CONFIG__', {
       value: { API_BASE_URL: apiUrl },
-      configurable: true
+      configurable: true,
     });
   };
 
@@ -58,7 +58,7 @@ describe('getApiBaseUrl', () => {
     const warnSpy = spyOn(console, 'warn');
     expect(getApiBaseUrl()).toBe('http://localhost:3000/api/v1');
     expect(warnSpy).toHaveBeenCalledWith(
-      'API_BASE_URL not provided; falling back to http://localhost:3000/api/v1'
+      'API_BASE_URL not provided; falling back to http://localhost:3000/api/v1',
     );
   });
 
@@ -72,7 +72,7 @@ describe('getApiBaseUrl', () => {
     const warnSpy = spyOn(console, 'warn');
     expect(getApiBaseUrl()).toBe('http://localhost:3000/api/v1');
     expect(warnSpy).toHaveBeenCalledWith(
-      'environment.apiUrl is empty; falling back to http://localhost:3000/api/v1'
+      'environment.apiUrl is empty; falling back to http://localhost:3000/api/v1',
     );
   });
 

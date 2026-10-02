@@ -204,10 +204,3 @@ export interface DemoArtifactHistory {
   total?: number;
   count?: number;
 }
-
-export interface DemoFeedbackRequest {
-  easeRating: number;
-  provenanceRating: number;
-  usefulnessRating: number;
-  comment?: string;
-}

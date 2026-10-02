@@ -11,7 +11,6 @@ import {
   DemoCatalogArtifact,
   DemoCatalogWorkflow,
   DemoCounters,
-  DemoFeedbackRequest,
   DemoOrganizationSlug,
   DemoSession,
   DemoStatus,
@@ -240,26 +239,6 @@ export class DemoService {
         headers: new HttpHeaders({ 'X-Correlation-Id': crypto.randomUUID() }),
         withCredentials: true,
       },
-    );
-  }
-
-  recordEvent(
-    eventName: 'STATUS_VIEWED' | 'SURVEY_SHOWN',
-  ): Observable<{ accepted: boolean }> {
-    return this.http.post<{ accepted: boolean }>(
-      this.url('/events'),
-      { eventName },
-      this.mutation(),
-    );
-  }
-
-  submitFeedback(
-    request: DemoFeedbackRequest,
-  ): Observable<{ accepted: boolean }> {
-    return this.http.post<{ accepted: boolean }>(
-      this.url('/feedback'),
-      request,
-      this.mutation(),
     );
   }
 

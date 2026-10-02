@@ -18,6 +18,22 @@
       <p>Register research outputs and manage the records you contribute.</p>
     </div>
 
+    <div
+      *ngIf="sessionExpired"
+      class="session-notice"
+      role="status"
+      aria-live="polite"
+      data-cy="session-expired"
+    >
+      <i class="bi bi-clock-history" aria-hidden="true"></i>
+      <div>
+        <strong>Your session ended</strong>
+        <p>
+          Sign in again to continue. Your artifact records were not changed.
+        </p>
+      </div>
+    </div>
+
     <form
       [formGroup]="signInForm"
       class="sign-in-form"

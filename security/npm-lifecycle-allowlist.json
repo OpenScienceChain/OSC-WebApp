@@ -12,11 +12,11 @@
     },
     "cypress": {
       "versions": [
-        "14.5.4"
+        "16.0.0"
       ],
       "execute": true,
       "scripts": {
-        "postinstall": "node index.js --exec install"
+        "postinstall": "node dist/index.js --exec install"
       }
     },
     "esbuild": {

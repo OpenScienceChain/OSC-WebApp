@@ -7,7 +7,7 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { AuthService } from '../auth.service';
 
@@ -23,10 +23,13 @@ export class SignInComponent {
   showForgotMessage = false;
   isLoading = false;
   invalidCredentials = false;
+  sessionExpired = false;
+  private readonly returnUrl: string;
 
   constructor(
     private readonly formBuilder: FormBuilder,
     private readonly router: Router,
+    private readonly route: ActivatedRoute,
     private readonly authService: AuthService,
     private readonly toastr: ToastrService,
   ) {
@@ -34,6 +37,11 @@ export class SignInComponent {
       username: ['', [Validators.required]],
       password: ['', [Validators.required]],
     });
+    this.sessionExpired =
+      this.route.snapshot.queryParamMap.get('reason') === 'expired';
+    this.returnUrl = this.safeReturnUrl(
+      this.route.snapshot.queryParamMap.get('returnUrl'),
+    );
   }
 
   onSubmit(): void {
@@ -51,7 +59,7 @@ export class SignInComponent {
     this.authService.login(username, password).subscribe({
       next: () => {
         this.toastr.success('Successfully signed in!', 'Welcome');
-        this.router.navigate(['/']);
+        this.router.navigateByUrl(this.returnUrl);
       },
       error: (error) => {
         console.error('Login error:', error);
@@ -74,5 +82,16 @@ export class SignInComponent {
       'Please contact support for assistance',
       'Password Recovery',
     );
+  }
+
+  private safeReturnUrl(value: string | null): string {
+    if (
+      value?.startsWith('/') &&
+      !value.startsWith('//') &&
+      !value.startsWith('/auth/sign-in')
+    ) {
+      return value;
+    }
+    return '/';
   }
 }

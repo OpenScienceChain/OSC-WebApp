@@ -398,8 +398,9 @@
   color: #38535f;
 }
 
-.state-panel strong {
+.state-panel h1 {
   display: block;
+  margin: 0;
   color: #163a59;
   font-size: 20px;
 }

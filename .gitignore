@@ -50,7 +50,7 @@ test-output.txt
 cypress.env.json
 cypress/videos
 cypress/screenshots
-cypress/downloads/downloads.html
+cypress/downloads/
 
 random_files/
 

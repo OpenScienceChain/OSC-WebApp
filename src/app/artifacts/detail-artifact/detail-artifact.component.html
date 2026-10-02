@@ -8,7 +8,7 @@
     <div *ngIf="isLoading" class="state-panel" role="status" aria-live="polite">
       <span class="spinner-border" aria-hidden="true"></span>
       <div>
-        <strong>Loading artifact record</strong>
+        <h1>Loading artifact record</h1>
         <p>Retrieving metadata and provenance evidence.</p>
       </div>
     </div>
@@ -20,7 +20,7 @@
     >
       <i class="bi bi-exclamation-circle" aria-hidden="true"></i>
       <div>
-        <strong>Artifact unavailable</strong>
+        <h1>Artifact unavailable</h1>
         <p>{{ errorMessage }}</p>
         <button type="button" (click)="loadArtifact()">Try again</button>
       </div>

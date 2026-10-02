@@ -1,5 +1,8 @@
 import { TestBed } from '@angular/core/testing';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import {
+  HttpClientTestingModule,
+  HttpTestingController,
+} from '@angular/common/http/testing';
 import { WorkflowService } from './workflow.service';
 import { WorkflowListItem, Workflow } from '../models/workflow.model';
 
@@ -38,14 +41,14 @@ describe('WorkflowService', () => {
         },
       ];
 
-      service.getWorkflows().subscribe(workflows => {
+      service.getWorkflows().subscribe((workflows) => {
         expect(workflows).toBeTruthy();
         expect(workflows.length).toBe(1);
         expect(workflows[0].title).toBe('Test Workflow');
         done();
       });
 
-      const req = httpMock.expectOne(r => r.url.includes('/workflows'));
+      const req = httpMock.expectOne((r) => r.url.includes('/workflows'));
       expect(req.request.method).toBe('GET');
       req.flush(mockData);
     });
@@ -66,14 +69,14 @@ describe('WorkflowService', () => {
         submission_comment: 'Test comment',
       };
 
-      service.getWorkflow('1').subscribe(workflow => {
+      service.getWorkflow('1').subscribe((workflow) => {
         expect(workflow).toBeTruthy();
         expect(workflow.id).toBe('1');
         expect(workflow.title).toBe('Test Workflow');
         done();
       });
 
-      const req = httpMock.expectOne(r => r.url.includes('/workflows/1'));
+      const req = httpMock.expectOne((r) => r.url.includes('/workflows/1'));
       expect(req.request.method).toBe('GET');
       req.flush(mockWorkflow);
     });
@@ -90,12 +93,12 @@ describe('WorkflowService', () => {
         submission_comment: 'A long enough submission comment.',
       };
 
-      service.createWorkflow(dto).subscribe(res => {
+      service.createWorkflow(dto).subscribe((res) => {
         expect(res.id).toBe('new-id');
         done();
       });
 
-      const req = httpMock.expectOne(r => r.url.includes('/workflows'));
+      const req = httpMock.expectOne((r) => r.url.includes('/workflows'));
       expect(req.request.method).toBe('POST');
       req.flush({ id: 'new-id' });
     });
@@ -112,7 +115,7 @@ describe('WorkflowService', () => {
         done();
       });
 
-      const req = httpMock.expectOne(r => r.url.includes('/workflows/1'));
+      const req = httpMock.expectOne((r) => r.url.includes('/workflows/1'));
       expect(req.request.method).toBe('PUT');
       req.flush(null);
     });

@@ -1,7 +1,7 @@
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ToastrService } from 'ngx-toastr';
 import { of, throwError } from 'rxjs';
@@ -12,6 +12,10 @@ describe('SignInComponent', () => {
   let component: SignInComponent;
   let fixture: ComponentFixture<SignInComponent>;
   let router: Router;
+
+  const routeStub = {
+    snapshot: { queryParamMap: convertToParamMap({}) },
+  };
 
   const authService = {
     login: jasmine.createSpy('login').and.returnValue(of({})),
@@ -26,11 +30,13 @@ describe('SignInComponent', () => {
   };
 
   beforeEach(async () => {
+    routeStub.snapshot.queryParamMap = convertToParamMap({});
     await TestBed.configureTestingModule({
       imports: [SignInComponent, RouterTestingModule, HttpClientTestingModule],
       providers: [
         { provide: AuthService, useValue: authService },
         { provide: ToastrService, useValue: toastr },
+        { provide: ActivatedRoute, useValue: routeStub },
       ],
     }).compileComponents();
 
@@ -105,7 +111,7 @@ describe('SignInComponent', () => {
   });
 
   it('should log in and return to the landing page', () => {
-    spyOn(router, 'navigate');
+    spyOn(router, 'navigateByUrl');
     component.signInForm.setValue({
       username: 'researcher',
       password: 'valid-password',
@@ -118,8 +124,36 @@ describe('SignInComponent', () => {
       'valid-password',
     );
     expect(toastr.success).toHaveBeenCalled();
-    expect(router.navigate).toHaveBeenCalledWith(['/']);
+    expect(router.navigateByUrl).toHaveBeenCalledWith('/');
     expect(component.isLoading).toBeFalse();
+  });
+
+  it('should explain an expired session and return to the requested page', () => {
+    fixture.destroy();
+    routeStub.snapshot.queryParamMap = convertToParamMap({
+      reason: 'expired',
+      returnUrl: '/artifacts/artifact-nsg-001/history',
+    });
+    fixture = TestBed.createComponent(SignInComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+    spyOn(router, 'navigateByUrl');
+
+    expect(component.sessionExpired).toBeTrue();
+    expect(
+      fixture.nativeElement.querySelector('[data-cy="session-expired"]')
+        .textContent,
+    ).toContain('Your session ended');
+
+    component.signInForm.setValue({
+      username: 'researcher',
+      password: 'valid-password',
+    });
+    component.onSubmit();
+
+    expect(router.navigateByUrl).toHaveBeenCalledWith(
+      '/artifacts/artifact-nsg-001/history',
+    );
   });
 
   it('should announce invalid credentials', () => {

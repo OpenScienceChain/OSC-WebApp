@@ -34,6 +34,7 @@
     </div>
 
     <button
+      #navigationToggle
       class="icon-button navigation-toggle"
       type="button"
       aria-controls="primary-navigation-links"
@@ -94,9 +95,10 @@
       <div class="navigation-actions">
         <div class="contribute-dropdown">
           <button
+            #contributeButton
             class="nav-action contribute-button"
             type="button"
-            aria-haspopup="menu"
+            aria-controls="contribute-options"
             [attr.aria-expanded]="contributeMenuOpen"
             (click)="toggleContributeMenu()"
           >
@@ -109,13 +111,12 @@
           </button>
           <div
             *ngIf="contributeMenuOpen"
+            id="contribute-options"
             class="contribute-menu"
-            role="menu"
-            aria-label="Contribution type"
           >
             <button
               type="button"
-              role="menuitem"
+              data-ux-click="CONTRIBUTE_CLICK"
               (click)="onContributeClick('artifact')"
             >
               <i class="bi bi-box-seam" aria-hidden="true"></i>
@@ -126,7 +127,7 @@
             </button>
             <button
               type="button"
-              role="menuitem"
+              data-ux-click="CONTRIBUTE_CLICK"
               (click)="onContributeClick('workflow')"
             >
               <i class="bi bi-diagram-3" aria-hidden="true"></i>
@@ -140,6 +141,7 @@
 
         <a
           *ngIf="!isAuthenticated && !contributorSignedIn"
+          data-ux-click="AUTH_ACTION"
           class="sign-in-button"
           routerLink="/auth/sign-in"
           routerLinkActive="active"
@@ -150,6 +152,7 @@
         </a>
         <button
           *ngIf="isAuthenticated || contributorSignedIn"
+          data-ux-click="AUTH_ACTION"
           class="sign-in-button"
           type="button"
           (click)="logout()"
@@ -161,6 +164,39 @@
     </div>
   </nav>
 </header>
+
+<section
+  *ngIf="analytics.choice() === 'undecided'"
+  class="privacy-banner"
+  aria-label="Analytics choice"
+>
+  <div class="privacy-banner-inner">
+    <p>
+      <strong>Optional analytics</strong> help us understand which pages and
+      actions are useful. No browsing events are sent before you accept.
+      Feedback works either way.
+    </p>
+    <div class="privacy-actions">
+      <button
+        type="button"
+        [disabled]="analytics.busy()"
+        (click)="acceptAnalytics()"
+      >
+        Accept
+      </button>
+      <button
+        type="button"
+        [disabled]="analytics.busy()"
+        (click)="analytics.reject()"
+      >
+        Reject
+      </button>
+    </div>
+    <p *ngIf="analytics.error()" role="alert" class="privacy-error">
+      {{ analytics.error() }}
+    </p>
+  </div>
+</section>
 
 <div *ngIf="mockPreview" class="mock-preview-banner" role="status">
   LOCAL MOCK PREVIEW - synthetic records; no Fabric connection
@@ -184,7 +220,55 @@
       <a routerLink="/list-artifacts">Artifacts</a>
       <a routerLink="/list-workflows">Workflows</a>
       <a routerLink="/research-example">Research example</a>
+      <a routerLink="/feedback">Share feedback</a>
     </nav>
+    <details class="privacy-settings">
+      <summary>Privacy choices</summary>
+      <p *ngIf="analytics.choice() === 'accepted'">
+        Optional analytics are on. You can delete this browser's analytics
+        history.
+      </p>
+      <p *ngIf="analytics.choice() === 'rejected'">
+        Optional analytics are off.
+      </p>
+      <p *ngIf="analytics.choice() === 'undecided'">
+        Choose whether to allow optional analytics.
+      </p>
+      <button
+        *ngIf="analytics.choice() === 'accepted'"
+        type="button"
+        [disabled]="analytics.busy()"
+        (click)="analytics.revoke()"
+      >
+        Delete analytics history
+      </button>
+      <div
+        *ngIf="
+          analytics.choice() === 'rejected' ||
+          analytics.choice() === 'undecided'
+        "
+        class="privacy-actions"
+      >
+        <button
+          type="button"
+          [disabled]="analytics.busy()"
+          (click)="acceptAnalytics()"
+        >
+          Accept
+        </button>
+        <button
+          *ngIf="analytics.choice() === 'undecided'"
+          type="button"
+          [disabled]="analytics.busy()"
+          (click)="analytics.reject()"
+        >
+          Reject
+        </button>
+      </div>
+      <p *ngIf="analytics.error()" role="alert" class="privacy-error">
+        {{ analytics.error() }}
+      </p>
+    </details>
   </div>
   <div class="footer-bottom">
     <span>Open Science Chain</span

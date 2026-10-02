@@ -59,6 +59,29 @@
   line-height: 1.6;
 }
 
+.session-notice {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  gap: 10px;
+  margin: -12px 0 24px;
+  padding: 13px 14px;
+  border-left: 4px solid #a97818;
+  background: #fff5d8;
+  color: #5f430d;
+}
+
+.session-notice i {
+  margin-top: 2px;
+}
+.session-notice strong {
+  display: block;
+}
+.session-notice p {
+  margin: 3px 0 0;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
 .form-group {
   margin-bottom: 20px;
 }

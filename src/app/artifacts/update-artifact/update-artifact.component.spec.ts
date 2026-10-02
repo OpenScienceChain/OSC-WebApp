@@ -1,4 +1,9 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import {
+  ComponentFixture,
+  TestBed,
+  fakeAsync,
+  tick,
+} from '@angular/core/testing';
 import { UpdateArtifactComponent } from './update-artifact.component';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
@@ -26,7 +31,7 @@ describe('UpdateArtifactComponent', () => {
     acknowledgements: 'a',
     manifest: [
       { filename: 'b.txt', hash: 'bbb', algorithm: 'sha256' },
-      { filename: 'a.txt', hash: 'aaa', algorithm: 'sha256' }
+      { filename: 'a.txt', hash: 'aaa', algorithm: 'sha256' },
     ],
     footprint: 'original-foot',
     submittedAt: '',
@@ -38,11 +43,14 @@ describe('UpdateArtifactComponent', () => {
     blockchainTxId: null,
     peerId: null,
     submissionError: null,
-    organization: { name: 'TestOrg' }
+    organization: { name: 'TestOrg' },
   } as ArtifactDetail;
 
   beforeEach(async () => {
-    artifactServiceSpy = jasmine.createSpyObj('ArtifactService', ['getArtifactById', 'updateArtifactMetadataOnly']);
+    artifactServiceSpy = jasmine.createSpyObj('ArtifactService', [
+      'getArtifactById',
+      'updateArtifactMetadataOnly',
+    ]);
     toastrSpy = jasmine.createSpyObj('ToastrService', ['success', 'error']);
 
     artifactServiceSpy.getArtifactById.and.returnValue(of(mockArtifact));
@@ -51,11 +59,19 @@ describe('UpdateArtifactComponent', () => {
     await TestBed.configureTestingModule({
       imports: [UpdateArtifactComponent],
       providers: [
-        { provide: ActivatedRoute, useValue: { paramMap: of(convertToParamMap({ id: mockArtifact.id })) } },
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            paramMap: of(convertToParamMap({ id: mockArtifact.id })),
+          },
+        },
         { provide: ArtifactService, useValue: artifactServiceSpy },
         { provide: ToastrService, useValue: toastrSpy },
-        { provide: Router, useValue: { navigate: jasmine.createSpy('navigate') } }
-      ]
+        {
+          provide: Router,
+          useValue: { navigate: jasmine.createSpy('navigate') },
+        },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(UpdateArtifactComponent);
@@ -86,7 +102,10 @@ describe('UpdateArtifactComponent', () => {
   it('onSubmit sends metadata-only update when keeping manifest', fakeAsync(() => {
     component.keepManifestUnchanged = true;
     component.artifact = mockArtifact;
-    component.artifactForm.patchValue({ keywords: 'changed', submission_comment: 'Valid update reason.' });
+    component.artifactForm.patchValue({
+      keywords: 'changed',
+      submission_comment: 'Valid update reason.',
+    });
     spyOn<any>(component, 'hasMetadataChanges').and.returnValue(true);
     spyOn(component, 'isFormAndFileValid').and.returnValue(true);
 
@@ -94,7 +113,8 @@ describe('UpdateArtifactComponent', () => {
     tick();
 
     expect(artifactServiceSpy.updateArtifactMetadataOnly).toHaveBeenCalled();
-    const dto = artifactServiceSpy.updateArtifactMetadataOnly.calls.mostRecent().args[1];
+    const dto =
+      artifactServiceSpy.updateArtifactMetadataOnly.calls.mostRecent().args[1];
     expect(dto.manifest.length).toBe(mockArtifact.manifest.length);
     expect(dto.footprint).toBe(mockArtifact.footprint);
     expect(component.lastCreatedId).toBe(mockArtifact.id);
@@ -103,19 +123,24 @@ describe('UpdateArtifactComponent', () => {
   it('onSubmit rebuilds manifest and hashes canonical list when multiple files', fakeAsync(() => {
     component.keepManifestUnchanged = false;
     component.artifact = mockArtifact;
-    component.artifactForm.patchValue({ submission_comment: 'Valid update reason.' });
+    component.artifactForm.patchValue({
+      submission_comment: 'Valid update reason.',
+    });
     component.selectedFilesData = [
       { name: 'b.txt', hash: '2', size: 10 } as any,
-      { name: 'a.txt', hash: '1', size: 10 } as any
+      { name: 'a.txt', hash: '1', size: 10 } as any,
     ];
     spyOn(component, 'isFormAndFileValid').and.returnValue(true);
 
-    spyOn(CryptoJS, 'SHA256').and.returnValue({ toString: () => 'hashed' } as any);
+    spyOn(CryptoJS, 'SHA256').and.returnValue({
+      toString: () => 'hashed',
+    } as any);
 
     component.onSubmit();
     tick();
 
-    const dto = artifactServiceSpy.updateArtifactMetadataOnly.calls.mostRecent().args[1];
+    const dto =
+      artifactServiceSpy.updateArtifactMetadataOnly.calls.mostRecent().args[1];
     expect(dto.manifest.length).toBe(2);
     expect(dto.footprint).toBe('hashed');
   }));
@@ -131,7 +156,7 @@ describe('UpdateArtifactComponent', () => {
         noaa: false,
         nasa: false,
         otherAgency: '',
-        acknowledgment: 'a'
+        acknowledgment: 'a',
       });
     };
 
@@ -161,7 +186,7 @@ describe('UpdateArtifactComponent', () => {
         keywords: 'k1',
         submission_comment: 'This is a valid update reason.',
         links: 'https://example.com',
-        doi: '10.1234/abcd'
+        doi: '10.1234/abcd',
       });
       component.artifactForm.updateValueAndValidity();
     };
@@ -170,7 +195,9 @@ describe('UpdateArtifactComponent', () => {
       setValidForm();
       (component as any).isProcessing = true;
       component.keepManifestUnchanged = false;
-      component.selectedFilesData = [{ name: 'a.txt', hash: 'h', size: 1 } as any];
+      component.selectedFilesData = [
+        { name: 'a.txt', hash: 'h', size: 1 } as any,
+      ];
       expect(component.isFormAndFileValid()).toBeFalse();
       (component as any).isProcessing = false;
     });
@@ -192,7 +219,9 @@ describe('UpdateArtifactComponent', () => {
     it('returns true when files selected and form valid', () => {
       setValidForm();
       component.keepManifestUnchanged = false;
-      component.selectedFilesData = [{ name: 'a.txt', hash: 'h', size: 1 } as any];
+      component.selectedFilesData = [
+        { name: 'a.txt', hash: 'h', size: 1 } as any,
+      ];
       expect(component.isFormAndFileValid()).toBeTrue();
     });
 

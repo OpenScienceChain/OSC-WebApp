@@ -10,9 +10,9 @@
     "build:staging": "ng build --configuration=staging",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "serve:ssr": "ng run OSC-WebApp:serve-ssr",
-    "dev:ssr": "ng run OSC-WebApp:serve-ssr --configuration development",
-    "build:ssr": "ng run OSC-WebApp:server:production",
+    "serve:ssr": "npm run build:ssr && npm run serve:ssr:OSC-WebApp",
+    "dev:ssr": "ng serve --configuration=ssr",
+    "build:ssr": "ng build --configuration=production,ssr",
     "serve:ssr:OSC-WebApp": "node dist/osc-web-app/server/server.mjs",
     "format:check": "prettier --check \"src/**/*.{ts,html,css,scss}\" \"cypress/**/*.ts\"",
     "lint": "eslint \"src/**/*.ts\" \"cypress/**/*.ts\"",
@@ -45,7 +45,7 @@
     "bootstrap": "^5.3.3",
     "bootstrap-icons": "^1.11.3",
     "crypto-js": "^4.2.0",
-    "express": "^4.18.2",
+    "express": "4.22.2",
     "jszip": "^3.10.1",
     "ngx-toastr": "^19.0.0",
     "rxjs": "~7.8.0",
@@ -66,8 +66,7 @@
     "@typescript-eslint/eslint-plugin": "^8.0.0",
     "@typescript-eslint/parser": "^8.0.0",
     "axe-core": "^4.12.1",
-    "cypress": "^14.2.0",
-    "cypress-axe": "^1.7.0",
+    "cypress": "16.0.0",
     "esbuild": "^0.25.0",
     "eslint": "^8.0.0",
     "eslint-config-prettier": "^9.0.0",
@@ -93,5 +92,8 @@
     "*.{json,md,html,css,scss}": [
       "prettier --write"
     ]
+  },
+  "overrides": {
+    "qs": "6.16.0"
   }
 }

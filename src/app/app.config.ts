@@ -1,4 +1,9 @@
-import { ApplicationConfig, importProvidersFrom, provideAppInitializer, inject } from '@angular/core';
+import {
+  ApplicationConfig,
+  importProvidersFrom,
+  provideAppInitializer,
+  inject,
+} from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { routes } from './app.routes';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
@@ -12,9 +17,7 @@ import { loadRuntimeConfig } from './config/runtime-config';
 export const appConfig: ApplicationConfig = {
   providers: [
     provideRouter(routes),
-    provideHttpClient(
-      withInterceptors([authInterceptor])
-    ),
+    provideHttpClient(withInterceptors([authInterceptor])),
     provideAnimations(),
     provideClientHydration(),
     provideAppInitializer(() => inject(RuntimeConfigService).load()),
@@ -22,9 +25,9 @@ export const appConfig: ApplicationConfig = {
       ToastrModule.forRoot({
         positionClass: 'toast-bottom-right',
         preventDuplicates: true,
-        timeOut: 3000
-      })
+        timeOut: 3000,
+      }),
     ),
-    provideAppInitializer(() => loadRuntimeConfig())
-  ]
+    provideAppInitializer(() => loadRuntimeConfig()),
+  ],
 };

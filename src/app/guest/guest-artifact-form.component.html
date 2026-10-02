@@ -55,6 +55,7 @@
   <form
     *ngIf="(!isEdit && !!demo.session?.accountUsername) || !!baseline"
     class="artifact-form"
+    data-ux-submit="SUBMISSION_ATTEMPT"
     (ngSubmit)="submit()"
   >
     <div class="form-grid">

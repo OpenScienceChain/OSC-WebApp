@@ -11,7 +11,8 @@
   --osc-line: #cbd8df;
   --osc-surface: #f3f7f8;
   --osc-error: #a4282f;
-  --osc-focus: #f6bf3a;
+  --osc-focus-inner: #ffffff;
+  --osc-focus-outer: #102f47;
   --osc-font: Inter, Aptos, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   --font-size-small: 0.875rem;
   --font-size-normal: 1rem;
@@ -57,9 +58,10 @@ button {
   touch-action: manipulation;
 }
 
-:focus-visible {
-  outline: 3px solid var(--osc-focus);
-  outline-offset: 3px;
+:root :focus-visible {
+  outline: 2px solid var(--osc-focus-inner);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 5px var(--osc-focus-outer);
 }
 
 ::selection {

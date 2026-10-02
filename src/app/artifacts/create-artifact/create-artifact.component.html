@@ -4,87 +4,168 @@
     <div class="header-divider"></div>
   </header>
 
-  <form [formGroup]="artifactForm" (ngSubmit)="onSubmit()" class="artifact-form">
+  <form
+    [formGroup]="artifactForm"
+    (ngSubmit)="onSubmit()"
+    class="artifact-form"
+  >
     <div class="form-grid">
       <!-- Left Column -->
       <div class="left-column">
         <div class="form-group">
           <label for="title" class="field-label">Title</label>
-          <input 
+          <input
             id="title"
             type="text"
             formControlName="title"
             class="form-control"
-            [ngClass]="{'is-invalid': artifactForm.get('title')?.invalid && artifactForm.get('title')?.touched}"
+            [ngClass]="{
+              'is-invalid':
+                artifactForm.get('title')?.invalid &&
+                artifactForm.get('title')?.touched,
+            }"
+          />
+          <div
+            *ngIf="
+              artifactForm.get('title')?.invalid &&
+              artifactForm.get('title')?.touched
+            "
+            class="error-message"
           >
-          <div *ngIf="artifactForm.get('title')?.invalid && artifactForm.get('title')?.touched" class="error-message">
-            <small *ngIf="artifactForm.get('title')?.errors?.['required']">Title is required</small>
-            <small *ngIf="artifactForm.get('title')?.errors?.['minlength']">Title must be at least 3 characters long</small>
-            <small *ngIf="artifactForm.get('title')?.errors?.['maxlength']">Title cannot exceed 200 characters</small>
+            <small *ngIf="artifactForm.get('title')?.errors?.['required']"
+              >Title is required</small
+            >
+            <small *ngIf="artifactForm.get('title')?.errors?.['minlength']"
+              >Title must be at least 3 characters long</small
+            >
+            <small *ngIf="artifactForm.get('title')?.errors?.['maxlength']"
+              >Title cannot exceed 200 characters</small
+            >
           </div>
         </div>
 
         <div class="form-group">
           <label for="description" class="field-label">Description</label>
-          <textarea 
+          <textarea
             id="description"
             formControlName="description"
             class="form-control"
             rows="4"
-            [ngClass]="{'is-invalid': artifactForm.get('description')?.invalid && artifactForm.get('description')?.touched}"
+            [ngClass]="{
+              'is-invalid':
+                artifactForm.get('description')?.invalid &&
+                artifactForm.get('description')?.touched,
+            }"
           ></textarea>
-          <div *ngIf="artifactForm.get('description')?.invalid && artifactForm.get('description')?.touched" class="error-message">
-            <small *ngIf="artifactForm.get('description')?.errors?.['required']">Description is required</small>
-            <small *ngIf="artifactForm.get('description')?.errors?.['minlength']">Description must be at least 50 characters long</small>
-            <small *ngIf="artifactForm.get('description')?.errors?.['maxlength']">Description cannot exceed 3000 characters</small>
+          <div
+            *ngIf="
+              artifactForm.get('description')?.invalid &&
+              artifactForm.get('description')?.touched
+            "
+            class="error-message"
+          >
+            <small *ngIf="artifactForm.get('description')?.errors?.['required']"
+              >Description is required</small
+            >
+            <small
+              *ngIf="artifactForm.get('description')?.errors?.['minlength']"
+              >Description must be at least 50 characters long</small
+            >
+            <small
+              *ngIf="artifactForm.get('description')?.errors?.['maxlength']"
+              >Description cannot exceed 3000 characters</small
+            >
           </div>
         </div>
 
         <div class="form-group">
           <label for="keywords" class="field-label">Key Words</label>
-          <input 
+          <input
             id="keywords"
             type="text"
             formControlName="keywords"
             class="form-control"
             placeholder="Enter keywords, separated by commas"
-            [ngClass]="{'is-invalid': artifactForm.get('keywords')?.invalid && artifactForm.get('keywords')?.touched}"
+            [ngClass]="{
+              'is-invalid':
+                artifactForm.get('keywords')?.invalid &&
+                artifactForm.get('keywords')?.touched,
+            }"
+          />
+          <div
+            *ngIf="
+              artifactForm.get('keywords')?.invalid &&
+              artifactForm.get('keywords')?.touched
+            "
+            class="error-message"
           >
-          <div *ngIf="artifactForm.get('keywords')?.invalid && artifactForm.get('keywords')?.touched" class="error-message">
-            <small *ngIf="artifactForm.get('keywords')?.errors?.['required']">At least one keyword is required</small>
-            <small *ngIf="artifactForm.get('keywords')?.errors?.['maxlength']">Keywords cannot exceed 1000 characters</small>
-            <small *ngIf="artifactForm.get('keywords')?.errors?.['invalidFormat']">Please enter valid keywords separated by commas</small>
+            <small *ngIf="artifactForm.get('keywords')?.errors?.['required']"
+              >At least one keyword is required</small
+            >
+            <small *ngIf="artifactForm.get('keywords')?.errors?.['maxlength']"
+              >Keywords cannot exceed 1000 characters</small
+            >
+            <small
+              *ngIf="artifactForm.get('keywords')?.errors?.['invalidFormat']"
+              >Please enter valid keywords separated by commas</small
+            >
           </div>
         </div>
 
         <div class="form-group">
           <label for="links" class="field-label">Links of interest</label>
-          <input 
+          <input
             id="links"
             type="text"
             formControlName="links"
             class="form-control"
             placeholder="Enter URLs, separated by commas"
-            [ngClass]="{'is-invalid': artifactForm.get('links')?.invalid && artifactForm.get('links')?.touched}"
+            [ngClass]="{
+              'is-invalid':
+                artifactForm.get('links')?.invalid &&
+                artifactForm.get('links')?.touched,
+            }"
+          />
+          <div
+            *ngIf="
+              artifactForm.get('links')?.invalid &&
+              artifactForm.get('links')?.touched
+            "
+            class="error-message"
           >
-          <div *ngIf="artifactForm.get('links')?.invalid && artifactForm.get('links')?.touched" class="error-message">
-            <small *ngIf="artifactForm.get('links')?.errors?.['maxlength']">Links cannot exceed 2000 characters</small>
-            <small *ngIf="artifactForm.get('links')?.errors?.['invalidLinks']">Please enter valid URLs separated by commas</small>
+            <small *ngIf="artifactForm.get('links')?.errors?.['maxlength']"
+              >Links cannot exceed 2000 characters</small
+            >
+            <small *ngIf="artifactForm.get('links')?.errors?.['invalidLinks']"
+              >Please enter valid URLs separated by commas</small
+            >
           </div>
         </div>
 
         <div class="form-group last-field">
           <label for="doi" class="field-label">DOI</label>
-          <input 
+          <input
             id="doi"
             type="text"
             formControlName="doi"
             class="form-control"
             placeholder="ex. DOI: 10.1234/abc123"
-            [ngClass]="{'is-invalid': artifactForm.get('doi')?.invalid && artifactForm.get('doi')?.touched}"
+            [ngClass]="{
+              'is-invalid':
+                artifactForm.get('doi')?.invalid &&
+                artifactForm.get('doi')?.touched,
+            }"
+          />
+          <div
+            *ngIf="
+              artifactForm.get('doi')?.invalid &&
+              artifactForm.get('doi')?.touched
+            "
+            class="error-message"
           >
-          <div *ngIf="artifactForm.get('doi')?.invalid && artifactForm.get('doi')?.touched" class="error-message">
-            <small *ngIf="artifactForm.get('doi')?.errors?.['invalidDoi']">Please enter valid DOIs separated by commas</small>
+            <small *ngIf="artifactForm.get('doi')?.errors?.['invalidDoi']"
+              >Please enter valid DOIs separated by commas</small
+            >
           </div>
         </div>
       </div>
@@ -92,69 +173,129 @@
       <!-- Right Column -->
       <div class="right-column">
         <div class="form-group">
-          <label for="fundingAgencies" class="field-label">Funding Agencies</label>
+          <label for="fundingAgencies" class="field-label"
+            >Funding Agencies</label
+          >
           <div id="fundingAgencies" class="checkbox-group">
             <label class="checkbox-label">
-              <input type="checkbox" formControlName="nsf">
+              <input type="checkbox" formControlName="nsf" />
               NSF
             </label>
             <label class="checkbox-label">
-              <input type="checkbox" formControlName="nih">
+              <input type="checkbox" formControlName="nih" />
               NIH
             </label>
             <label class="checkbox-label">
-              <input type="checkbox" formControlName="noaa">
+              <input type="checkbox" formControlName="noaa" />
               NOAA
             </label>
             <label class="checkbox-label">
-              <input type="checkbox" formControlName="nasa">
+              <input type="checkbox" formControlName="nasa" />
               NASA
             </label>
           </div>
           <div class="other-agency">
             <label for="otherAgency">Other:</label>
-            <input 
+            <input
               id="otherAgency"
               type="text"
               formControlName="otherAgency"
               class="form-control"
               placeholder="Enter agencies, separated by commas"
-              [ngClass]="{'is-invalid': artifactForm.get('otherAgency')?.invalid && artifactForm.get('otherAgency')?.touched}"
+              [ngClass]="{
+                'is-invalid':
+                  artifactForm.get('otherAgency')?.invalid &&
+                  artifactForm.get('otherAgency')?.touched,
+              }"
+            />
+            <div
+              *ngIf="
+                artifactForm.get('otherAgency')?.invalid &&
+                artifactForm.get('otherAgency')?.touched
+              "
+              class="error-message"
             >
-            <div *ngIf="artifactForm.get('otherAgency')?.invalid && artifactForm.get('otherAgency')?.touched" class="error-message">
-              <small *ngIf="artifactForm.get('otherAgency')?.errors?.['maxlength']">Other agencies cannot exceed 100 characters</small>
-              <small *ngIf="artifactForm.get('otherAgency')?.errors?.['invalidFormat']">Please enter valid agencies separated by commas</small>
+              <small
+                *ngIf="artifactForm.get('otherAgency')?.errors?.['maxlength']"
+                >Other agencies cannot exceed 100 characters</small
+              >
+              <small
+                *ngIf="
+                  artifactForm.get('otherAgency')?.errors?.['invalidFormat']
+                "
+                >Please enter valid agencies separated by commas</small
+              >
             </div>
           </div>
         </div>
 
         <div class="form-group">
           <label for="acknowledgment" class="field-label">Acknowledgment</label>
-          <textarea 
+          <textarea
             id="acknowledgment"
             formControlName="acknowledgment"
             class="form-control"
             rows="4"
-            [ngClass]="{'is-invalid': artifactForm.get('acknowledgment')?.invalid && artifactForm.get('acknowledgment')?.touched}"
+            [ngClass]="{
+              'is-invalid':
+                artifactForm.get('acknowledgment')?.invalid &&
+                artifactForm.get('acknowledgment')?.touched,
+            }"
           ></textarea>
-          <div *ngIf="artifactForm.get('acknowledgment')?.invalid && artifactForm.get('acknowledgment')?.touched" class="error-message">
-            <small *ngIf="artifactForm.get('acknowledgment')?.errors?.['maxlength']">Acknowledgment cannot exceed 3000 characters</small>
+          <div
+            *ngIf="
+              artifactForm.get('acknowledgment')?.invalid &&
+              artifactForm.get('acknowledgment')?.touched
+            "
+            class="error-message"
+          >
+            <small
+              *ngIf="artifactForm.get('acknowledgment')?.errors?.['maxlength']"
+              >Acknowledgment cannot exceed 3000 characters</small
+            >
           </div>
         </div>
 
         <div class="form-group">
-          <label for="submission_comment" class="field-label">Submission Comment</label>
+          <label for="submission_comment" class="field-label"
+            >Submission Comment</label
+          >
           <textarea
             id="submission_comment"
             formControlName="submission_comment"
             class="form-control"
             rows="3"
-            [ngClass]="{'is-invalid': artifactForm.get('submission_comment')?.invalid && artifactForm.get('submission_comment')?.touched}"
+            [ngClass]="{
+              'is-invalid':
+                artifactForm.get('submission_comment')?.invalid &&
+                artifactForm.get('submission_comment')?.touched,
+            }"
           ></textarea>
-          <div *ngIf="artifactForm.get('submission_comment')?.invalid && artifactForm.get('submission_comment')?.touched" class="error-message">
-            <small *ngIf="artifactForm.get('submission_comment')?.errors?.['required']">Submission comment is required</small>
-            <small *ngIf="artifactForm.get('submission_comment')?.errors?.['minlength']">Submission comment must be at least 20 characters long</small>
-            <small *ngIf="artifactForm.get('submission_comment')?.errors?.['maxlength']">Submission comment cannot exceed 1000 characters</small>
+          <div
+            *ngIf="
+              artifactForm.get('submission_comment')?.invalid &&
+              artifactForm.get('submission_comment')?.touched
+            "
+            class="error-message"
+          >
+            <small
+              *ngIf="
+                artifactForm.get('submission_comment')?.errors?.['required']
+              "
+              >Submission comment is required</small
+            >
+            <small
+              *ngIf="
+                artifactForm.get('submission_comment')?.errors?.['minlength']
+              "
+              >Submission comment must be at least 20 characters long</small
+            >
+            <small
+              *ngIf="
+                artifactForm.get('submission_comment')?.errors?.['maxlength']
+              "
+              >Submission comment cannot exceed 1000 characters</small
+            >
           </div>
         </div>
       </div>
@@ -176,7 +317,7 @@
     (fileDrop)="onDrop($event)"
     (selectFolder)="selectFolder()"
     (selectFile)="selectFile()"
-    (resetUpload)="resetUpload(); lastCreatedId = null; isSubmitted = false;"
+    (resetUpload)="resetUpload(); lastCreatedId = null; isSubmitted = false"
   ></app-file-upload-section>
 
   <!-- Navigation Buttons -->
@@ -184,19 +325,37 @@
     <button type="button" class="btn btn-secondary" (click)="goBack()">
       Cancel and Go Back
     </button>
-    <button 
+    <button
       data-cy="submit-btn"
       type="button"
-      class="btn btn-primary" 
-      [disabled]="!isFormAndFileValid() || isProcessing || isSubmitting || lastCreatedId"
+      class="btn btn-primary"
+      [disabled]="
+        !isFormAndFileValid() || isProcessing || isSubmitting || lastCreatedId
+      "
       (click)="onSubmit()"
     >
       Submit
     </button>
-    <a *ngIf="lastCreatedId" class="btn btn-success" [routerLink]="['/artifacts', lastCreatedId]">View new artifact here</a>
+    <a
+      *ngIf="lastCreatedId"
+      class="btn btn-success"
+      [routerLink]="['/artifacts', lastCreatedId]"
+      >View new artifact here</a
+    >
   </div>
 
   <!-- Hidden file inputs -->
-  <input #fileInput type="file" style="display: none" (change)="handleFileSelection($event)">
-  <input #folderInput type="file" webkitdirectory style="display: none" (change)="handleFileSelection($event)">
-</div> 
+  <input
+    #fileInput
+    type="file"
+    style="display: none"
+    (change)="handleFileSelection($event)"
+  />
+  <input
+    #folderInput
+    type="file"
+    webkitdirectory
+    style="display: none"
+    (change)="handleFileSelection($event)"
+  />
+</div>

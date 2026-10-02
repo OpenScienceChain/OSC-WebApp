@@ -16,11 +16,20 @@ import { ArtifactMetadataFormComponent } from '../../components/artifact-metadat
 @Component({
   selector: 'app-update-artifact',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule, FileUploadSectionComponent, ArtifactMetadataFormComponent],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    RouterModule,
+    FileUploadSectionComponent,
+    ArtifactMetadataFormComponent,
+  ],
   templateUrl: './update-artifact.component.html',
-  styleUrls: ['./update-artifact.component.css']
+  styleUrls: ['./update-artifact.component.css'],
 })
-export class UpdateArtifactComponent extends CreateArtifactComponent implements OnInit {
+export class UpdateArtifactComponent
+  extends CreateArtifactComponent
+  implements OnInit
+{
   artifact?: ArtifactDetail;
   keepManifestUnchanged = false;
 
@@ -30,7 +39,7 @@ export class UpdateArtifactComponent extends CreateArtifactComponent implements 
     private readonly artService: ArtifactService,
     private readonly toastrSvc: ToastrService,
     private readonly route: ActivatedRoute,
-    router: Router
+    router: Router,
   ) {
     super(fb, location, artService, toastrSvc, router);
   }
@@ -42,12 +51,12 @@ export class UpdateArtifactComponent extends CreateArtifactComponent implements 
     // Fetch artifact data and populate form
     this.route.paramMap
       .pipe(
-        switchMap(params => {
+        switchMap((params) => {
           const id = params.get('id');
           return id ? this.artService.getArtifactById(id) : of(null);
-        })
+        }),
       )
-      .subscribe(detail => {
+      .subscribe((detail) => {
         if (!detail) return;
         this.artifact = detail;
         this.prefillForm(detail);
@@ -66,8 +75,10 @@ export class UpdateArtifactComponent extends CreateArtifactComponent implements 
       nih: detail.fundingAgencies?.includes('NIH') ?? false,
       noaa: detail.fundingAgencies?.includes('NOAA') ?? false,
       nasa: detail.fundingAgencies?.includes('NASA') ?? false,
-      otherAgency: detail.fundingAgencies?.filter(ag => !['NSF','NIH','NOAA','NASA'].includes(ag)).join(', '),
-      acknowledgment: detail.acknowledgements ?? ''
+      otherAgency: detail.fundingAgencies
+        ?.filter((ag) => !['NSF', 'NIH', 'NOAA', 'NASA'].includes(ag))
+        .join(', '),
+      acknowledgment: detail.acknowledgements ?? '',
     });
 
     // Disable title & description so they cannot be edited
@@ -80,7 +91,9 @@ export class UpdateArtifactComponent extends CreateArtifactComponent implements 
 
     if (!this.artifact || !this.isFormAndFileValid()) {
       this.isSubmitting = false;
-      this.toastrSvc.error('Please select files/folder and ensure the form is valid.');
+      this.toastrSvc.error(
+        'Please select files/folder and ensure the form is valid.',
+      );
       return;
     }
 
@@ -95,13 +108,17 @@ export class UpdateArtifactComponent extends CreateArtifactComponent implements 
     let manifest: ManifestItem[];
     let footprint: string;
     if (this.keepManifestUnchanged) {
-      manifest = (this.artifact?.manifest || []).map(m => ({ hash: m.hash, filename: m.filename, algorithm: m.algorithm }));
+      manifest = (this.artifact?.manifest || []).map((m) => ({
+        hash: m.hash,
+        filename: m.filename,
+        algorithm: m.algorithm,
+      }));
       footprint = this.artifact?.footprint || '';
     } else {
-      manifest = this.selectedFilesData.map(f => ({
+      manifest = this.selectedFilesData.map((f) => ({
         hash: f.hash,
         filename: f.name,
-        algorithm: 'sha256'
+        algorithm: 'sha256',
       }));
 
       // Single-file rule; otherwise hash canonical manifest
@@ -121,10 +138,11 @@ export class UpdateArtifactComponent extends CreateArtifactComponent implements 
       acknowledgements: formValues.acknowledgment ?? '',
       submission_comment: formValues.submission_comment ?? '',
       manifest,
-      footprint
+      footprint,
     };
 
-    this.artService.updateArtifactMetadataOnly(this.artifact.id, dto)
+    this.artService
+      .updateArtifactMetadataOnly(this.artifact.id, dto)
       .subscribe({
         next: () => {
           const id = this.artifact!.id;
@@ -133,27 +151,34 @@ export class UpdateArtifactComponent extends CreateArtifactComponent implements 
           this.toastrSvc.success(
             `Artifact updated successfully! <a href='${link}'>Check your modified artifact</a>`,
             'Success!',
-            { enableHtml: true, timeOut: 5000 }
+            { enableHtml: true, timeOut: 5000 },
           );
           this.isSubmitting = false;
         },
         error: (err) => {
           this.toastrSvc.error(err?.message || 'Failed to update artifact');
           this.isSubmitting = false;
-        }
+        },
       });
   }
 
   private buildCanonicalManifestForUpdate(manifest: ManifestItem[]): string {
     return [...manifest]
-      .sort((a, b) => a.filename.localeCompare(b.filename, undefined, { sensitivity: 'base' }))
-      .map(m => `${m.filename}\t${m.hash}\t${m.algorithm}`)
+      .sort((a, b) =>
+        a.filename.localeCompare(b.filename, undefined, {
+          sensitivity: 'base',
+        }),
+      )
+      .map((m) => `${m.filename}\t${m.hash}\t${m.algorithm}`)
       .join('\n');
   }
 
   // Toggle handler for keeping the existing manifest/footprint
   onToggleKeepManifest(eventOrValue: Event | boolean): void {
-    const checked = typeof eventOrValue === 'boolean' ? eventOrValue : !!(eventOrValue.target as HTMLInputElement).checked;
+    const checked =
+      typeof eventOrValue === 'boolean'
+        ? eventOrValue
+        : !!(eventOrValue.target as HTMLInputElement).checked;
     this.keepManifestUnchanged = checked;
     if (this.keepManifestUnchanged) {
       // Clear any selected files if user opts to keep the manifest
@@ -166,10 +191,11 @@ export class UpdateArtifactComponent extends CreateArtifactComponent implements 
     if (!this.artifact) return false;
     const formValues = this.artifactForm.getRawValue();
 
-    const toNormalizedArray = (arr?: string[]) => (arr || [])
-      .map(x => (x ?? '').toString().trim().toLowerCase())
-      .filter(x => x.length > 0)
-      .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+    const toNormalizedArray = (arr?: string[]) =>
+      (arr || [])
+        .map((x) => (x ?? '').toString().trim().toLowerCase())
+        .filter((x) => x.length > 0)
+        .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
 
     const arraysEqualUnordered = (a: string[], b: string[]) => {
       if (a.length !== b.length) return false;
@@ -177,28 +203,50 @@ export class UpdateArtifactComponent extends CreateArtifactComponent implements 
       return true;
     };
 
-    const currentKeywords = toNormalizedArray(this.processCommaSeparatedField(formValues.keywords));
+    const currentKeywords = toNormalizedArray(
+      this.processCommaSeparatedField(formValues.keywords),
+    );
     const originalKeywords = toNormalizedArray(this.artifact.keywords);
 
-    const currentLinks = toNormalizedArray(this.processCommaSeparatedField(formValues.links, 'links'));
+    const currentLinks = toNormalizedArray(
+      this.processCommaSeparatedField(formValues.links, 'links'),
+    );
     const originalLinks = toNormalizedArray(this.artifact.links);
 
-    const currentDois = toNormalizedArray(this.processCommaSeparatedField(formValues.doi));
+    const currentDois = toNormalizedArray(
+      this.processCommaSeparatedField(formValues.doi),
+    );
     const originalDois = toNormalizedArray(this.artifact.dois);
 
-    const currentAgencies = toNormalizedArray(this.processFundingAgencies(formValues));
+    const currentAgencies = toNormalizedArray(
+      this.processFundingAgencies(formValues),
+    );
     const originalAgencies = toNormalizedArray(this.artifact.fundingAgencies);
 
     const currentAck = (formValues.acknowledgment ?? '').toString().trim();
-    const originalAck = (this.artifact.acknowledgements ?? '').toString().trim();
+    const originalAck = (this.artifact.acknowledgements ?? '')
+      .toString()
+      .trim();
 
-    const keywordsChanged = !arraysEqualUnordered(currentKeywords, originalKeywords);
+    const keywordsChanged = !arraysEqualUnordered(
+      currentKeywords,
+      originalKeywords,
+    );
     const linksChanged = !arraysEqualUnordered(currentLinks, originalLinks);
     const doisChanged = !arraysEqualUnordered(currentDois, originalDois);
-    const agenciesChanged = !arraysEqualUnordered(currentAgencies, originalAgencies);
+    const agenciesChanged = !arraysEqualUnordered(
+      currentAgencies,
+      originalAgencies,
+    );
     const ackChanged = currentAck !== originalAck;
 
-    return keywordsChanged || linksChanged || doisChanged || agenciesChanged || ackChanged;
+    return (
+      keywordsChanged ||
+      linksChanged ||
+      doisChanged ||
+      agenciesChanged ||
+      ackChanged
+    );
   }
 
   // Allow submit when either a new file/folder is provided or user opts to keep the manifest with other metadata changes

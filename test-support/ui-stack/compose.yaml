@@ -1,0 +1,142 @@
+name: osc-usrse26-ux
+
+x-webapp-common: &webapp-common
+  build:
+    context: ../..
+    dockerfile: Dockerfile
+  ports:
+    - '127.0.0.1:${WEBAPP_PORT:-18080}:80'
+  healthcheck:
+    test: [CMD, wget, -qO-, http://127.0.0.1/healthz]
+    interval: 5s
+    timeout: 3s
+    retries: 12
+    start_period: 5s
+
+services:
+  webapp-simulator:
+    <<: *webapp-common
+    profiles: [simulator]
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    environment:
+      API_UPSTREAM: http://simulator:3100
+    depends_on:
+      simulator:
+        condition: service_healthy
+
+  webapp-gateway:
+    <<: *webapp-common
+    profiles: [gateway]
+    environment:
+      API_UPSTREAM: http://gateway:3000
+    depends_on:
+      gateway:
+        condition: service_healthy
+
+  simulator:
+    profiles: [simulator]
+    build:
+      context: ${OSC_IS_ROOT:-../../..}/OSC-IS-Infra/ui-tests/simulator
+      dockerfile: Dockerfile
+    ports:
+      - '127.0.0.1:${SIMULATOR_PORT:-13310}:3100'
+    healthcheck:
+      test:
+        [
+          CMD,
+          node,
+          -e,
+          "require('http').get('http://127.0.0.1:3100/api/v1/health',r=>process.exit(r.statusCode<500?0:1)).on('error',()=>process.exit(1))",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 3s
+
+  postgres:
+    profiles: [gateway]
+    image: postgres:16-alpine@sha256:cf78e76683b9ca8c5733cbbdce6c9262b45b6767934dd0a95e671f9a0fc20685
+    environment:
+      POSTGRES_DB: osc_usrse26
+      POSTGRES_USER: osc_local
+      POSTGRES_PASSWORD: osc_local_only
+    volumes:
+      - gateway-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U osc_local -d osc_usrse26]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+
+  rabbitmq:
+    profiles: [gateway]
+    image: rabbitmq:3.13-management-alpine@sha256:606d8c0d6b3c18d1da9afc53bc7cdb2a8d5486df91b5a9830e9e07626c9ae281
+    environment:
+      RABBITMQ_DEFAULT_USER: osc_local
+      RABBITMQ_DEFAULT_PASS: osc_local_only
+    healthcheck:
+      test: [CMD, rabbitmq-diagnostics, -q, ping]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+
+  gateway:
+    profiles: [gateway]
+    build:
+      context: ${OSC_IS_ROOT:-../../..}/OSC-APIGateway
+      dockerfile: Dockerfile
+      target: production
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: osc_usrse26
+      DB_USER: osc_local
+      DB_PASSWORD: osc_local_only
+      DB_SYNCHRONIZE: 'true'
+      DB_MIGRATIONS_RUN: 'false'
+      JWT_SECRET: usrse26-local-disposable-jwt-secret-not-for-deployment
+      JWT_EXPIRES_IN: 30m
+      ADMIN1_USERNAME: usrse26-admin
+      ADMIN1_EMAIL: usrse26-admin@example.test
+      ADMIN1_PASSWORD: LocalOnly-Admin-2026
+      ADMIN1_ROLES: admin
+      ADMIN2_USERNAME: usrse26-admin-two
+      ADMIN2_EMAIL: usrse26-admin-two@example.test
+      ADMIN2_PASSWORD: LocalOnly-Admin-Two-2026
+      ADMIN2_ROLES: admin
+      SUBMISSION_LISTENER_API_KEY: usrse26-local-listener-key
+      SUBMISSION_LISTENER_SERVICE_ROLE: submitter_listener
+      SUBMISSION_LISTENER_USERNAME: usrse26-listener
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: osc_local
+      RABBITMQ_PASS: osc_local_only
+      GHW_URL: http://history-worker-not-in-this-harness:8002
+      CORS_ORIGINS: http://localhost:18080,http://127.0.0.1:18080
+    ports:
+      - '127.0.0.1:${GATEWAY_PORT:-13300}:3000'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          CMD,
+          node,
+          -e,
+          "require('http').get('http://127.0.0.1:3000/api/v1/health',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+
+volumes:
+  gateway-postgres:

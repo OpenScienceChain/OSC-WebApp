@@ -171,12 +171,51 @@ describe('AppComponent', () => {
   });
 
   describe('Contribute Navigation', () => {
-    it('should toggle and close the contribution menu with Escape', () => {
+    it('should expose contribution options as a disclosure', () => {
       component.toggleContributeMenu();
+      fixture.detectChanges();
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      const trigger =
+        compiled.querySelector<HTMLButtonElement>('.contribute-button');
+      const options = compiled.querySelector('#contribute-options');
+
+      expect(trigger?.getAttribute('aria-controls')).toBe('contribute-options');
+      expect(trigger?.getAttribute('aria-expanded')).toBe('true');
+      expect(options).toBeTruthy();
+      expect(compiled.querySelector('[role="menu"]')).toBeNull();
+      expect(compiled.querySelector('[role="menuitem"]')).toBeNull();
+    });
+
+    it('should close contribution options with Escape and restore focus', () => {
+      const compiled = fixture.nativeElement as HTMLElement;
+      const trigger =
+        compiled.querySelector<HTMLButtonElement>('.contribute-button');
+      const focusSpy = spyOn(trigger!, 'focus');
+
+      component.toggleContributeMenu();
+      fixture.detectChanges();
       expect(component.contributeMenuOpen).toBeTrue();
 
       component.onEscape();
+      fixture.detectChanges();
+
       expect(component.contributeMenuOpen).toBeFalse();
+      expect(focusSpy).toHaveBeenCalled();
+    });
+
+    it('should close mobile navigation with Escape and restore toggle focus', () => {
+      const compiled = fixture.nativeElement as HTMLElement;
+      const trigger =
+        compiled.querySelector<HTMLButtonElement>('.navigation-toggle');
+      const focusSpy = spyOn(trigger!, 'focus');
+      component.mobileNavigationOpen = true;
+
+      component.onEscape();
+      fixture.detectChanges();
+
+      expect(component.mobileNavigationOpen).toBeFalse();
+      expect(focusSpy).toHaveBeenCalled();
     });
 
     it('should navigate unsigned visitors to the bounded contribution form', () => {
