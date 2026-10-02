@@ -1,5 +1,4 @@
 import { CommonModule } from '@angular/common';
-import { HttpClient } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
@@ -20,12 +19,11 @@ export class FeedbackComponent implements OnInit {
   submitted = false;
   error = '';
 
-  constructor(private readonly http: HttpClient) {}
-
   ngOnInit(): void {
-    this.http
-      .post(this.url('/view'), null)
-      .subscribe({ error: () => undefined });
+    void fetch(this.url('/view'), {
+      method: 'POST',
+      credentials: 'omit',
+    }).catch(() => undefined);
   }
 
   get valid(): boolean {
@@ -43,7 +41,7 @@ export class FeedbackComponent implements OnInit {
     );
   }
 
-  submit(): void {
+  async submit(): Promise<void> {
     if (!this.valid || this.submitting || this.submitted) return;
     const comment = this.overallComment.trim();
     const body = {
@@ -57,20 +55,25 @@ export class FeedbackComponent implements OnInit {
     };
     this.submitting = true;
     this.error = '';
-    this.http.post<{ accepted: boolean }>(this.url(''), body).subscribe({
-      next: (result) => {
-        this.submitting = false;
-        if (result.accepted !== true) {
-          this.error = 'Feedback was not confirmed. Please try again.';
-          return;
-        }
-        this.submitted = true;
-      },
-      error: () => {
-        this.submitting = false;
-        this.error = 'Feedback could not be submitted. Please try again.';
-      },
-    });
+    try {
+      const response = await fetch(this.url(''), {
+        method: 'POST',
+        credentials: 'omit',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!response.ok) throw new Error('Feedback request failed');
+      const result = (await response.json()) as { accepted?: boolean };
+      if (result.accepted !== true) {
+        this.error = 'Feedback was not confirmed. Please try again.';
+        return;
+      }
+      this.submitted = true;
+    } catch {
+      this.error = 'Feedback could not be submitted. Please try again.';
+    } finally {
+      this.submitting = false;
+    }
   }
 
   private url(path: string): string {

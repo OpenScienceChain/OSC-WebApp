@@ -92,13 +92,13 @@ export class UxAnalyticsService {
     this.busy.set(true);
     this.error.set('');
     this.http
-      .delete<{ accepted?: boolean }>(this.url('/session'), {
+      .delete<{ deleted?: boolean }>(this.url('/session'), {
         withCredentials: true,
       })
       .subscribe({
         next: (result) => {
           this.busy.set(false);
-          if (result.accepted !== true) {
+          if (result.deleted !== true) {
             this.deletionFailed.set(true);
             this.error.set('Deletion was not confirmed. Please retry.');
             return;
@@ -128,7 +128,7 @@ export class UxAnalyticsService {
       )
       .subscribe({
         error: (error) => {
-          if (error.status === 401) {
+          if (error.status === 401 || error.status === 403) {
             this.trackingAllowed = false;
             this.clearChoice();
           }

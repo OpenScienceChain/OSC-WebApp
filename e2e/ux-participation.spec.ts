@@ -1,7 +1,7 @@
 import { expect, test, type Page, type Request } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
-async function setup(page: Page) {
+async function setup(page: Page, eventStatus = 200) {
   const analytics: Request[] = [];
   const feedback: Request[] = [];
   await page.route('**/assets/runtime-config.json', (route) =>
@@ -16,9 +16,13 @@ async function setup(page: Page) {
     if (request.url().includes('/analytics/')) {
       analytics.push(request);
       return route.fulfill({
-        status: 200,
+        status: request.url().endsWith('/events') ? eventStatus : 200,
         contentType: 'application/json',
-        body: JSON.stringify({ accepted: true, consented: true }),
+        body: JSON.stringify(
+          request.method() === 'DELETE'
+            ? { consented: false, deleted: true }
+            : { accepted: true, consented: true },
+        ),
       });
     }
     if (request.url().includes('/ux-feedback')) {
@@ -103,6 +107,7 @@ test('reject is equal choice and sends only aggregate reject', async ({
   );
   expect(analytics[0].postData()).toBeNull();
   expect(analytics[0].headers()).not.toHaveProperty('cookie');
+  expect(analytics[0].headers()).toHaveProperty('origin');
   await page.reload();
   await expect(
     page.getByRole('region', { name: 'Analytics choice' }),
@@ -151,6 +156,26 @@ test('accept tracks only allowlisted route and deletion stops events', async ({
   await checkA11y(page);
 });
 
+test('expired analytics session clears the accepted choice', async ({
+  page,
+}) => {
+  const { analytics } = await setup(page, 403);
+  await page.goto('/feedback');
+  await page
+    .getByRole('button', { name: 'Accept', exact: true })
+    .first()
+    .click();
+  await expect.poll(() => analytics.length).toBe(2);
+  await expect(
+    page.getByRole('region', { name: 'Analytics choice' }),
+  ).toBeVisible();
+  expect(
+    await page.evaluate(() =>
+      localStorage.getItem('osc-ux-analytics-choice-v1'),
+    ),
+  ).toBeNull();
+});
+
 test('anonymous survey needs one answer and works without analytics consent', async ({
   page,
 }) => {
@@ -196,6 +221,10 @@ test('anonymous survey needs one answer and works without analytics consent', as
     overallComment: 'A private comment',
   });
   expect(submitted.headers()).not.toHaveProperty('authorization');
+  expect(submitted.headers()).not.toHaveProperty('cookie');
+  expect(
+    feedback.find((request) => request.url().endsWith('/view'))!.headers(),
+  ).not.toHaveProperty('cookie');
   expect(analytics).toHaveLength(0);
 });
 
