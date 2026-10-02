@@ -45,27 +45,14 @@ describe('HomeComponent', () => {
     fixture.detectChanges();
   });
 
-  it('introduces Open Science Chain as a provenance product', () => {
+  it('introduces Open Science Chain and its three user paths', () => {
     const root = fixture.nativeElement as HTMLElement;
-    expect(root.querySelector('h1')?.textContent).toContain(
+    expect(root.querySelector('h1')?.getAttribute('aria-label')).toBe(
       'Open Science Chain',
     );
-    expect(root.textContent).toContain(
-      'Scientific outputs, with their history intact.',
-    );
-    expect(root.textContent).toContain('Hyperledger Fabric');
-    expect(root.textContent).toContain('Research files remain off-chain');
-  });
-
-  it('labels deterministic demonstration records honestly', () => {
-    const root = fixture.nativeElement as HTMLElement;
-    expect(root.textContent).toContain(
-      'Demonstration data, not researcher submissions',
-    );
-    expect(root.textContent).toContain(
-      'Neuroscience image segmentation dataset',
-    );
-    expect(root.textContent).toContain('Citizen Science');
+    expect(root.textContent).toContain('Discover research');
+    expect(root.textContent).toContain('Share your work');
+    expect(root.textContent).toContain('Reproduce a process');
   });
 
   it('keeps live artifact and workflow previews on the landing page', () => {
