@@ -41,7 +41,7 @@ jobs:
         run: python3 scripts/security/check_npm_supply_chain.py --repo . --skip-installed
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
-          node-version: 20.19
+          node-version: 24.20.0
           package-manager-cache: false
       - name: Prove dependency lifecycle scripts are suppressed
         run: python3 scripts/security/test_lifecycle_suppression.py
