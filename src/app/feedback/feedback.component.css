@@ -54,6 +54,13 @@ button:disabled {
   opacity: 0.55;
   cursor: not-allowed;
 }
+.skip-feedback {
+  justify-self: start;
+  color: #075e66;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
 .feedback-error {
   color: #8c2727;
 }

@@ -5,9 +5,14 @@
       Anonymous feedback helps us improve the demonstration. Answer any one or
       more questions. Analytics consent and sign-in are not required.
     </p>
+    <p>
+      Please do not include personal details or research data in your answers.
+    </p>
 
     <form *ngIf="!submitted" (ngSubmit)="submit()">
-      <label for="visual-rating">How would you rate the visual design?</label>
+      <label for="visual-rating"
+        >How would you rate the layout and visual design?</label
+      >
       <select id="visual-rating" name="visualRating" [(ngModel)]="visualRating">
         <option [ngValue]="null">No rating</option>
         <option *ngFor="let rating of [1, 2, 3, 4, 5]" [ngValue]="rating">
@@ -30,7 +35,10 @@
         <option value="UNSURE">Unsure</option>
       </select>
 
-      <label for="overall-comment">What should we improve?</label>
+      <label for="overall-comment"
+        >What do you think of the product overall, and what should we
+        improve?</label
+      >
       <textarea
         id="overall-comment"
         name="overallComment"
@@ -43,6 +51,7 @@
       <button type="submit" [disabled]="!valid || submitting">
         {{ submitting ? 'Sending feedback…' : 'Send feedback' }}
       </button>
+      <a routerLink="/" class="skip-feedback">Skip for now</a>
       <p *ngIf="error" role="alert" class="feedback-error">{{ error }}</p>
     </form>
     <p *ngIf="submitted" role="status" class="feedback-success">

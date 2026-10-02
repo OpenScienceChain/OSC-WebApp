@@ -65,6 +65,8 @@ jobs:
           if [ "${#linted[@]}" -gt 0 ]; then
             ./node_modules/.bin/eslint "${linted[@]}"
           fi
+      - name: Check maintained source duplication
+        run: npm run duplication:check
       - name: Unit tests with coverage
         run: npm run test:ci
       - name: Production build

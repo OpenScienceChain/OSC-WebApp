@@ -200,12 +200,16 @@ test('anonymous survey needs one answer and works without analytics consent', as
   const send = page.getByRole('button', { name: 'Send feedback' });
   await expect(send).toBeDisabled();
   await page
-    .getByLabel('How would you rate the visual design?')
+    .getByLabel('How would you rate the layout and visual design?')
     .selectOption({ label: '5 of 5' });
   await page
     .getByLabel('Would research workflow automation be useful to you?')
     .selectOption('YES');
-  await page.getByLabel('What should we improve?').fill('A private comment');
+  await page
+    .getByLabel(
+      'What do you think of the product overall, and what should we improve?',
+    )
+    .fill('A private comment');
   await expect(send).toBeEnabled();
   await checkA11y(page);
   await send.click();
@@ -225,6 +229,22 @@ test('anonymous survey needs one answer and works without analytics consent', as
   expect(
     feedback.find((request) => request.url().endsWith('/view'))!.headers(),
   ).not.toHaveProperty('cookie');
+  expect(analytics).toHaveLength(0);
+});
+
+test('signed-out visitors can skip the survey without submitting', async ({
+  page,
+}) => {
+  const { analytics, feedback } = await setup(page);
+  await page.goto('/feedback');
+  await expect(
+    page.getByRole('button', { name: 'Send feedback' }),
+  ).toBeDisabled();
+  await page.getByRole('link', { name: 'Skip for now' }).click();
+  await expect(page).toHaveURL(/\/$/);
+  expect(feedback.filter((item) => !item.url().endsWith('/view'))).toHaveLength(
+    0,
+  );
   expect(analytics).toHaveLength(0);
 });
 

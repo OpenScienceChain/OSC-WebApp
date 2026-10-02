@@ -1,0 +1,13 @@
+{
+  "minTokens": 50,
+  "minLines": 5,
+  "format": ["typescript", "markup", "css", "scss"],
+  "ignore": [
+    "**/*.spec.ts",
+    "**/*.test.ts",
+    "**/*.generated.*",
+    "**/assets/**"
+  ],
+  "reporters": ["threshold", "json"],
+  "output": "test-results/jscpd"
+}

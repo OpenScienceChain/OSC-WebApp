@@ -26,6 +26,7 @@ COPY --from=build /app/dist/osc-web-app/browser/ /usr/share/nginx/html/
 COPY docker/runtime-config.json.template /opt/osc/runtime-config.json.template
 COPY docker/40-runtime-config.sh /docker-entrypoint.d/40-runtime-config.sh
 RUN apk upgrade --no-cache libuuid \
+    && sed -i 's/\r$//' /docker-entrypoint.d/40-runtime-config.sh \
     && chmod 0555 /docker-entrypoint.d/40-runtime-config.sh \
     && sed -i 's#pid .*#pid /tmp/nginx.pid;#' /etc/nginx/nginx.conf \
     && chown -R nginx:nginx /etc/nginx/conf.d /usr/share/nginx/html /var/cache/nginx

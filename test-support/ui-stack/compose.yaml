@@ -5,9 +5,9 @@ x-webapp-common: &webapp-common
     context: ../..
     dockerfile: Dockerfile
   ports:
-    - '127.0.0.1:${WEBAPP_PORT:-18080}:80'
+    - '127.0.0.1:${WEBAPP_PORT:-18080}:8080'
   healthcheck:
-    test: [CMD, wget, -qO-, http://127.0.0.1/healthz]
+    test: [CMD, wget, -qO-, http://127.0.0.1:8080/healthz]
     interval: 5s
     timeout: 3s
     retries: 12
