@@ -1,21 +1,35 @@
-<div class="row mb-5">
-  <div class="col-12 d-flex justify-content-between align-items-center mb-4">
-    <h2 class="section-title">Artifacts</h2>
-    <a routerLink="/list-artifacts" class="view-all-link">VIEW ALL</a>
+<section class="catalog-preview" aria-labelledby="artifact-preview-heading">
+  <div class="preview-heading">
+    <h3 id="artifact-preview-heading">Artifacts</h3>
+    <a routerLink="/list-artifacts">
+      View all artifacts
+      <i class="bi bi-arrow-right" aria-hidden="true"></i>
+    </a>
   </div>
 
-  <div class="col-12">
-    <div *ngIf="artifacts.length > 0; else noArtifacts">
-      <div class="row justify-content-center">
-        <div class="col-md-4 mb-4 d-flex justify-content-center" *ngFor="let artifact of artifacts">
-          <app-artifact-card [artifact]="artifact"></app-artifact-card>
-        </div>
-      </div>
-    </div>
-    <ng-template #noArtifacts>
-      <div class="no-content-message">
-        <p>No artifacts have been created yet. Be the first to contribute!</p>
-      </div>
-    </ng-template>
+  <div *ngIf="isLoading" class="preview-state" role="status">
+    Loading artifact preview...
   </div>
-</div>
+
+  <div *ngIf="hasError" class="preview-state preview-error" role="status">
+    <span>The artifact preview is unavailable.</span>
+    <button type="button" (click)="loadArtifacts()">Try again</button>
+  </div>
+
+  <div
+    *ngIf="!isLoading && !hasError && artifacts.length > 0"
+    class="preview-grid"
+  >
+    <app-artifact-card
+      *ngFor="let artifact of artifacts"
+      [artifact]="artifact"
+    ></app-artifact-card>
+  </div>
+
+  <div
+    *ngIf="!isLoading && !hasError && artifacts.length === 0"
+    class="preview-state"
+  >
+    No artifacts have been registered yet.
+  </div>
+</section>

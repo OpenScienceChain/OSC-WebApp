@@ -21,7 +21,7 @@ describe('WorkflowCardComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [CommonModule, RouterTestingModule, WorkflowCardComponent]
+      imports: [CommonModule, RouterTestingModule, WorkflowCardComponent],
     }).compileComponents();
 
     fixture = TestBed.createComponent(WorkflowCardComponent);
@@ -48,21 +48,32 @@ describe('WorkflowCardComponent', () => {
     expect(textContent).toContain('This is a test description');
   });
 
-  it('should display the submitted date', () => {
+  it('should display the last activity', () => {
     const textContent = fixture.nativeElement.textContent;
-    expect(textContent).toContain('Submitted at');
+    expect(textContent).toContain('Last activity');
   });
 
-  it('should have a view button', () => {
-    const viewButton = fixture.debugElement.query(By.css('.btn-primary, .view-button'));
+  it('should have a workflow detail link', () => {
+    const viewButton = fixture.debugElement.query(By.css('.card-actions a'));
     expect(viewButton).toBeTruthy();
-    expect(viewButton.nativeElement.textContent.trim()).toBe('View');
+    expect(viewButton.nativeElement.textContent).toContain('View workflow');
+    expect(viewButton.attributes['href']).toBe('/workflows/1');
   });
 
-  it('should apply the correct CSS classes', () => {
-    const cardElement = fixture.debugElement.query(By.css('.card'));
+  it('shows a management link only when requested by the list', () => {
+    expect(fixture.debugElement.query(By.css('.manage-action'))).toBeNull();
+    component.showManage = true;
+    fixture.detectChanges();
+    const manageLink = fixture.debugElement.query(By.css('.manage-action'));
+    expect(manageLink.attributes['href']).toBe('/update-workflow/1');
+  });
+
+  it('should use semantic card structure', () => {
+    const cardElement = fixture.debugElement.query(
+      By.css('article.catalog-card'),
+    );
     expect(cardElement).toBeTruthy();
-    const headerElement = fixture.debugElement.query(By.css('.card-header'));
+    const headerElement = fixture.debugElement.query(By.css('article header'));
     expect(headerElement).toBeTruthy();
     const bodyElement = fixture.debugElement.query(By.css('.card-body'));
     expect(bodyElement).toBeTruthy();

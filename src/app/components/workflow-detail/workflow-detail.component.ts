@@ -1,5 +1,5 @@
-import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { Workflow } from '../../models/workflow.model';
 import { WorkflowService } from '../../services/workflow.service';
@@ -9,14 +9,52 @@ import { WorkflowService } from '../../services/workflow.service';
   standalone: true,
   imports: [CommonModule, RouterModule],
   templateUrl: './workflow-detail.component.html',
-  styleUrls: ['./workflow-detail.component.css']
+  styleUrls: ['./workflow-detail.component.css'],
 })
 export class WorkflowDetailComponent implements OnInit {
   workflow?: Workflow;
   isLoading = true;
+  errorMessage = '';
   workflowId = '';
-  expandedRepos: Set<number> = new Set();
+  expandedRepos = new Set<number>();
   idCopied = false;
+
+  constructor(
+    private readonly route: ActivatedRoute,
+    private readonly workflowService: WorkflowService,
+  ) {}
+
+  ngOnInit(): void {
+    this.workflowId = this.route.snapshot.paramMap.get('id') ?? '';
+    this.loadWorkflow();
+  }
+
+  loadWorkflow(): void {
+    this.isLoading = true;
+    this.errorMessage = '';
+    this.workflow = undefined;
+
+    if (!this.workflowId) {
+      this.isLoading = false;
+      this.errorMessage = 'This workflow record does not have a valid ID.';
+      return;
+    }
+
+    this.workflowService.getWorkflow(this.workflowId).subscribe({
+      next: (workflow) => {
+        this.workflow = workflow || undefined;
+        this.isLoading = false;
+        if (!workflow) {
+          this.errorMessage = 'This workflow record could not be found.';
+        }
+      },
+      error: () => {
+        this.isLoading = false;
+        this.errorMessage =
+          'We could not load this workflow record. The catalog may be temporarily unavailable.';
+      },
+    });
+  }
 
   toggleContents(repoIndex: number): void {
     if (this.expandedRepos.has(repoIndex)) {
@@ -36,29 +74,16 @@ export class WorkflowDetailComponent implements OnInit {
 
   copyId(): void {
     if (!this.workflow) return;
-    const fullId = 'osc-is-workflow-' + this.workflow.id;
-    navigator.clipboard.writeText(fullId).then(() => {
+    navigator.clipboard.writeText(this.recordId()).then(() => {
       this.idCopied = true;
-      setTimeout(() => this.idCopied = false, 2000);
+      setTimeout(() => (this.idCopied = false), 2000);
     });
   }
 
-  constructor(
-    private readonly route: ActivatedRoute,
-    private readonly workflowService: WorkflowService
-  ) {}
-
-  ngOnInit(): void {
-    this.workflowId = this.route.snapshot.paramMap.get('id') ?? '';
-
-    this.workflowService.getWorkflow(this.workflowId).subscribe({
-      next: workflow => {
-        this.workflow = workflow;
-        this.isLoading = false;
-      },
-      error: () => {
-        this.isLoading = false;
-      }
-    });
+  recordId(): string {
+    if (!this.workflow) return '';
+    return this.workflow.id.startsWith('workflow-')
+      ? `osc-is-${this.workflow.id}`
+      : `osc-is-workflow-${this.workflow.id}`;
   }
 }

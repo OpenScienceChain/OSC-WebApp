@@ -1,184 +1,284 @@
-<ng-container *ngIf="!isLoading && workflow; else loadingTpl">
-  <div class="workflow-wrapper container">
-    <!-- Header Section -->
-    <div class="workflow-header">
-      <div class="badge-container mb-2">
-        <span class="badge bg-primary">Scientific Workflow</span>
-        <span class="badge ms-2" [ngClass]="{
-          'bg-warning': workflow.submissionState === 'PENDING',
-          'bg-success': workflow.submissionState === 'SUCCESS',
-          'bg-danger': workflow.submissionState === 'FAILED'
-        }">{{ workflow.submissionState }}</span>
+<main class="record-page">
+  <div class="record-shell">
+    <a class="back-link" routerLink="/list-workflows">
+      <i class="bi bi-arrow-left" aria-hidden="true"></i>
+      Back to workflows
+    </a>
+
+    <div *ngIf="isLoading" class="state-panel" role="status" aria-live="polite">
+      <span class="spinner-border" aria-hidden="true"></span>
+      <div>
+        <h1>Loading workflow record</h1>
+        <p>
+          Retrieving linked artifacts, repositories, and provenance evidence.
+        </p>
       </div>
-      <h1 class="workflow-title">{{ workflow.title }}</h1>
     </div>
 
-    <div class="workflow-body">
-      <!-- Description and Details Row -->
-      <div class="row g-4 mb-4">
-        <!-- Description Column -->
-        <div class="col-lg-7 description-col">
-          <h4 class="section-heading">Description</h4>
-          <p class="pre-wrap">{{ workflow.description }}</p>
-        </div>
-
-        <!-- Details Column -->
-        <div class="col-lg-5 details-col">
-          <h4 class="section-heading">Details</h4>
-          <table class="table table-borderless workflow-meta">
-            <tbody>
-              <tr>
-                <th>ID</th>
-                <td class="monospace">
-                  {{ 'osc-is-workflow-' + workflow.id }}
-                  <button class="btn btn-sm btn-outline-secondary ms-2 copy-btn"
-                    title="Copy ID to clipboard"
-                    (click)="copyId()">
-                    <i class="bi" [ngClass]="idCopied ? 'bi-check-lg text-success' : 'bi-clipboard'"></i>
-                  </button>
-                </td>
-              </tr>
-              <tr>
-                <th>Submitter</th>
-                <td>{{ workflow.submitterUsername }} ({{ workflow.submitterEmail }})</td>
-              </tr>
-              <tr *ngIf="workflow.submittedAt">
-                <th>Submitted</th>
-                <td>{{ workflow.submittedAt | date:'medium' }}</td>
-              </tr>
-              <tr *ngIf="workflow.updatedAt">
-                <th>Last Updated</th>
-                <td>{{ workflow.updatedAt | date:'medium' }}</td>
-              </tr>
-              <tr *ngIf="workflow.blockchainTxId">
-                <th>Blockchain TX</th>
-                <td class="monospace">{{ workflow.blockchainTxId }}</td>
-              </tr>
-              <tr *ngIf="workflow.submissionError">
-                <th>Error</th>
-                <td class="text-danger">{{ workflow.submissionError }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+    <div
+      *ngIf="!isLoading && errorMessage"
+      class="state-panel state-error"
+      role="alert"
+    >
+      <i class="bi bi-exclamation-circle" aria-hidden="true"></i>
+      <div>
+        <h1>Workflow unavailable</h1>
+        <p>{{ errorMessage }}</p>
+        <button type="button" (click)="loadWorkflow()">Try again</button>
       </div>
+    </div>
 
-      <!-- Keywords Section -->
-      <div class="keywords-section mt-3 mb-4" *ngIf="workflow.keywords && workflow.keywords.length > 0">
-        <h4 class="section-heading">
-          <i class="bi bi-tags"></i> Keywords
-        </h4>
-        <div class="keywords-list">
-          <span class="badge bg-secondary me-2 mb-2" *ngFor="let kw of workflow.keywords">{{ kw }}</span>
+    <ng-container *ngIf="!isLoading && workflow">
+      <header class="record-header">
+        <div class="record-kicker">
+          <span>Scientific workflow</span>
+          <span
+            class="record-state"
+            [class.is-confirmed]="workflow.submissionState === 'SUCCESS'"
+          >
+            {{ workflow.submissionState || 'Recorded' }}
+          </span>
         </div>
-      </div>
+        <h1>{{ workflow.title }}</h1>
+        <p>{{ workflow.description }}</p>
+      </header>
 
-      <!-- Submission Comment -->
-      <div class="comment-section mt-3 mb-4" *ngIf="workflow.submission_comment">
-        <h4 class="section-heading">Submission Comment</h4>
-        <p class="pre-wrap">{{ workflow.submission_comment }}</p>
-      </div>
-
-      <!-- Artifacts Section -->
-      <div class="osc-data-section mt-4" *ngIf="workflow.artifacts && workflow.artifacts.length > 0">
-        <h4 class="section-heading mb-3">
-          <i class="bi bi-database"></i> Linked Artifacts
-        </h4>
-        <div class="artifacts-list">
-          <div class="artifact-item card mb-3" *ngFor="let artifact of workflow.artifacts">
-            <div class="card-body">
-              <h5 class="artifact-name">
-                <span class="bullet-icon">&#9679;</span>
-                <a [routerLink]="['/artifacts', artifact.id]" class="artifact-link">
-                  {{ artifact.title }}
-                </a>
-              </h5>
-              <div class="artifact-description">
-                <strong>Description:</strong> {{ artifact.description.length > 200 ? (artifact.description | slice:0:200) + '...' : artifact.description }}
-              </div>
-            </div>
+      <section
+        class="ledger-confirmation"
+        [class.is-pending]="!workflow.blockchainTxId"
+        aria-labelledby="workflow-ledger-heading"
+      >
+        <i class="bi bi-diagram-3" aria-hidden="true"></i>
+        <div class="ledger-summary">
+          <p class="section-label">Blockchain provenance</p>
+          <h2 id="workflow-ledger-heading">
+            {{
+              workflow.blockchainTxId
+                ? 'Workflow relationships committed as a ledger event'
+                : 'Awaiting blockchain confirmation'
+            }}
+          </h2>
+          <p>
+            This event preserves which artifacts and repository revisions
+            belonged to the workflow when it was registered.
+          </p>
+        </div>
+        <dl *ngIf="workflow.blockchainTxId" class="ledger-facts">
+          <div>
+            <dt>Transaction</dt>
+            <dd>{{ workflow.blockchainTxId }}</dd>
           </div>
-        </div>
-      </div>
-
-      <!-- GitHub Repositories Section -->
-      <div class="github-section mt-4" *ngIf="workflow.githubRepositories && workflow.githubRepositories.length > 0">
-        <h4 class="section-heading mb-3">
-          <i class="bi bi-github"></i> GitHub Repositories
-        </h4>
-        <div class="repositories-list">
-          <div class="repository-item card mb-4" *ngFor="let repo of workflow.githubRepositories; let ri = index">
-            <div class="card-body">
-              <h5 class="repo-title">
-                <a [href]="repo.url" target="_blank" class="repo-link">
-                  {{ repo.url }}
-                  <i class="bi bi-box-arrow-up-right ms-1"></i>
-                </a>
-              </h5>
-
-              <div class="repo-info mb-3" *ngIf="repo.description">
-                <strong>Description:</strong> {{ repo.description }}
-              </div>
-
-              <div class="repo-hash mb-3" *ngIf="repo.gitHash">
-                <strong>Git Hash:</strong>
-                <code class="hash-code">{{ repo.gitHash }}</code>
-              </div>
-
-              <div class="repo-contents" *ngIf="repo.contents && repo.contents.length > 0">
-                <strong class="d-block mb-2">Contents ({{ repo.contents.length }} items):</strong>
-                <div class="table-responsive">
-                  <table class="table table-sm contents-table">
-                    <thead class="table-light">
-                      <tr>
-                        <th>Filename</th>
-                        <th>Hash</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <ng-container *ngFor="let content of repo.contents; let ci = index">
-                        <tr *ngIf="ci < 3 || isExpanded(ri)">
-                          <td class="filename">
-                            <i *ngIf="isFolder(content.filename)" class="bi bi-folder-fill folder-icon"></i>
-                            <i *ngIf="!isFolder(content.filename)" class="bi bi-file-earmark file-icon"></i>
-                            {{ content.filename }}
-                          </td>
-                          <td class="hash">{{ isFolder(content.filename) ? '—' : content.hash }}</td>
-                        </tr>
-                      </ng-container>
-                    </tbody>
-                  </table>
-                  <button
-                    *ngIf="repo.contents.length > 3"
-                    class="btn btn-sm btn-outline-secondary expand-btn"
-                    (click)="toggleContents(ri)">
-                    {{ isExpanded(ri) ? 'Show less' : 'Show all ' + repo.contents.length + ' items' }}
-                  </button>
-                </div>
-              </div>
-            </div>
+          <div *ngIf="workflow.peerId">
+            <dt>Committing peer</dt>
+            <dd>{{ workflow.peerId }}</dd>
           </div>
+          <div>
+            <dt>Committed</dt>
+            <dd>
+              {{ workflow.updatedAt || workflow.submittedAt | date: 'medium' }}
+            </dd>
+          </div>
+        </dl>
+      </section>
+
+      <div class="record-layout">
+        <section aria-labelledby="workflow-context-heading">
+          <p class="section-label">Workflow context</p>
+          <h2 id="workflow-context-heading">
+            A reproducible process, not just a title
+          </h2>
+          <p class="workflow-note" *ngIf="workflow.submission_comment">
+            {{ workflow.submission_comment }}
+          </p>
+          <div class="tag-list" *ngIf="workflow.keywords?.length">
+            <span *ngFor="let keyword of workflow.keywords">{{ keyword }}</span>
+          </div>
+        </section>
+
+        <aside
+          class="record-identity"
+          aria-labelledby="workflow-identity-heading"
+        >
+          <p class="section-label">Record identity</p>
+          <h2 id="workflow-identity-heading">Who registered this workflow</h2>
+          <dl>
+            <div>
+              <dt>OSC ID</dt>
+              <dd class="copy-value">
+                <code>{{ recordId() }}</code>
+                <button
+                  type="button"
+                  (click)="copyId()"
+                  [attr.aria-label]="
+                    idCopied ? 'Workflow ID copied' : 'Copy workflow ID'
+                  "
+                  [title]="idCopied ? 'Copied' : 'Copy workflow ID'"
+                >
+                  <i
+                    class="bi"
+                    [ngClass]="idCopied ? 'bi-check-lg' : 'bi-clipboard'"
+                    aria-hidden="true"
+                  ></i>
+                </button>
+              </dd>
+            </div>
+            <div *ngIf="workflow.organization?.name">
+              <dt>Organization</dt>
+              <dd>{{ workflow.organization?.name }}</dd>
+            </div>
+            <div>
+              <dt>Contributor</dt>
+              <dd>{{ workflow.submitterUsername }}</dd>
+            </div>
+            <div>
+              <dt>Contact</dt>
+              <dd>{{ workflow.submitterEmail }}</dd>
+            </div>
+            <div>
+              <dt>Submitted</dt>
+              <dd>{{ workflow.submittedAt | date: 'medium' }}</dd>
+            </div>
+            <div *ngIf="workflow.updatedAt">
+              <dt>Last updated</dt>
+              <dd>{{ workflow.updatedAt | date: 'medium' }}</dd>
+            </div>
+          </dl>
+        </aside>
+      </div>
+
+      <section
+        class="linked-section"
+        *ngIf="workflow.artifacts?.length"
+        aria-labelledby="linked-artifacts-heading"
+      >
+        <div class="section-heading-row">
+          <div>
+            <p class="section-label">Inputs and outputs</p>
+            <h2 id="linked-artifacts-heading">Linked OSC artifacts</h2>
+          </div>
+          <span>{{ workflow.artifacts.length }} records</span>
         </div>
-      </div>
+        <div class="linked-records">
+          <a
+            *ngFor="let artifact of workflow.artifacts"
+            [routerLink]="['/artifacts', artifact.id]"
+          >
+            <i class="bi bi-file-earmark-check" aria-hidden="true"></i>
+            <span>
+              <strong>{{ artifact.title }}</strong>
+              <small>{{ artifact.description }}</small>
+            </span>
+            <i class="bi bi-arrow-right" aria-hidden="true"></i>
+          </a>
+        </div>
+      </section>
 
-      <!-- Action Buttons -->
-      <div class="d-flex gap-2 mt-4 justify-content-center action-buttons">
-        <a class="btn btn-outline-primary back-button" routerLink="/list-workflows">
-          <i class="bi bi-arrow-left me-1"></i> Back to Workflows
+      <section
+        class="repository-section"
+        *ngIf="workflow.githubRepositories?.length"
+        aria-labelledby="repositories-heading"
+      >
+        <div class="section-heading-row">
+          <div>
+            <p class="section-label">Versioned software</p>
+            <h2 id="repositories-heading">Repository revisions</h2>
+          </div>
+          <span>{{ workflow.githubRepositories.length }} repositories</span>
+        </div>
+
+        <article
+          class="repository-record"
+          *ngFor="
+            let repository of workflow.githubRepositories;
+            let repositoryIndex = index
+          "
+        >
+          <header>
+            <a
+              [href]="repository.url"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <i class="bi bi-github" aria-hidden="true"></i>
+              {{ repository.url }}
+              <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i>
+            </a>
+            <p>{{ repository.description }}</p>
+            <dl>
+              <dt>Git commit</dt>
+              <dd>
+                <code>{{ repository.gitHash }}</code>
+              </dd>
+            </dl>
+          </header>
+
+          <div class="table-responsive" *ngIf="repository.contents?.length">
+            <table>
+              <thead>
+                <tr>
+                  <th scope="col">Path</th>
+                  <th scope="col">Cryptographic hash</th>
+                </tr>
+              </thead>
+              <tbody>
+                <ng-container
+                  *ngFor="
+                    let content of repository.contents;
+                    let contentIndex = index
+                  "
+                >
+                  <tr *ngIf="contentIndex < 3 || isExpanded(repositoryIndex)">
+                    <td>
+                      <i
+                        class="bi"
+                        [ngClass]="
+                          isFolder(content.filename)
+                            ? 'bi-folder-fill'
+                            : 'bi-file-earmark'
+                        "
+                        aria-hidden="true"
+                      ></i>
+                      {{ content.filename }}
+                    </td>
+                    <td>
+                      <code>{{
+                        isFolder(content.filename) ? '-' : content.hash
+                      }}</code>
+                    </td>
+                  </tr>
+                </ng-container>
+              </tbody>
+            </table>
+            <button
+              *ngIf="repository.contents.length > 3"
+              type="button"
+              class="expand-button"
+              (click)="toggleContents(repositoryIndex)"
+              [attr.aria-expanded]="isExpanded(repositoryIndex)"
+            >
+              {{
+                isExpanded(repositoryIndex)
+                  ? 'Show fewer files'
+                  : 'Show all ' + repository.contents.length + ' files'
+              }}
+            </button>
+          </div>
+        </article>
+      </section>
+
+      <div class="record-actions">
+        <a class="secondary-action" routerLink="/list-workflows">
+          <i class="bi bi-arrow-left" aria-hidden="true"></i>
+          Back to workflows
         </a>
-        <a class="btn btn-primary manage-button" [routerLink]="['/update-workflow', workflow.id]">
-          <i class="bi bi-pencil-square me-1"></i> Manage Workflow
+        <a
+          class="primary-action"
+          [routerLink]="['/update-workflow', workflow.id]"
+        >
+          <i class="bi bi-pencil-square" aria-hidden="true"></i>
+          Manage workflow
         </a>
       </div>
-    </div>
+    </ng-container>
   </div>
-</ng-container>
-
-<ng-template #loadingTpl>
-  <div class="loading text-center">
-    <div class="spinner-border text-primary" role="status">
-      <span class="visually-hidden">Loading...</span>
-    </div>
-    <p class="mt-3">Loading workflow details...</p>
-  </div>
-</ng-template>
+</main>

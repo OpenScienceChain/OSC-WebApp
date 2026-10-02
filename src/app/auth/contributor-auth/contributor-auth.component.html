@@ -1,0 +1,182 @@
+<main class="sign-in-page" aria-labelledby="sign-in-heading">
+  <section class="sign-in-panel">
+    <a
+      class="sign-in-brand"
+      routerLink="/"
+      aria-label="Open Science Chain home"
+    >
+      <img
+        src="assets/images/osc-logo-color-official.png"
+        alt="Open Science Chain"
+        class="logo"
+      />
+    </a>
+    <div class="sign-in-intro">
+      <p class="eyebrow">Contributor access</p>
+      <h1 id="sign-in-heading">
+        {{ mode === 'register' ? 'Create an account' : 'Sign in' }}
+      </h1>
+      <p>Keep your artifacts and workflows connected to your account.</p>
+    </div>
+    <div class="account-modes" role="group" aria-label="Account action">
+      <button
+        type="button"
+        [attr.aria-pressed]="mode === 'sign-in'"
+        (click)="setMode('sign-in')"
+      >
+        Sign in
+      </button>
+      <button
+        type="button"
+        [attr.aria-pressed]="mode === 'register'"
+        (click)="setMode('register')"
+      >
+        Create account
+      </button>
+    </div>
+    <form
+      class="sign-in-form"
+      novalidate
+      (ngSubmit)="submit()"
+      [attr.aria-busy]="busy"
+    >
+      <div class="form-group">
+        <label for="account-organization">Organization</label>
+        <select
+          id="account-organization"
+          name="organization"
+          class="form-control organization-select"
+          [(ngModel)]="organization"
+          [disabled]="busy"
+        >
+          <option value="neuroscience-gateway">Neuroscience Gateway</option>
+          <option value="citizen-science">Citizen Science</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="account-username">Username</label>
+        <input
+          id="account-username"
+          name="username"
+          class="form-control"
+          type="text"
+          autocomplete="username"
+          maxlength="24"
+          required
+          [(ngModel)]="username"
+          [disabled]="busy"
+          [attr.aria-invalid]="
+            submitted && !username.trim().match('^[a-zA-Z][a-zA-Z0-9_-]{2,23}$')
+          "
+          [attr.aria-describedby]="
+            submitted && !username.trim().match('^[a-zA-Z][a-zA-Z0-9_-]{2,23}$')
+              ? 'account-username-error'
+              : null
+          "
+        />
+        <p
+          *ngIf="
+            submitted && !username.trim().match('^[a-zA-Z][a-zA-Z0-9_-]{2,23}$')
+          "
+          id="account-username-error"
+          class="error-message"
+        >
+          Use 3-24 letters, numbers, underscores, or hyphens, starting with a
+          letter.
+        </p>
+      </div>
+      <div class="form-group">
+        <label for="account-pin">{{
+          mode === 'register' ? 'Choose a PIN' : 'PIN'
+        }}</label>
+        <input
+          id="account-pin"
+          name="pin"
+          class="form-control"
+          type="password"
+          inputmode="numeric"
+          pattern="[0-9]{4,6}"
+          minlength="4"
+          maxlength="6"
+          required
+          [attr.autocomplete]="
+            mode === 'register' ? 'new-password' : 'current-password'
+          "
+          [(ngModel)]="pin"
+          [disabled]="busy"
+          [attr.aria-invalid]="submitted && !pin.match('^[0-9]{4,6}$')"
+          [attr.aria-describedby]="
+            submitted && !pin.match('^[0-9]{4,6}$') ? 'account-pin-error' : null
+          "
+        />
+        <p
+          *ngIf="submitted && !pin.match('^[0-9]{4,6}$')"
+          id="account-pin-error"
+          class="error-message"
+        >
+          Enter 4-6 digits.
+        </p>
+      </div>
+      <button
+        class="submit-button"
+        type="submit"
+        [disabled]="busy || status?.state !== 'OPEN'"
+      >
+        {{
+          busy
+            ? 'Please wait...'
+            : mode === 'register'
+              ? 'Create account'
+              : 'Sign in'
+        }}
+      </button>
+      <p
+        *ngIf="status && status.state !== 'OPEN'"
+        class="form-notice"
+        role="status"
+      >
+        Contributor access is paused while the current run is
+        {{ status.state | lowercase }}.
+      </p>
+      <p *ngIf="error" class="form-notice form-notice-error" role="alert">
+        {{ error }}
+      </p>
+    </form>
+    <p class="account-disclosure">
+      Organization selection is self-declared. Accounts are local to this
+      demonstration; there is no PIN recovery.
+    </p>
+    <a class="team-sign-in" routerLink="/auth/team-sign-in"
+      >Administrator sign in</a
+    >
+  </section>
+  <aside class="sign-in-context" aria-label="Why sign in">
+    <span class="photo-credit"
+      >Photo:
+      <a
+        href="https://unsplash.com/photos/a-scientist-is-working-in-a-laboratory-TOZsuh0MWJw"
+        target="_blank"
+        rel="noopener noreferrer"
+        >Adam Bezer / Unsplash</a
+      ></span
+    >
+    <div>
+      <p class="eyebrow">Your work, with its history intact</p>
+      <h2>Contribute with confidence</h2>
+      <ul>
+        <li>
+          <i class="bi bi-check2-circle" aria-hidden="true"></i> Keep metadata
+          connected to every artifact.
+        </li>
+        <li>
+          <i class="bi bi-check2-circle" aria-hidden="true"></i> Record updates
+          in a verifiable history.
+        </li>
+        <li>
+          <i class="bi bi-check2-circle" aria-hidden="true"></i> Collaborate
+          across research organizations.
+        </li>
+      </ul>
+    </div>
+  </aside>
+</main>

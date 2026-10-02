@@ -1,62 +1,154 @@
-.artifact-card {
-  border-radius: 25px;
+:host {
+  min-width: 0;
+  display: block;
+  height: 100%;
+}
+
+.catalog-card {
+  height: 100%;
+  min-height: 290px;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1), 0 6px 20px rgba(0, 0, 0, 0.05);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  width: 380px;  /* Ancho fijo para todas las tarjetas */
-  margin: 0 auto; /* Centra la tarjeta en su contenedor */
-  height: auto;   /* La altura se ajustará automáticamente */
-  min-height: 300px; /* Altura mínima para mantener consistencia */
+  border: 1px solid var(--osc-line);
+  border-radius: 6px;
+  background: #ffffff;
+  box-shadow: 0 4px 14px rgba(22, 58, 89, 0.08);
+  transition:
+    transform 300ms ease,
+    box-shadow 300ms ease;
 }
 
-.artifact-card:hover {
+.catalog-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15), 0 10px 25px rgba(0, 0, 0, 0.1);
+  box-shadow:
+    0 8px 16px rgba(0, 0, 0, 0.15),
+    0 10px 25px rgba(0, 0, 0, 0.1);
 }
 
-.card-header {
-  background-color: #A09CE1;
-  color: white;
-  font-family: 'Open Sans', sans-serif !important;
-  font-weight: 700;
-  font-size: 24px;
+@media (prefers-reduced-motion: reduce) {
+  .catalog-card {
+    transition: none;
+  }
+  .catalog-card:hover {
+    transform: none;
+  }
+}
+
+.catalog-card header {
+  min-height: 102px;
+  padding: 18px 20px;
+  border-top: 5px solid #5b6991;
+  border-bottom: 1px solid var(--osc-line);
+  background: #f4f5f8;
+}
+
+.record-type {
+  display: block;
+  margin-bottom: 6px;
+  color: #46557d;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+h3 {
+  display: -webkit-box;
+  overflow: hidden;
+  margin: 0;
+  color: var(--osc-navy);
+  font-size: 19px;
+  line-height: 1.35;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .card-body {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  flex: 1;  /* Permite que el cuerpo de la tarjeta crezca */
+  padding: 19px 20px;
 }
 
-.card-subtitle {
-  font-family: 'Open Sans', sans-serif !important;
-  font-weight: 700;
-  font-size: 18px;
+.description {
+  display: -webkit-box;
+  overflow: hidden;
+  min-height: 68px;
+  margin: 0 0 18px;
+  color: var(--osc-muted);
+  line-height: 1.45;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
 }
 
-.card-text {
-  font-family: 'Open Sans', sans-serif !important;
-  font-weight: 400;
-  font-size: 16px;
+dl {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 0 0 20px;
 }
 
-.button-container {
+dt {
+  color: #465d69;
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+dd {
+  margin: 2px 0 0;
+  color: var(--osc-ink);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: auto;
   padding-top: 15px;
-  border-top: none;
-  margin-top: auto; /* Empuja el botón hacia abajo */
+  border-top: 1px solid #e0e8ec;
 }
 
-.view-button {
-  background-color: #1D3557;
-  border-color: #1D3557;
-  font-family: 'Open Sans', sans-serif !important;
-  border-radius: 12px;
-  padding: 6px 20px;
-  font-weight: 700;
-  font-size: 18px;
+.card-actions a {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 11px;
+  border: 1px solid var(--osc-navy);
+  border-radius: 4px;
+  background: var(--osc-navy);
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 750;
+  text-decoration: none;
 }
 
-.view-button:hover {
-  background-color: #2a4a76;
-  border-color: #2a4a76;
+.card-actions a:hover {
+  background: var(--osc-navy-deep);
+}
+
+.card-actions .manage-action {
+  background: #ffffff;
+  color: var(--osc-navy);
+}
+
+.card-actions .manage-action:hover {
+  background: var(--osc-surface);
+}
+.status-failed {
+  width: fit-content;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: #fbe4e6;
+  color: #8b1e2b;
+}
+
+.status-pending {
+  width: fit-content;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: #fff0bf;
+  color: #624900;
 }

@@ -1,50 +1,289 @@
-<!-- Barra de navegación -->
-<nav class="main-navbar navbar navbar-expand-lg navbar-dark">
-  <div class="container-fluid">
-    <!-- Contenedor izquierdo para la flecha y el logo -->
-    <div class="d-flex align-items-center">
-      <!-- Botón de retroceso -->
-      <button *ngIf="showBackButton" class="back-button" (click)="goBack()">
-        <i class="bi bi-arrow-left-circle"></i>
+<a class="skip-link" href="#app-main">Skip to main content</a>
+
+<header
+  class="site-header"
+  [class.portal-header]="router.url !== '/' && !router.url.startsWith('/#')"
+>
+  <nav class="primary-navigation" aria-label="Primary navigation">
+    <div class="brand-group">
+      <button
+        *ngIf="showBackButton"
+        class="icon-button back-button"
+        type="button"
+        aria-label="Return to the previous page"
+        title="Go back"
+        (click)="goBack()"
+      >
+        <i class="bi bi-arrow-left" aria-hidden="true"></i>
       </button>
 
-      <!-- Logo (con posición fija) -->
-      <a class="navbar-brand" routerLink="/">
-        <img src="assets/images/OpenScienceChain_logo_horiz_white.png" alt="osc-logo">
+      <a
+        class="brand-link"
+        routerLink="/"
+        aria-label="Open Science Chain home"
+        (click)="closeNavigation()"
+      >
+        <img
+          *ngIf="!logoError"
+          src="assets/images/osc-logo-white-transparent.png"
+          alt="Open Science Chain"
+          (error)="onLogoError()"
+        />
+        <span *ngIf="logoError">Open Science Chain</span>
       </a>
     </div>
 
-    <!-- Navegación dinámica basada en el estado de autenticación -->
-    <div class="d-flex nav-links" *ngIf="!isAuthRoute()">
-      <!-- Contribute dropdown -->
-      <div class="contribute-dropdown">
-        <a class="nav-link contribute-link" style="cursor: pointer;">
-          Contribute <i class="bi bi-chevron-down" style="font-size: 14px;"></i>
-        </a>
-        <div class="contribute-menu">
-          <a class="contribute-menu-item" (click)="onContributeClick('artifact')">Artifact</a>
-          <a class="contribute-menu-item" (click)="onContributeClick('workflow')">Workflow</a>
-        </div>
+    <button
+      #navigationToggle
+      class="icon-button navigation-toggle"
+      type="button"
+      aria-controls="primary-navigation-links"
+      [attr.aria-expanded]="mobileNavigationOpen"
+      [attr.aria-label]="
+        mobileNavigationOpen ? 'Close navigation menu' : 'Open navigation menu'
+      "
+      [title]="
+        mobileNavigationOpen ? 'Close navigation menu' : 'Open navigation menu'
+      "
+      (click)="toggleMobileNavigation()"
+    >
+      <i
+        class="bi"
+        [class.bi-x-lg]="mobileNavigationOpen"
+        [class.bi-list]="!mobileNavigationOpen"
+        aria-hidden="true"
+      ></i>
+    </button>
+
+    <div
+      id="primary-navigation-links"
+      class="navigation-panel"
+      [class.navigation-panel-open]="mobileNavigationOpen"
+    >
+      <div class="navigation-links">
+        <a
+          class="nav-link"
+          routerLink="/"
+          routerLinkActive="active"
+          [routerLinkActiveOptions]="{ exact: true }"
+          (click)="closeNavigation()"
+          >Home</a
+        >
+        <a
+          class="nav-link"
+          routerLink="/list-artifacts"
+          routerLinkActive="active"
+          (click)="closeNavigation()"
+          >Artifacts</a
+        >
+        <a
+          class="nav-link"
+          routerLink="/list-workflows"
+          routerLinkActive="active"
+          (click)="closeNavigation()"
+          >Workflows</a
+        >
+        <a
+          class="nav-link"
+          routerLink="/research-example"
+          routerLinkActive="active"
+          (click)="closeNavigation()"
+          >Research example</a
+        >
       </div>
 
-      <!-- Condicional basado en autenticación -->
-      <a *ngIf="!isAuthenticated" class="nav-link signin-link" routerLink="/auth/sign-in">Sign In</a>
-      <a *ngIf="isAuthenticated"
-              class="nav-link signin-link"
-              (click)="logout()"
-              type="button">
-        Sign Out
-    </a>
-    </div>
-  </div>
-</nav>
+      <div class="navigation-actions">
+        <div class="contribute-dropdown">
+          <button
+            #contributeButton
+            class="nav-action contribute-button"
+            type="button"
+            aria-controls="contribute-options"
+            [attr.aria-expanded]="contributeMenuOpen"
+            (click)="toggleContributeMenu()"
+          >
+            Contribute
+            <i
+              class="bi bi-chevron-down"
+              [class.rotated]="contributeMenuOpen"
+              aria-hidden="true"
+            ></i>
+          </button>
+          <div
+            *ngIf="contributeMenuOpen"
+            id="contribute-options"
+            class="contribute-menu"
+          >
+            <button
+              type="button"
+              data-ux-click="CONTRIBUTE_CLICK"
+              (click)="onContributeClick('artifact')"
+            >
+              <i class="bi bi-box-seam" aria-hidden="true"></i>
+              <span>
+                <strong>Artifact</strong>
+                <small>Register data, software, or a publication</small>
+              </span>
+            </button>
+            <button
+              type="button"
+              data-ux-click="CONTRIBUTE_CLICK"
+              (click)="onContributeClick('workflow')"
+            >
+              <i class="bi bi-diagram-3" aria-hidden="true"></i>
+              <span>
+                <strong>Workflow</strong>
+                <small>Document a reproducible process</small>
+              </span>
+            </button>
+          </div>
+        </div>
 
-<!-- Contenido principal de la página de inicio -->
-<!-- Solo mostrar cuando estamos en la ruta principal y no hay otra ruta cargada -->
-<div class="container mt-4" *ngIf="router.url === '/' && !isAuthRoute()">
-  <app-artifacts-preview></app-artifacts-preview>
-  <app-workflows-preview></app-workflows-preview>
+        <a
+          *ngIf="!isAuthenticated && !contributorSignedIn"
+          data-ux-click="AUTH_ACTION"
+          class="sign-in-button"
+          routerLink="/auth/sign-in"
+          routerLinkActive="active"
+          (click)="closeNavigation()"
+        >
+          <i class="bi bi-person" aria-hidden="true"></i>
+          Sign in
+        </a>
+        <button
+          *ngIf="isAuthenticated || contributorSignedIn"
+          data-ux-click="AUTH_ACTION"
+          class="sign-in-button"
+          type="button"
+          (click)="logout()"
+        >
+          <i class="bi bi-box-arrow-right" aria-hidden="true"></i>
+          Sign out
+        </button>
+      </div>
+    </div>
+  </nav>
+</header>
+
+<section
+  *ngIf="analytics.choice() === 'undecided'"
+  class="privacy-banner"
+  aria-label="Analytics choice"
+>
+  <div class="privacy-banner-inner">
+    <p>
+      <strong>Optional analytics</strong> help us understand which pages and
+      actions are useful. No browsing events are sent before you accept.
+      Feedback works either way.
+    </p>
+    <div class="privacy-actions">
+      <button
+        type="button"
+        [disabled]="analytics.busy()"
+        (click)="acceptAnalytics()"
+      >
+        Accept
+      </button>
+      <button
+        type="button"
+        [disabled]="analytics.busy()"
+        (click)="analytics.reject()"
+      >
+        Reject
+      </button>
+    </div>
+    <p *ngIf="analytics.error()" role="alert" class="privacy-error">
+      {{ analytics.error() }}
+    </p>
+  </div>
+</section>
+
+<div *ngIf="mockPreview" class="mock-preview-banner" role="status">
+  LOCAL MOCK PREVIEW - synthetic records; no Fabric connection
 </div>
 
-<!-- Router outlet para las rutas cargadas dinámicamente -->
-<router-outlet></router-outlet>
+<div id="app-main" tabindex="-1">
+  <router-outlet></router-outlet>
+</div>
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div class="footer-about">
+      <strong>Open Science Chain</strong>
+      <p>
+        Research provenance you can trace. OSC records file fingerprints and
+        metadata, not the research files themselves.
+      </p>
+    </div>
+    <nav aria-label="Footer navigation" class="footer-links">
+      <a routerLink="/">Home</a>
+      <a routerLink="/list-artifacts">Artifacts</a>
+      <a routerLink="/list-workflows">Workflows</a>
+      <a routerLink="/research-example">Research example</a>
+      <a routerLink="/feedback">Share feedback</a>
+    </nav>
+    <details class="privacy-settings" [open]="analytics.deletionFailed()">
+      <summary>Privacy choices</summary>
+      <p *ngIf="analytics.choice() === 'accepted'">
+        Optional analytics are on. You can delete this browser's analytics
+        history.
+      </p>
+      <p
+        *ngIf="
+          analytics.choice() === 'rejected' ||
+          analytics.choice() === 'deletion-pending'
+        "
+      >
+        Optional analytics are off.
+      </p>
+      <p *ngIf="analytics.choice() === 'undecided'">
+        Choose whether to allow optional analytics.
+      </p>
+      <button
+        *ngIf="
+          analytics.choice() === 'accepted' ||
+          analytics.choice() === 'deletion-pending'
+        "
+        type="button"
+        [disabled]="analytics.busy()"
+        (click)="analytics.revoke()"
+      >
+        {{
+          analytics.choice() === 'deletion-pending'
+            ? 'Retry deleting analytics history'
+            : 'Delete analytics history'
+        }}
+      </button>
+      <div
+        *ngIf="
+          analytics.choice() === 'rejected' ||
+          analytics.choice() === 'undecided'
+        "
+        class="privacy-actions"
+      >
+        <button
+          type="button"
+          [disabled]="analytics.busy()"
+          (click)="acceptAnalytics()"
+        >
+          Accept
+        </button>
+        <button
+          *ngIf="analytics.choice() === 'undecided'"
+          type="button"
+          [disabled]="analytics.busy()"
+          (click)="analytics.reject()"
+        >
+          Reject
+        </button>
+      </div>
+      <p *ngIf="analytics.error()" role="alert" class="privacy-error">
+        {{ analytics.error() }}
+      </p>
+    </details>
+  </div>
+  <div class="footer-bottom">
+    <span>Open Science Chain</span
+    ><span>Public records show source attribution and ledger history.</span>
+  </div>
+</footer>

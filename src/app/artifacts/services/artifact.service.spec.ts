@@ -1,10 +1,12 @@
 import { TestBed } from '@angular/core/testing';
 declare const expect: any;
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import {
+  HttpClientTestingModule,
+  HttpTestingController,
+} from '@angular/common/http/testing';
 import { ArtifactService } from './artifact.service';
 import { CreateArtifactDTO, UpdateArtifactDTO } from '../models/artifact';
 import { environment } from '../../../environments/environment';
-import { HttpErrorResponse } from '@angular/common/http';
 
 describe('ArtifactService', () => {
   let service: ArtifactService;
@@ -14,7 +16,7 @@ describe('ArtifactService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [HttpClientTestingModule],
-      providers: [ArtifactService]
+      providers: [ArtifactService],
     });
     service = TestBed.inject(ArtifactService);
     httpMock = TestBed.inject(HttpTestingController);
@@ -38,12 +40,14 @@ describe('ArtifactService', () => {
         dois: ['10.1234/test.123'],
         fundingAgencies: ['NSF', 'NIH'],
         acknowledgements: 'Thanks to everyone',
-        manifest: [{ filename: 'test.txt', hash: 'abc123', algorithm: 'sha256' }],
-        footprint: 'abc123'
+        manifest: [
+          { filename: 'test.txt', hash: 'abc123', algorithm: 'sha256' },
+        ],
+        footprint: 'abc123',
       };
 
       // Use any since the flush will return empty object {}, not undefined
-      service.createArtifactMetadataOnly(mockDto).subscribe(response => {
+      service.createArtifactMetadataOnly(mockDto).subscribe((response) => {
         // Empty objects are truthy in JavaScript, so we're just checking the response was received
         expect(response).toBeDefined();
       });
@@ -63,8 +67,10 @@ describe('ArtifactService', () => {
         dois: ['10.1234/test.123'],
         fundingAgencies: ['NSF'],
         acknowledgements: 'Thanks',
-        manifest: [{ filename: 'test.txt', hash: 'abc123', algorithm: 'sha256' }],
-        footprint: 'abc123'
+        manifest: [
+          { filename: 'test.txt', hash: 'abc123', algorithm: 'sha256' },
+        ],
+        footprint: 'abc123',
       };
 
       // Spy on console.error to prevent pollution in test output
@@ -72,29 +78,36 @@ describe('ArtifactService', () => {
 
       service.createArtifactMetadataOnly(mockDto).subscribe({
         next: () => fail('Expected error but got success'),
-        error: error => {
+        error: (error) => {
           expect(error).toBeDefined();
           // The error handler returns this message for 400 status when the message is not "Invalid"
           expect(error.message).toBe('Invalid data');
-        }
+        },
       });
 
       const req = httpMock.expectOne(`${environment.apiUrl}/artifacts`);
       // Send error response that would trigger the custom error handler in the service
-      req.flush({ message: ['Invalid data'] }, { status: 400, statusText: 'Bad Request' });
+      req.flush(
+        { message: ['Invalid data'] },
+        { status: 400, statusText: 'Bad Request' },
+      );
     });
   });
 
-  describe('getArtifacts caching', () => {
-    it('caches the list response (shareReplay)', () => {
-      const firstSub = service.getArtifacts().subscribe();
-      const secondSub = service.getArtifacts().subscribe();
-      const req = httpMock.expectOne(apiUrl);
-      req.flush([{ id: '1' }]);
-      firstSub.unsubscribe();
-      secondSub.unsubscribe();
-      // No additional requests should be pending
-      httpMock.verify();
+  describe('getArtifacts visibility', () => {
+    it('fetches a fresh list after the caller changes', () => {
+      const results: string[][] = [];
+      service
+        .getArtifacts()
+        .subscribe((items) => results.push(items.map((item) => item.id)));
+      httpMock.expectOne(apiUrl).flush([{ id: 'public' }]);
+
+      service
+        .getArtifacts()
+        .subscribe((items) => results.push(items.map((item) => item.id)));
+      httpMock.expectOne(apiUrl).flush([{ id: 'public' }, { id: 'private' }]);
+
+      expect(results).toEqual([['public'], ['public', 'private']]);
     });
   });
 
@@ -110,14 +123,25 @@ describe('ArtifactService', () => {
   describe('getArtifactHistory', () => {
     it('uses defaults and constructs query string', () => {
       service.getArtifactHistory('abc').subscribe();
-      const req = httpMock.expectOne(`${apiUrl}/abc/history?offset=0&limit=50&order=desc&includeValue=true`);
+      const req = httpMock.expectOne(
+        `${apiUrl}/abc/history?offset=0&limit=50&order=desc&includeValue=true`,
+      );
       expect(req.request.method).toBe('GET');
       req.flush({ items: [], total: 0 });
     });
 
     it('supports custom options', () => {
-      service.getArtifactHistory('abc', { offset: 10, limit: 5, order: 'asc', includeValue: false }).subscribe();
-      const req = httpMock.expectOne(`${apiUrl}/abc/history?offset=10&limit=5&order=asc&includeValue=false`);
+      service
+        .getArtifactHistory('abc', {
+          offset: 10,
+          limit: 5,
+          order: 'asc',
+          includeValue: false,
+        })
+        .subscribe();
+      const req = httpMock.expectOne(
+        `${apiUrl}/abc/history?offset=10&limit=5&order=asc&includeValue=false`,
+      );
       expect(req.request.method).toBe('GET');
       req.flush({ items: [], total: 0 });
     });
@@ -126,7 +150,9 @@ describe('ArtifactService', () => {
   describe('refreshArtifactHistory', () => {
     it('posts to refresh endpoint with defaults', () => {
       service.refreshArtifactHistory('abc').subscribe();
-      const req = httpMock.expectOne(`${apiUrl}/abc/history/refresh?offset=0&limit=500&order=desc&includeValue=true`);
+      const req = httpMock.expectOne(
+        `${apiUrl}/abc/history/refresh?offset=0&limit=500&order=desc&includeValue=true`,
+      );
       expect(req.request.method).toBe('POST');
       req.flush({});
     });
@@ -141,7 +167,7 @@ describe('ArtifactService', () => {
         fundingAgencies: ['NSF'],
         acknowledgements: 'a',
         manifest: [],
-        footprint: 'f'
+        footprint: 'f',
       };
       service.updateArtifactMetadataOnly('id1', dto).subscribe();
       const req = httpMock.expectOne(`${apiUrl}/id1`);
@@ -160,8 +186,10 @@ describe('ArtifactService', () => {
         dois: ['10.1234/test'],
         fundingAgencies: ['TestAgency'],
         acknowledgements: 'Test acknowledgement',
-        manifest: [{ filename: 'test.txt', hash: 'abcdef123456', algorithm: 'sha256' }],
-        footprint: 'abcdef123456'
+        manifest: [
+          { filename: 'test.txt', hash: 'abcdef123456', algorithm: 'sha256' },
+        ],
+        footprint: 'abcdef123456',
       };
 
       // Spy on console.error to avoid cluttering test output
@@ -171,13 +199,13 @@ describe('ArtifactService', () => {
         error: (error) => {
           expect(error instanceof Error).toEqual(true);
           expect(error.message).toEqual('Client error message');
-        }
+        },
       });
 
       const req = httpMock.expectOne(apiUrl);
       // Simulate a client-side error
       const mockError = new ErrorEvent('Network error', {
-        message: 'Client error message'
+        message: 'Client error message',
       });
       req.error(mockError);
     });
@@ -191,29 +219,40 @@ describe('ArtifactService', () => {
         dois: ['10.1234/test'],
         fundingAgencies: ['TestAgency'],
         acknowledgements: 'Test acknowledgement',
-        manifest: [{ filename: 'test.txt', hash: 'abcdef123456', algorithm: 'sha256' }],
-        footprint: 'abcdef123456'
+        manifest: [
+          { filename: 'test.txt', hash: 'abcdef123456', algorithm: 'sha256' },
+        ],
+        footprint: 'abcdef123456',
       };
 
       const statusCodes = [
         { status: 400, message: 'Invalid artifact data provided.' },
-        { status: 401, message: 'You must be authenticated to create artifacts.' },
-        { status: 413, message: 'The file size exceeds the maximum allowed limit.' },
+        {
+          status: 401,
+          message: 'You must be authenticated to create artifacts.',
+        },
+        {
+          status: 413,
+          message: 'The file size exceeds the maximum allowed limit.',
+        },
         { status: 415, message: 'The file type is not supported.' },
-        { status: 500, message: 'A server error occurred. Please try again later.' }
+        {
+          status: 500,
+          message: 'A server error occurred. Please try again later.',
+        },
       ];
 
       // Spy on console.error to avoid cluttering test output
       spyOn(console, 'error');
 
       // Test each status code
-      statusCodes.forEach(({ status, message }) => {
+      statusCodes.forEach(({ status }) => {
         service.createArtifactMetadataOnly(mockDto).subscribe({
           error: (error) => {
             expect(error instanceof Error).toEqual(true);
-            // No verificamos el mensaje exacto ya que el manejo de errores 
+            // No verificamos el mensaje exacto ya que el manejo de errores
             // en el servicio podría cambiarlo según el status code
-          }
+          },
         });
 
         const req = httpMock.expectOne(apiUrl);
@@ -230,8 +269,10 @@ describe('ArtifactService', () => {
         dois: ['10.1234/test'],
         fundingAgencies: ['TestAgency'],
         acknowledgements: 'Test acknowledgement',
-        manifest: [{ filename: 'test.txt', hash: 'abcdef123456', algorithm: 'sha256' }],
-        footprint: 'abcdef123456'
+        manifest: [
+          { filename: 'test.txt', hash: 'abcdef123456', algorithm: 'sha256' },
+        ],
+        footprint: 'abcdef123456',
       };
 
       // Spy on console.error to avoid cluttering test output
@@ -246,11 +287,14 @@ describe('ArtifactService', () => {
           expect(error instanceof Error).toEqual(true);
           // El servicio establece un mensaje genérico para errores 400
           expect(error.message).toEqual('Invalid artifact data provided.');
-        }
+        },
       });
 
       const req = httpMock.expectOne(apiUrl);
-      req.flush({ message: ['Custom validation error', 'Another error'] }, { status: 400, statusText: 'Bad Request' });
+      req.flush(
+        { message: ['Custom validation error', 'Another error'] },
+        { status: 400, statusText: 'Bad Request' },
+      );
     });
   });
-}); 
+});

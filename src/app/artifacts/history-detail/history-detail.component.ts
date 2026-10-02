@@ -5,13 +5,14 @@ import { ArtifactHistoryItem } from '../../models/artifact-history.model';
 import { ArtifactService } from '../services/artifact.service';
 import { HistoryCacheService } from '../services/history-cache.service';
 import { firstValueFrom } from 'rxjs';
+import { printFileHashes } from '../../shared/print-file-hashes';
 
 @Component({
   selector: 'app-history-detail',
   standalone: true,
   imports: [CommonModule, RouterModule],
   templateUrl: './history-detail.component.html',
-  styleUrls: ['./history-detail.component.css']
+  styleUrls: ['./history-detail.component.css'],
 })
 export class HistoryDetailComponent implements OnInit {
   artifactId = '';
@@ -25,7 +26,7 @@ export class HistoryDetailComponent implements OnInit {
   constructor(
     private readonly route: ActivatedRoute,
     private readonly artifactService: ArtifactService,
-    private readonly cache: HistoryCacheService
+    private readonly cache: HistoryCacheService,
   ) {}
 
   ngOnInit(): void {
@@ -33,7 +34,11 @@ export class HistoryDetailComponent implements OnInit {
     this.txId = this.route.snapshot.paramMap.get('txId') ?? '';
 
     // Try router state first
-    const nav = history.state as { snapshot?: ArtifactHistoryItem, isCurrent?: boolean, isInitial?: boolean };
+    const nav = history.state as {
+      snapshot?: ArtifactHistoryItem;
+      isCurrent?: boolean;
+      isInitial?: boolean;
+    };
     if (nav?.snapshot) {
       this.item = nav.snapshot;
       if (this.item?.txId) this.cache.set(this.item.txId, this.item);
@@ -52,42 +57,19 @@ export class HistoryDetailComponent implements OnInit {
     }
 
     // Fallback: fetch pages until found or small cap
-    this.fetchUntilFound().then(found => {
-      if (!found) this.errorMessage = 'Snapshot not found.';
-      this.isLoading = false;
-    }).catch(() => {
-      this.errorMessage = 'Unable to load snapshot.';
-      this.isLoading = false;
-    });
+    this.fetchUntilFound()
+      .then((found) => {
+        if (!found) this.errorMessage = 'Snapshot not found.';
+        this.isLoading = false;
+      })
+      .catch(() => {
+        this.errorMessage = 'Unable to load snapshot.';
+        this.isLoading = false;
+      });
   }
 
   printManifest(): void {
-    const manifest = this.item?.value?.manifest;
-    if (!manifest || manifest.length === 0) return;
-
-    const manifestText = manifest
-      .map(item => `${item.filename}\t${item.hash}\t${item.algorithm}`)
-      .join('\n');
-
-    const win = window.open('', '_blank');
-    if (!win) {
-      alert('Please allow pop-ups to print the manifest.');
-      return;
-    }
-
-    const doc = win.document;
-    doc.title = 'Artifact Snapshot Manifest';
-
-    const styleEl = doc.createElement('style');
-    styleEl.textContent = 'body { font-family: monospace; margin: 16px; }';
-    doc.head.appendChild(styleEl);
-
-    const pre = doc.createElement('pre');
-    pre.textContent = manifestText;
-    doc.body.innerHTML = '';
-    doc.body.appendChild(pre);
-
-    setTimeout(() => { win.focus(); win.print(); }, 10);
+    printFileHashes(this.item?.value?.manifest ?? []);
   }
 
   private async fetchUntilFound(): Promise<boolean> {
@@ -98,10 +80,12 @@ export class HistoryDetailComponent implements OnInit {
     const maxScan = 1000; // safety cap
     do {
       const res = await firstValueFrom(
-        this.artifactService.getArtifactHistory(
-          this.artifactId,
-          { offset, limit, order: 'desc', includeValue: true }
-        )
+        this.artifactService.getArtifactHistory(this.artifactId, {
+          offset,
+          limit,
+          order: 'desc',
+          includeValue: true,
+        }),
       );
       const items = res?.items ?? [];
       total = res?.total ?? total;
@@ -110,9 +94,13 @@ export class HistoryDetailComponent implements OnInit {
         if (it.txId === this.txId) {
           this.item = it;
           // current state is the first item by timestamp desc
-          this.isCurrent = offset === 0 && items.length > 0 && items[0].txId === it.txId;
+          this.isCurrent =
+            offset === 0 && items.length > 0 && items[0].txId === it.txId;
           // initial state is the last item overall; detect when we are in final page and last index
-          this.isInitial = (offset + items.length) >= total && items.length > 0 && items[items.length - 1].txId === it.txId;
+          this.isInitial =
+            offset + items.length >= total &&
+            items.length > 0 &&
+            items[items.length - 1].txId === it.txId;
           return true;
         }
       }
@@ -122,5 +110,3 @@ export class HistoryDetailComponent implements OnInit {
     return false;
   }
 }
-
-

@@ -1,355 +1,185 @@
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { ReactiveFormsModule, FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
-import { DebugElement } from '@angular/core';
-import { Router } from '@angular/router';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { ToastrService } from 'ngx-toastr';
 import { of, throwError } from 'rxjs';
-
+import { AuthService } from '../auth.service';
 import { SignInComponent } from './sign-in.component';
-import { AuthService } from '../../auth/auth.service';
-
-// Mock services
-const mockToastr = {
-  success: jasmine.createSpy('success'),
-  error: jasmine.createSpy('error'),
-  warning: jasmine.createSpy('warning'),
-  info: jasmine.createSpy('info')
-};
-
-const mockAuthService = {
-  login: jasmine.createSpy('login').and.returnValue(of({})),
-  isAuthenticated$: of(false)
-};
 
 describe('SignInComponent', () => {
   let component: SignInComponent;
   let fixture: ComponentFixture<SignInComponent>;
-  let debugElement: DebugElement;
   let router: Router;
-  let authService: AuthService;
-  let toastrService: ToastrService;
+
+  const routeStub = {
+    snapshot: { queryParamMap: convertToParamMap({}) },
+  };
+
+  const authService = {
+    login: jasmine.createSpy('login').and.returnValue(of({})),
+    isAuthenticated$: of(false),
+  };
+
+  const toastr = {
+    success: jasmine.createSpy('success'),
+    error: jasmine.createSpy('error'),
+    warning: jasmine.createSpy('warning'),
+    info: jasmine.createSpy('info'),
+  };
 
   beforeEach(async () => {
+    routeStub.snapshot.queryParamMap = convertToParamMap({});
     await TestBed.configureTestingModule({
-      imports: [
-        SignInComponent,
-        ReactiveFormsModule,
-        FormsModule,
-        RouterTestingModule,
-        HttpClientTestingModule
-      ],
+      imports: [SignInComponent, RouterTestingModule, HttpClientTestingModule],
       providers: [
-        { provide: AuthService, useValue: mockAuthService },
-        { provide: ToastrService, useValue: mockToastr }
-      ]
-    })
-    .compileComponents();
+        { provide: AuthService, useValue: authService },
+        { provide: ToastrService, useValue: toastr },
+        { provide: ActivatedRoute, useValue: routeStub },
+      ],
+    }).compileComponents();
 
     fixture = TestBed.createComponent(SignInComponent);
     component = fixture.componentInstance;
-    debugElement = fixture.debugElement;
     router = TestBed.inject(Router);
-    authService = TestBed.inject(AuthService);
-    toastrService = TestBed.inject(ToastrService);
+    authService.login.calls.reset();
+    Object.values(toastr).forEach((spy) => spy.calls.reset());
     fixture.detectChanges();
   });
 
-  it('should create', () => {
+  it('should create with an invalid empty form', () => {
     expect(component).toBeTruthy();
+    expect(component.signInForm.invalid).toBeTrue();
   });
 
-  // Test for UI elements
-  describe('UI Elements', () => {
-    it('should display the logo', () => {
-      const logoElement = debugElement.query(By.css('.logo'));
-      expect(logoElement).toBeTruthy();
+  it('should render persistent labels and autocomplete metadata', () => {
+    const username = fixture.debugElement.query(
+      By.css('#username'),
+    ).nativeElement;
+    const password = fixture.debugElement.query(
+      By.css('#password'),
+    ).nativeElement;
 
-      const imgElement = logoElement.nativeElement;
-      expect(imgElement.src).toContain('OpenScienceChain_logo_horiz_white.png');
-      expect(imgElement.alt).toBe('Open Science Chain Logo');
-    });
-
-    it('should have username input field', () => {
-      const usernameInput = debugElement.query(By.css('#username'));
-      expect(usernameInput).toBeTruthy();
-      expect(usernameInput.nativeElement.placeholder).toBe('username or email');
-      expect(usernameInput.nativeElement.required).toBeTrue();
-    });
-
-    it('should have password input field', () => {
-      const passwordInput = debugElement.query(By.css('#password'));
-      expect(passwordInput).toBeTruthy();
-      expect(passwordInput.nativeElement.placeholder).toBe('password');
-      expect(passwordInput.nativeElement.type).toBe('password');
-      expect(passwordInput.nativeElement.required).toBeTrue();
-    });
-
-    it('should have a sign-in button', () => {
-      const signInButton = debugElement.query(By.css('button.btn-primary'));
-      expect(signInButton).toBeTruthy();
-      expect(signInButton.nativeElement.textContent).toBe('Sign In');
-      expect(signInButton.nativeElement.classList).toContain('btn-primary');
-    });
-
-    it('should have a forgot password link', () => {
-      const forgotPasswordLink = debugElement.query(By.css('.forgot-password a'));
-      expect(forgotPasswordLink).toBeTruthy();
-      expect(forgotPasswordLink.nativeElement.textContent).toBe('Forgot password or username?');
-    });
+    expect(
+      fixture.nativeElement.querySelector('label[for="username"]'),
+    ).toBeTruthy();
+    expect(
+      fixture.nativeElement.querySelector('label[for="password"]'),
+    ).toBeTruthy();
+    expect(username.autocomplete).toBe('username');
+    expect(password.autocomplete).toBe('current-password');
   });
 
-  // Test for form functionality
-  describe('Form Functionality', () => {
-    it('should have a form with formGroup directive', () => {
-      const formElement = debugElement.query(By.css('form.sign-in-form'));
-      expect(formElement).toBeTruthy();
-      expect(formElement.attributes['ng-reflect-form']).toBeTruthy();
-    });
-
-    it('should initialize the form with empty fields', () => {
-      expect(component.signInForm).toBeTruthy();
-      expect(component.signInForm.get('username')?.value).toBe('');
-      expect(component.signInForm.get('password')?.value).toBe('');
-    });
-
-    it('should mark form as invalid when empty', () => {
-      expect(component.signInForm.valid).toBeFalse();
-    });
-
-    it('should mark form as valid when all fields are filled', () => {
-      component.signInForm.patchValue({
-        username: 'testuser',
-        password: 'password123'
-      });
-
-      expect(component.signInForm.valid).toBeTrue();
-    });
-
-    it('should disable submit button when form is invalid', () => {
-      component.signInForm.patchValue({
-        username: '',
-        password: ''
-      });
-      fixture.detectChanges();
-
-      const submitButton = debugElement.query(By.css('button.btn-primary'));
-      expect(submitButton.nativeElement.disabled).toBeTrue();
-    });
-
-    it('should enable submit button when form is valid', () => {
-      component.signInForm.patchValue({
-        username: 'testuser',
-        password: 'password123'
-      });
-      fixture.detectChanges();
-
-      const submitButton = debugElement.query(By.css('button.btn-primary'));
-      expect(submitButton.nativeElement.disabled).toBeFalse();
-    });
+  it('should use the official OSC logo', () => {
+    const logo = fixture.nativeElement.querySelector('.logo');
+    expect(logo.src).toContain('assets/images/osc-logo-color-official.png');
+    expect(logo.alt).toBe('Open Science Chain');
   });
 
-  // Test for form submission
-  describe('Form Submission', () => {
-    it('should call onSubmit method when button is clicked', () => {
-      spyOn(component, 'onSubmit');
-
-      const signInButton = debugElement.query(By.css('button.btn-primary'));
-      signInButton.triggerEventHandler('click', null);
-
-      expect(component.onSubmit).toHaveBeenCalled();
-    });
-
-    it('should not navigate when form is invalid', () => {
-      spyOn(router, 'navigate');
-      spyOn(console, 'log');
-
-      component.signInForm.patchValue({
-        username: '',
-        password: ''
-      });
-
-      component.onSubmit();
-
-      expect(router.navigate).not.toHaveBeenCalled();
-      expect(console.log).toHaveBeenCalledWith('Form is invalid');
-    });
-
-    it('should mark all fields as touched when form is submitted', () => {
-      const usernameControl = component.signInForm.get('username');
-      const passwordControl = component.signInForm.get('password');
-
-      spyOn(usernameControl!, 'markAsTouched');
-      spyOn(passwordControl!, 'markAsTouched');
-
-      component.onSubmit();
-
-      expect(usernameControl!.markAsTouched).toHaveBeenCalled();
-      expect(passwordControl!.markAsTouched).toHaveBeenCalled();
-    });
+  it('credits the sign-in photograph', () => {
+    const credit = fixture.nativeElement.querySelector('.photo-credit a');
+    expect(credit.textContent).toContain('Adam Bezer');
+    expect(credit.href).toBe(
+      'https://unsplash.com/photos/a-scientist-is-working-in-a-laboratory-TOZsuh0MWJw',
+    );
   });
 
-  // Test for form validation
-  describe('Form Validation', () => {
-    it('should show error message when username is touched but empty', () => {
-      const usernameControl = component.signInForm.get('username');
-      usernameControl?.markAsTouched();
-      fixture.detectChanges();
+  it('should expose errors through aria-describedby after invalid submission', () => {
+    component.onSubmit();
+    fixture.detectChanges();
 
-      const errorMessage = debugElement.query(By.css('.form-group:first-child .error-message'));
-      expect(errorMessage).toBeTruthy();
-      expect(errorMessage.nativeElement.textContent.trim()).toBe('Username is required');
-    });
-
-    it('should show error message when password is touched but empty', () => {
-      const passwordControl = component.signInForm.get('password');
-      passwordControl?.markAsTouched();
-      fixture.detectChanges();
-
-      const errorMessage = debugElement.query(By.css('.form-group:nth-child(3) .error-message'));
-      expect(errorMessage).toBeTruthy();
-      expect(errorMessage.nativeElement.textContent.trim()).toBe('Password is required');
-    });
-
-    it('should not show error messages when form is valid', () => {
-      component.signInForm.patchValue({
-        username: 'testuser',
-        password: 'password123'
-      });
-
-      const usernameControl = component.signInForm.get('username');
-      const passwordControl = component.signInForm.get('password');
-
-      usernameControl?.markAsTouched();
-      passwordControl?.markAsTouched();
-
-      fixture.detectChanges();
-
-      const usernameError = debugElement.query(By.css('.form-group:first-child .error-message'));
-      const passwordError = debugElement.query(By.css('.form-group:nth-child(3) .error-message'));
-
-      expect(usernameError).toBeNull();
-      expect(passwordError).toBeNull();
-    });
+    const username = fixture.nativeElement.querySelector('#username');
+    const password = fixture.nativeElement.querySelector('#password');
+    expect(username.getAttribute('aria-invalid')).toBe('true');
+    expect(username.getAttribute('aria-describedby')).toBe('username-error');
+    expect(password.getAttribute('aria-describedby')).toBe('password-error');
+    expect(toastr.warning).toHaveBeenCalled();
   });
 
-  // Test for forgot credentials functionality
-  describe('Forgot Credentials', () => {
-    it('should show message when forgot credentials link is clicked', () => {
-      // Verificar que el mensaje no se muestra inicialmente
-      expect(component.showForgotMessage).toBeFalse();
-      let forgotMessage = debugElement.query(By.css('.forgot-message'));
-      expect(forgotMessage).toBeNull();
+  it('should keep submit disabled until both fields are valid', () => {
+    const submit = (): HTMLButtonElement =>
+      fixture.nativeElement.querySelector('button[type="submit"]');
+    expect(submit().disabled).toBeTrue();
 
-      // Simular clic en el enlace
-      const forgotLink = debugElement.query(By.css('.forgot-password a'));
-      const mockEvent = new Event('click');
-      spyOn(mockEvent, 'preventDefault');
-
-      component.onForgotCredentials(mockEvent);
-      fixture.detectChanges();
-
-      // Verificar que el mensaje se muestra
-      expect(component.showForgotMessage).toBeTrue();
-      forgotMessage = debugElement.query(By.css('.forgot-message'));
-      expect(forgotMessage).toBeTruthy();
-      expect(forgotMessage.nativeElement.textContent.trim()).toContain('If you forgot your password or username');
+    component.signInForm.setValue({
+      username: 'researcher',
+      password: 'correct-horse-battery-staple',
     });
-
-    it('should prevent default behavior when forgot credentials link is clicked', () => {
-      const mockEvent = jasmine.createSpyObj('Event', ['preventDefault']);
-
-      component.onForgotCredentials(mockEvent);
-
-      expect(mockEvent.preventDefault).toHaveBeenCalled();
-      expect(component.showForgotMessage).toBeTrue();
-    });
-
-    it('should log a message when forgot credentials link is clicked', () => {
-      spyOn(console, 'log');
-      const mockEvent = jasmine.createSpyObj('Event', ['preventDefault']);
-
-      component.onForgotCredentials(mockEvent);
-
-      expect(console.log).toHaveBeenCalledWith('Forgot credentials link clicked');
-    });
-
-    it('should toggle message visibility when clicking the link multiple times', () => {
-      const mockEvent = jasmine.createSpyObj('Event', ['preventDefault']);
-
-      // Primera vez - mostrar mensaje
-      component.onForgotCredentials(mockEvent);
-      expect(component.showForgotMessage).toBeTrue();
-
-      // Modificamos el componente para que el método alterne la visibilidad
-      component.showForgotMessage = false;
-      fixture.detectChanges();
-
-      // Segunda vez - mostrar mensaje de nuevo
-      component.onForgotCredentials(mockEvent);
-      expect(component.showForgotMessage).toBeTrue();
-    });
+    fixture.detectChanges();
+    expect(submit().disabled).toBeFalse();
   });
 
-  // Add new tests for login functionality
-  describe('Login Functionality', () => {
-    let loginSpy: jasmine.Spy;
-
-    beforeEach(() => {
-      loginSpy = mockAuthService.login;
-      loginSpy.calls.reset();
+  it('should log in and return to the landing page', () => {
+    spyOn(router, 'navigateByUrl');
+    component.signInForm.setValue({
+      username: 'researcher',
+      password: 'valid-password',
     });
 
-    it('should handle successful login', () => {
-      loginSpy.and.returnValue(of({
-        access_token: 'mock-token',
-        user: { username: 'testuser', role: 'user' }
-      }));
+    component.onSubmit();
 
-      component.signInForm.setValue({
-        username: 'testuser',
-        password: 'password123'
-      });
+    expect(authService.login).toHaveBeenCalledWith(
+      'researcher',
+      'valid-password',
+    );
+    expect(toastr.success).toHaveBeenCalled();
+    expect(router.navigateByUrl).toHaveBeenCalledWith('/');
+    expect(component.isLoading).toBeFalse();
+  });
 
-      component.onSubmit();
+  it('should explain an expired session and return to the requested page', () => {
+    fixture.destroy();
+    routeStub.snapshot.queryParamMap = convertToParamMap({
+      reason: 'expired',
+      returnUrl: '/artifacts/artifact-nsg-001/history',
+    });
+    fixture = TestBed.createComponent(SignInComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+    spyOn(router, 'navigateByUrl');
 
-      expect(component.isLoading).toBeFalse();
-      expect(component.invalidCredentials).toBeFalse();
-      expect(toastrService.success).toHaveBeenCalled();
-      expect(loginSpy).toHaveBeenCalledWith('testuser', 'password123');
+    expect(component.sessionExpired).toBeTrue();
+    expect(
+      fixture.nativeElement.querySelector('[data-cy="session-expired"]')
+        .textContent,
+    ).toContain('Your session ended');
+
+    component.signInForm.setValue({
+      username: 'researcher',
+      password: 'valid-password',
+    });
+    component.onSubmit();
+
+    expect(router.navigateByUrl).toHaveBeenCalledWith(
+      '/artifacts/artifact-nsg-001/history',
+    );
+  });
+
+  it('should announce invalid credentials', () => {
+    authService.login.and.returnValue(
+      throwError(() => ({ error: { message: 'Invalid credentials' } })),
+    );
+    component.signInForm.setValue({
+      username: 'researcher',
+      password: 'wrong-password',
     });
 
-    it('should handle failed login', () => {
-      loginSpy.and.returnValue(throwError(() => ({
-        error: { message: 'Invalid credentials' }
-      })));
+    component.onSubmit();
+    fixture.detectChanges();
 
-      component.signInForm.setValue({
-        username: 'testuser',
-        password: 'wrongpass'
-      });
+    expect(component.invalidCredentials).toBeTrue();
+    expect(fixture.nativeElement.querySelector('[role="alert"]')).toBeTruthy();
+    expect(toastr.error).toHaveBeenCalled();
+    authService.login.and.returnValue(of({}));
+  });
 
-      component.onSubmit();
+  it('should provide a recovery status message', () => {
+    component.onForgotCredentials();
+    fixture.detectChanges();
 
-      expect(component.isLoading).toBeFalse();
-      expect(component.invalidCredentials).toBeTrue();
-      expect(toastrService.error).toHaveBeenCalled();
-      expect(loginSpy).toHaveBeenCalledWith('testuser', 'wrongpass');
-    });
-
-    it('should handle invalid form', () => {
-      component.signInForm.setValue({
-        username: '',
-        password: ''
-      });
-
-      component.onSubmit();
-
-      expect(component.isLoading).toBeFalse();
-      expect(toastrService.warning).toHaveBeenCalled();
-      expect(loginSpy).not.toHaveBeenCalled();
-    });
+    const status = fixture.nativeElement.querySelector('[role="status"]');
+    expect(status.textContent).toContain('Open Science Chain administrator');
+    expect(toastr.info).toHaveBeenCalled();
   });
 });

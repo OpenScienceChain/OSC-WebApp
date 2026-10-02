@@ -1,0 +1,2 @@
+# Signed but non-secret JWT fixture used only by AuthService unit tests.
+c7932c741802b12396638cc775a5522f12edbc73:src/app/auth/auth.service.spec.ts:jwt:24

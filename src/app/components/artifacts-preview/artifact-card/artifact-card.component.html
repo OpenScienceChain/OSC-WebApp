@@ -1,20 +1,43 @@
-<div class="card artifact-card shadow-sm">
-  <div class="card-header">
-    {{ artifact.title.length > 20 ? (artifact.title | slice:0:20) + '...' : artifact.title }}
-  </div>
-  <div class="card-body d-flex flex-column">
-    <h6 class="card-subtitle mb-2 text-muted">Description:</h6>
-    <p class="card-text">{{ artifact.description.length > 100 ? (artifact.description | slice:0:100) + '...' : artifact.description }}</p>
-
-    <h6 class="card-subtitle mb-2 text-muted">Updates:</h6>
-    <p class="card-text" *ngIf="!(artifact.updatedAt || artifact.lastTimeUpdated); else lastUpdatedTpl">Submitted at {{ artifact.submittedAt | date:'medium' }}</p>
-    <ng-template #lastUpdatedTpl>
-      <p class="card-text">Last Updated at {{ (artifact.updatedAt || artifact.lastTimeUpdated) | date:'medium' }}</p>
-    </ng-template>
-
-    <div class="mt-auto button-container d-flex gap-2">
-      <a class="btn btn-primary view-button" [routerLink]="['/artifacts', artifact.id]">View</a>
-      <a class="btn btn-primary view-button" [routerLink]="['/artifacts', artifact.id, 'history']">History</a>
+<article class="catalog-card">
+  <header>
+    <span class="record-type">Artifact</span>
+    <h3>{{ artifact.title }}</h3>
+  </header>
+  <div class="card-body">
+    <p class="description">{{ artifact.description }}</p>
+    <dl>
+      <div>
+        <dt>Status</dt>
+        <dd
+          [class.status-failed]="artifact.submissionState === 'FAILED'"
+          [class.status-pending]="artifact.submissionState === 'PENDING'"
+        >
+          {{
+            artifact.submissionState ||
+              (artifact.verified ? 'Verified' : 'Recorded')
+          }}
+        </dd>
+      </div>
+      <div>
+        <dt>Last activity</dt>
+        <dd>
+          {{
+            artifact.updatedAt ||
+              artifact.lastTimeUpdated ||
+              artifact.submittedAt | date: 'mediumDate'
+          }}
+        </dd>
+      </div>
+    </dl>
+    <div class="card-actions">
+      <a [routerLink]="['/artifacts', artifact.id]">
+        View
+        <span class="visually-hidden">{{ artifact.title }}</span>
+      </a>
+      <a [routerLink]="['/artifacts', artifact.id, 'history']">
+        History
+        <span class="visually-hidden">for {{ artifact.title }}</span>
+      </a>
     </div>
   </div>
-</div>
+</article>

@@ -1,0 +1,34 @@
+02 09 2026 10:17:12.382:INFO [karma-server]: Karma v6.4.4 server started at http://localhost:9876/
+02 09 2026 10:17:12.387:INFO [launcher]: Launching browsers ChromeHeadless with concurrency unlimited
+02 09 2026 10:17:12.396:INFO [launcher]: Starting browser ChromeHeadless
+02 09 2026 10:17:14.102:INFO [Chrome Headless 152.0.0.0 (Windows 10)]: Connected on socket 1V6wF9oiyo-z-UMJAAAB with id 79575186
+Chrome Headless 152.0.0.0 (Windows 10): Executed 0 of 18 SUCCESS (0 secs / 0 secs)
+Chrome Headless 152.0.0.0 (Windows 10): Executed 1 of 18 SUCCESS (0 secs / 0.079 secs)
+02 09 2026 10:17:15.442:WARN [web-server]: 404: /_karma_webpack_/assets/images/osc-logo-white-transparent.png
+Chrome Headless 152.0.0.0 (Windows 10): Executed 2 of 18 SUCCESS (0 secs / 0.087 secs)
+Chrome Headless 152.0.0.0 (Windows 10): Executed 3 of 18 SUCCESS (0 secs / 0.093 secs)
+02 09 2026 10:17:15.460:WARN [web-server]: 404: /_karma_webpack_/assets/images/osc-logo-white-transparent.png
+Chrome Headless 152.0.0.0 (Windows 10): Executed 4 of 18 SUCCESS (0 secs / 0.1 secs)
+Chrome Headless 152.0.0.0 (Windows 10): Executed 5 of 18 SUCCESS (0 secs / 0.107 secs)
+02 09 2026 10:17:15.476:WARN [web-server]: 404: /_karma_webpack_/assets/images/osc-logo-white-transparent.png
+Chrome Headless 152.0.0.0 (Windows 10): Executed 6 of 18 SUCCESS (0 secs / 0.113 secs)
+Chrome Headless 152.0.0.0 (Windows 10): Executed 7 of 18 SUCCESS (0 secs / 0.118 secs)
+02 09 2026 10:17:15.491:WARN [web-server]: 404: /_karma_webpack_/assets/images/osc-logo-white-transparent.png
+Chrome Headless 152.0.0.0 (Windows 10): Executed 8 of 18 SUCCESS (0 secs / 0.124 secs)
+Chrome Headless 152.0.0.0 (Windows 10): Executed 9 of 18 SUCCESS (0 secs / 0.13 secs)
+02 09 2026 10:17:15.504:WARN [web-server]: 404: /_karma_webpack_/assets/images/osc-logo-white-transparent.png
+Chrome Headless 152.0.0.0 (Windows 10): Executed 10 of 18 SUCCESS (0 secs / 0.136 secs)
+Chrome Headless 152.0.0.0 (Windows 10): Executed 11 of 18 SUCCESS (0 secs / 0.141 secs)
+02 09 2026 10:17:15.516:WARN [web-server]: 404: /_karma_webpack_/assets/images/osc-logo-white-transparent.png
+Chrome Headless 152.0.0.0 (Windows 10): Executed 12 of 18 SUCCESS (0 secs / 0.146 secs)
+Chrome Headless 152.0.0.0 (Windows 10): Executed 13 of 18 SUCCESS (0 secs / 0.151 secs)
+02 09 2026 10:17:15.527:WARN [web-server]: 404: /_karma_webpack_/assets/images/osc-logo-white-transparent.png
+Chrome Headless 152.0.0.0 (Windows 10): Executed 14 of 18 SUCCESS (0 secs / 0.155 secs)
+Chrome Headless 152.0.0.0 (Windows 10): Executed 15 of 18 SUCCESS (0 secs / 0.159 secs)
+02 09 2026 10:17:15.537:WARN [web-server]: 404: /_karma_webpack_/assets/images/osc-logo-white-transparent.png
+Chrome Headless 152.0.0.0 (Windows 10): Executed 16 of 18 SUCCESS (0 secs / 0.162 secs)
+Chrome Headless 152.0.0.0 (Windows 10): Executed 17 of 18 SUCCESS (0 secs / 0.166 secs)
+02 09 2026 10:17:15.545:WARN [web-server]: 404: /_karma_webpack_/assets/images/osc-logo-white-transparent.png
+Chrome Headless 152.0.0.0 (Windows 10): Executed 18 of 18 SUCCESS (0 secs / 0.169 secs)
+Chrome Headless 152.0.0.0 (Windows 10): Executed 18 of 18 SUCCESS (0.194 secs / 0.169 secs)
+TOTAL: 18 SUCCESS

@@ -1,14 +1,35 @@
-<div class="row mb-5">
-  <div class="col-12 d-flex justify-content-between align-items-center mb-4">
-    <h2 class="section-title">Workflows</h2>
-    <a routerLink="/list-workflows" class="view-all-link">VIEW ALL</a>
+<section class="catalog-preview" aria-labelledby="workflow-preview-heading">
+  <div class="preview-heading">
+    <h3 id="workflow-preview-heading">Workflows</h3>
+    <a routerLink="/list-workflows">
+      View all workflows
+      <i class="bi bi-arrow-right" aria-hidden="true"></i>
+    </a>
   </div>
 
-  <div class="col-12">
-    <div class="row justify-content-center">
-      <div class="col-md-4 mb-4 d-flex justify-content-center" *ngFor="let workflow of workflows">
-        <app-workflow-card [workflow]="workflow"></app-workflow-card>
-      </div>
-    </div>
+  <div *ngIf="isLoading" class="preview-state" role="status">
+    Loading workflow preview...
   </div>
-</div>
+
+  <div *ngIf="hasError" class="preview-state preview-error" role="status">
+    <span>The workflow preview is unavailable.</span>
+    <button type="button" (click)="loadWorkflows()">Try again</button>
+  </div>
+
+  <div
+    *ngIf="!isLoading && !hasError && workflows.length > 0"
+    class="preview-grid"
+  >
+    <app-workflow-card
+      *ngFor="let workflow of workflows"
+      [workflow]="workflow"
+    ></app-workflow-card>
+  </div>
+
+  <div
+    *ngIf="!isLoading && !hasError && workflows.length === 0"
+    class="preview-state"
+  >
+    No workflows have been documented yet.
+  </div>
+</section>

@@ -8,7 +8,7 @@ import { RouterModule } from '@angular/router';
   templateUrl: './artifact-card.component.html',
   styleUrls: ['./artifact-card.component.css'],
   standalone: true,
-  imports: [CommonModule, RouterModule]
+  imports: [CommonModule, RouterModule],
 })
 export class ArtifactCardComponent {
   @Input() artifact!: Artifact;

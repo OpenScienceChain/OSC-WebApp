@@ -1,6 +1,13 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { BehaviorSubject, Observable, tap, catchError, throwError, of } from 'rxjs';
+import {
+  BehaviorSubject,
+  Observable,
+  tap,
+  catchError,
+  throwError,
+  of,
+} from 'rxjs';
 import { getApiBaseUrl } from '../services/api-base-url';
 import { Router } from '@angular/router';
 
@@ -17,7 +24,7 @@ interface TokenPayload {
 export enum UserRole {
   ADMIN = 'admin',
   COLLABORATOR = 'collaborator',
-  PI = 'pi'
+  PI = 'pi',
 }
 
 // Token storage structure
@@ -27,20 +34,22 @@ interface StoredTokenData {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class AuthService {
-  private get apiUrl(): string { return `${getApiBaseUrl()}/users`; }
+  private get apiUrl(): string {
+    return `${getApiBaseUrl()}/users`;
+  }
   private readonly isAuthenticatedSubject = new BehaviorSubject<boolean>(false);
   isAuthenticated$ = this.isAuthenticatedSubject.asObservable();
   private tokenCheckInterval: any = null;
 
   constructor(
     private readonly http: HttpClient,
-    private readonly router: Router
+    private readonly router: Router,
   ) {
     this.initializeAuthState();
-    
+
     // Set up periodic token validation (every 5 minutes)
     this.setupTokenRefreshCheck();
   }
@@ -52,47 +61,49 @@ export class AuthService {
     try {
       // Get stored token data
       const storedData = this.getStoredTokenData();
-      
+
       if (!storedData) {
         // No token found
         return;
       }
-      
+
       // Check local expiration
       if (this.isTokenExpiredLocally(storedData)) {
         console.log('Token expired locally, cleaning up session');
-        this.cleanupSession();
+        this.cleanupSession('expired');
         return;
       }
-      
+
       // Decode and validate token structure
       const payload = this.decodeToken();
       if (!payload) {
         console.log('Token could not be decoded, cleaning up session');
-        this.cleanupSession();
+        this.cleanupSession('expired');
         return;
       }
-      
-      // Check JWT expiration if available
-      if (payload.exp && this.isJwtTokenExpired(payload)) {
-        console.log('JWT token expired, cleaning up session');
-        this.cleanupSession();
+
+      // Refuse legacy tokens that have no enforceable server expiration.
+      if (!payload.exp || this.isJwtTokenExpired(payload)) {
+        console.log(
+          'JWT token is missing an expiration or has expired, cleaning up session',
+        );
+        this.cleanupSession('expired');
         return;
       }
-      
+
       // If we reach here, token is valid locally - set authenticated state
       this.isAuthenticatedSubject.next(true);
-      
+
       // Backend validation (if backend is available)
       this.validateTokenWithBackend().subscribe({
         error: (err) => {
           console.error('Backend token validation failed:', err);
-          this.cleanupSession();
-        }
+          this.cleanupSession('expired');
+        },
       });
     } catch (error) {
       console.error('Error initializing auth state:', error);
-      this.cleanupSession();
+      this.cleanupSession('expired');
     }
   }
 
@@ -105,15 +116,18 @@ export class AuthService {
       clearInterval(this.tokenCheckInterval);
       this.tokenCheckInterval = null;
     }
-    
+
     // In test environments, setInterval might be replaced by Jasmine clock mock
     try {
       // Check token validity every 5 minutes
-      this.tokenCheckInterval = setInterval(() => {
-        if (this.isAuthenticatedSubject.value) {
-          this.validateTokenLocallyAndWithBackend();
-        }
-      }, 5 * 60 * 1000); // 5 minutes
+      this.tokenCheckInterval = setInterval(
+        () => {
+          if (this.isAuthenticatedSubject.value) {
+            this.validateTokenLocallyAndWithBackend();
+          }
+        },
+        5 * 60 * 1000,
+      ); // 5 minutes
     } catch (e) {
       console.warn('Error setting up token refresh timer:', e);
       // Avoid breaking the app - we'll still validate on navigation and other actions
@@ -126,15 +140,15 @@ export class AuthService {
   private validateTokenLocallyAndWithBackend(): void {
     // First check locally
     const storedData = this.getStoredTokenData();
-    
+
     if (!storedData || this.isTokenExpiredLocally(storedData)) {
-      this.cleanupSession();
+      this.cleanupSession('expired');
       return;
     }
-    
+
     // Then check with backend if available
     this.validateTokenWithBackend().subscribe({
-      error: () => this.cleanupSession()
+      error: () => this.cleanupSession('expired'),
     });
   }
 
@@ -148,23 +162,22 @@ export class AuthService {
     }
 
     const headers = new HttpHeaders({
-      'Authorization': `Bearer ${token}`
+      Authorization: `Bearer ${token}`,
     });
 
     // Simple validation endpoint call - could be a dedicated endpoint or any authenticated endpoint
-    return this.http.get(`${this.apiUrl}/validate-token`, { headers })
-      .pipe(
-        catchError(error => {
-          // If error is 401 or 403, token is invalid
-          if (error.status === 401 || error.status === 403) {
-            return throwError(() => new Error('Invalid token'));
-          }
-          
-          // For other errors (like network errors), we'll assume token might still be valid
-          // to prevent logging users out when backend is temporarily unavailable
-          return of(true);
-        })
-      );
+    return this.http.get(`${this.apiUrl}/validate-token`, { headers }).pipe(
+      catchError((error) => {
+        // If error is 401 or 403, token is invalid
+        if (error.status === 401 || error.status === 403) {
+          return throwError(() => new Error('Invalid token'));
+        }
+
+        // For other errors (like network errors), we'll assume token might still be valid
+        // to prevent logging users out when backend is temporarily unavailable
+        return of(true);
+      }),
+    );
   }
 
   /**
@@ -180,7 +193,7 @@ export class AuthService {
    */
   private isJwtTokenExpired(payload: TokenPayload): boolean {
     if (!payload.exp) return false;
-    
+
     const currentTime = Math.floor(Date.now() / 1000);
     return payload.exp < currentTime;
   }
@@ -192,16 +205,16 @@ export class AuthService {
     try {
       const storedDataStr = localStorage.getItem('tokenData');
       if (!storedDataStr) return null;
-      
+
       const parsedData = JSON.parse(storedDataStr) as StoredTokenData;
-      
+
       // Validate required properties exist
       if (!parsedData.token || typeof parsedData.expiresAt !== 'number') {
         // If data is invalid, clean up and return null
         localStorage.removeItem('tokenData');
         return null;
       }
-      
+
       return parsedData;
     } catch (e) {
       console.error('Error parsing stored token data:', e);
@@ -212,15 +225,16 @@ export class AuthService {
   }
 
   login(username: string, password: string): Observable<any> {
-    return this.http.post<{ token: string }>(`${this.apiUrl}/login`, { username, password })
+    return this.http
+      .post<{ token: string }>(`${this.apiUrl}/login`, { username, password })
       .pipe(
-        tap(response => {
+        tap((response) => {
           if (response.token) {
-            // Store token with expiration (default 24 hours if not in JWT)
+            // The API must issue an exp claim so browser and server agree.
             this.storeTokenWithExpiration(response.token);
             this.isAuthenticatedSubject.next(true);
           }
-        })
+        }),
       );
   }
 
@@ -228,27 +242,24 @@ export class AuthService {
    * Store token with expiration time
    */
   private storeTokenWithExpiration(token: string): void {
-    // Try to get expiration from JWT token
-    let expiresAtMs = Date.now() + (24 * 60 * 60 * 1000); // Default: 24 hours from now
-    
-    try {
-      const payload = this.parseJwt(token);
-      if (payload?.exp) {
-        // exp is in seconds, convert to milliseconds
-        expiresAtMs = payload.exp * 1000;
-      }
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      console.warn(`Could not parse JWT expiration: ${errorMessage}. Using default expiration time.`);
-      console.error('JWT Parsing Error:', error);
+    const payload = this.parseJwt(token) as TokenPayload | null;
+    if (!payload?.exp || !Number.isFinite(payload.exp)) {
+      this.cleanupSession();
+      throw new Error('Authentication token is missing a valid expiration');
     }
-    
+
+    const expiresAtMs = payload.exp * 1000;
+    if (expiresAtMs <= Date.now()) {
+      this.cleanupSession();
+      throw new Error('Authentication token has already expired');
+    }
+
     // Store token and expiration
     const tokenData: StoredTokenData = {
       token: token,
-      expiresAt: expiresAtMs
+      expiresAt: expiresAtMs,
     };
-    
+
     localStorage.setItem('tokenData', JSON.stringify(tokenData));
     localStorage.setItem('token', token); // Keep for backward compatibility
   }
@@ -260,27 +271,34 @@ export class AuthService {
     try {
       // Validation checks
       if (!token || typeof token !== 'string') {
-        console.warn('Invalid token format: token is null, undefined, or not a string');
+        console.warn(
+          'Invalid token format: token is null, undefined, or not a string',
+        );
         return null;
       }
-      
+
       const parts = token.split('.');
       if (parts.length !== 3) {
         console.warn('Invalid token format: token should have 3 parts');
         return null;
       }
-      
+
       const base64Url = parts[1];
       if (!base64Url) {
         console.warn('Invalid token format: payload part is empty');
         return null;
       }
-      
+
       const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-      const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => {
-        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-      }).join(''));
-      
+      const jsonPayload = decodeURIComponent(
+        atob(base64)
+          .split('')
+          .map((c) => {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+          })
+          .join(''),
+      );
+
       return JSON.parse(jsonPayload);
     } catch (e) {
       console.error('Error parsing JWT token:', e);
@@ -293,58 +311,80 @@ export class AuthService {
     if (!token) {
       // If no token, just clean up and redirect
       this.cleanupSession();
-      return new Observable(subscriber => {
+      return new Observable((subscriber) => {
         subscriber.complete();
       });
     }
 
     const headers = new HttpHeaders({
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
     });
 
-    return this.http.post(`${this.apiUrl}/logout`, {}, { headers })
-      .pipe(
-        tap(() => this.cleanupSession()),
-        catchError(error => {
-          // Even if the server request fails, we should clean up the local session
-          this.cleanupSession();
-          throw error;
-        })
-      );
+    return this.http.post(`${this.apiUrl}/logout`, {}, { headers }).pipe(
+      tap(() => this.cleanupSession()),
+      catchError((error) => {
+        // Even if the server request fails, we should clean up the local session
+        this.cleanupSession();
+        throw error;
+      }),
+    );
   }
 
-  private cleanupSession(): void {
+  expireSession(): void {
+    this.cleanupSession('expired');
+  }
+
+  private cleanupSession(reason: 'expired' | 'logout' = 'logout'): void {
     localStorage.removeItem('token');
     localStorage.removeItem('tokenData');
+    localStorage.removeItem('user');
     this.isAuthenticatedSubject.next(false);
+    if (reason === 'expired') {
+      const currentUrl = this.router.url;
+      const returnUrl =
+        currentUrl.startsWith('/') &&
+        !currentUrl.startsWith('//') &&
+        !currentUrl.startsWith('/auth/sign-in')
+          ? currentUrl
+          : '/';
+      this.router.navigate(['/auth/sign-in'], {
+        queryParams: { reason: 'expired', returnUrl },
+      });
+      return;
+    }
     this.router.navigate(['/']);
   }
 
   getToken(): string | null {
     const storedData = this.getStoredTokenData();
     if (!storedData) {
-      // Fall back to legacy token storage
-      return localStorage.getItem('token');
-    }
-    
-    // Check expiration before returning
-    if (this.isTokenExpiredLocally(storedData)) {
-      this.cleanupSession();
+      // Old unbounded sessions are intentionally invalidated.
+      if (localStorage.getItem('token')) {
+        this.cleanupSession('expired');
+      }
       return null;
     }
-    
+
+    // Check expiration before returning
+    const payload = this.parseJwt(storedData.token) as TokenPayload | null;
+    if (
+      this.isTokenExpiredLocally(storedData) ||
+      !payload?.exp ||
+      this.isJwtTokenExpired(payload)
+    ) {
+      this.cleanupSession('expired');
+      return null;
+    }
+
     return storedData.token;
   }
 
   isAuthenticated(): boolean {
-    // Check token validity before returning authenticated state
-    const storedData = this.getStoredTokenData();
-    if (!storedData || this.isTokenExpiredLocally(storedData)) {
-      this.cleanupSession();
+    if (!this.getToken()) {
       return false;
     }
-    
+
     return this.isAuthenticatedSubject.value;
   }
 
@@ -352,18 +392,18 @@ export class AuthService {
   private decodeToken(): TokenPayload | null {
     const token = this.getToken();
     if (!token) return null;
-    
+
     return this.parseJwt(token) as TokenPayload;
   }
 
   // Métodos relacionados con roles
-  
+
   getUserRoles(): UserRole[] {
     const payload = this.decodeToken();
     if (!payload?.roles) return [];
-    
+
     // Convertir los roles del token a UserRole (asumiendo que coinciden con nuestro enum)
-    return payload.roles.map(role => role.toLowerCase() as UserRole);
+    return payload.roles.map((role) => role.toLowerCase() as UserRole);
   }
 
   hasRole(role: UserRole): boolean {

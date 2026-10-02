@@ -1,0 +1,74 @@
+name: Deploy staging
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: webapp-staging
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build verified portal artifact
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Scan lockfile before installation
+        run: python3 scripts/security/check_npm_supply_chain.py --repo . --skip-installed
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 20.19
+          package-manager-cache: false
+      - name: Install reviewed dependencies
+        run: bash scripts/security/secure-install.sh --ci
+      - run: npm run build:production
+      - name: Generate CycloneDX SBOM
+        run: npm sbom --sbom-format cyclonedx > sbom.cdx.json
+      - name: Package and checksum compiled output
+        run: |
+          tar -C dist/osc-web-app/browser -czf webapp-dist.tar.gz .
+          sha256sum webapp-dist.tar.gz sbom.cdx.json > SHA256SUMS
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: webapp-${{ github.sha }}
+          path: |
+            webapp-dist.tar.gz
+            sbom.cdx.json
+            SHA256SUMS
+          if-no-files-found: error
+          retention-days: 7
+
+  deploy:
+    name: Deploy verified portal artifact
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: staging
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: webapp-${{ github.sha }}
+      - name: Verify and extract compiled output
+        run: |
+          sha256sum --check SHA256SUMS
+          mkdir deployment
+          tar -xzf webapp-dist.tar.gz -C deployment
+      - name: Configure AWS credentials with GitHub OIDC
+        uses: aws-actions/configure-aws-credentials@cabfdba3510de1431bac9dba27511d97497fc100 # v5
+        with:
+          role-to-assume: arn:aws:iam::269624229733:role/osc-github-deploy-webapp
+          aws-region: us-west-2
+          role-duration-seconds: 900
+      - name: Publish immutable build output
+        run: aws s3 sync deployment/ s3://${{ vars.WEBAPP_S3_BUCKET }}/ --delete
+      - name: Invalidate CloudFront
+        run: aws cloudfront create-invalidation --distribution-id ${{ vars.WEBAPP_CF_DISTRIBUTION_ID }} --paths "/*"

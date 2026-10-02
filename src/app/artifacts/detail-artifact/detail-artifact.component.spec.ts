@@ -1,7 +1,12 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import {
+  ComponentFixture,
+  TestBed,
+  fakeAsync,
+  tick,
+} from '@angular/core/testing';
 import { DetailArtifactComponent } from './detail-artifact.component';
 import { ActivatedRoute } from '@angular/router';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { ArtifactService } from '../services/artifact.service';
 import { ArtifactDetail } from '../../models/artifact-detail.model';
 
@@ -24,8 +29,8 @@ describe('DetailArtifactComponent', () => {
       {
         filename: 'sample.txt',
         hash: 'abcdef',
-        algorithm: 'sha256'
-      }
+        algorithm: 'sha256',
+      },
     ],
     submittedAt: '',
     verified: false,
@@ -36,11 +41,11 @@ describe('DetailArtifactComponent', () => {
     blockchainTxId: null,
     peerId: null,
     submissionError: null,
-    organization: { name: 'TestOrg' }
+    organization: { name: 'TestOrg' },
   } as any;
 
   const artifactServiceStub = {
-    getArtifactById: () => of(mockArtifact)
+    getArtifactById: () => of(mockArtifact),
   };
 
   beforeEach(async () => {
@@ -49,10 +54,10 @@ describe('DetailArtifactComponent', () => {
       providers: [
         {
           provide: ActivatedRoute,
-          useValue: { paramMap: of(new Map([['id', '123']])) }
+          useValue: { paramMap: of(new Map([['id', '123']])) },
         },
-        { provide: ArtifactService, useValue: artifactServiceStub }
-      ]
+        { provide: ArtifactService, useValue: artifactServiceStub },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(DetailArtifactComponent);
@@ -64,13 +69,29 @@ describe('DetailArtifactComponent', () => {
     expect(component).toBeTruthy();
   });
 
+  it('leaves the loading state when the detail request fails', () => {
+    spyOn(artifactServiceStub, 'getArtifactById').and.returnValue(
+      throwError(() => new Error('unavailable')),
+    );
+
+    component.loadArtifact();
+
+    expect(component.isLoading).toBeFalse();
+    expect(component.errorMessage).toContain('could not load');
+  });
+
   describe('utility methods', () => {
+    it('does not duplicate the artifact prefix in a display ID', () => {
+      component.artifact = { ...mockArtifact, id: 'artifact-nsg-001' };
+      expect(component.recordId()).toBe('osc-is-artifact-nsg-001');
+    });
+
     it('truncated should return em dash for null value', () => {
-      expect(component.truncated(null)).toBe('—');
+      expect(component.truncated(null)).toBe('\u2014');
     });
 
     it('truncated should shorten long strings with ellipsis', () => {
-      expect(component.truncated('abcdefghijkl', 6)).toBe('abcdef…');
+      expect(component.truncated('abcdefghijkl', 6)).toBe('abcdef\u2026');
     });
 
     it('printManifest should open new window and write manifest', fakeAsync(() => {
@@ -82,9 +103,9 @@ describe('DetailArtifactComponent', () => {
           title: '',
           open: jasmine.createSpy('open'),
           write: jasmine.createSpy('write'),
-          close: jasmine.createSpy('close')
+          close: jasmine.createSpy('close'),
         },
-        focus: jasmine.createSpy('focus')
+        focus: jasmine.createSpy('focus'),
       } as unknown as Window;
 
       spyOn(window, 'open').and.returnValue(mockWin);
@@ -110,10 +131,10 @@ describe('DetailArtifactComponent', () => {
           body: { innerHTML: '', appendChild: bodyAppend },
           open: jasmine.createSpy('open'),
           write: jasmine.createSpy('write'),
-          close: jasmine.createSpy('close')
+          close: jasmine.createSpy('close'),
         },
         focus: jasmine.createSpy('focus'),
-        print: jasmine.createSpy('print')
+        print: jasmine.createSpy('print'),
       } as unknown as Window;
 
       spyOn(window, 'open').and.returnValue(mockWin);
@@ -142,4 +163,4 @@ describe('DetailArtifactComponent', () => {
       expect(navigate).toHaveBeenCalled();
     });
   });
-}); 
+});

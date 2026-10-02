@@ -10,7 +10,7 @@
 }
 
 .header h1 {
-  color: #1D3557;
+  color: #1d3557;
   margin: 0;
   font-family: 'Open Sans', sans-serif;
   font-weight: 700;
@@ -22,7 +22,7 @@
 .header-divider {
   width: 75%;
   height: 1px;
-  background-color: #9BA4B5;
+  background-color: #9ba4b5;
   margin-top: 0.25rem;
   margin-left: 20px;
 }
@@ -48,9 +48,9 @@
   height: calc(100% - 5%);
   left: 50%;
   width: 1px;
-  background-color: #9BA4B5;
+  background-color: #9ba4b5;
   transform: translateX(-50%);
-  opacity: 0.70;
+  opacity: 0.7;
 }
 
 .form-group {
@@ -61,7 +61,7 @@
   font-family: 'Open Sans', sans-serif;
   font-size: 36px;
   font-weight: 700;
-  color: #1D3557;
+  color: #1d3557;
   margin-bottom: 0.15rem;
   display: block;
 }
@@ -84,7 +84,7 @@
 
 .form-control:focus {
   outline: none;
-  border-color: #1D3557;
+  border-color: #1d3557;
 }
 
 textarea.form-control {
@@ -113,7 +113,7 @@ textarea.form-control {
   max-height: 280px;
   overflow-y: auto;
   background: #fff;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   margin-top: 4px;
   z-index: 10;
   position: relative;
@@ -148,7 +148,7 @@ textarea.form-control {
 .dropdown-item-title {
   font-size: 14px;
   font-weight: 600;
-  color: #1D3557;
+  color: #1d3557;
 }
 
 .dropdown-item-desc {
@@ -166,8 +166,12 @@ textarea.form-control {
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .selected-artifacts {
@@ -184,7 +188,7 @@ textarea.form-control {
   background-color: #e8eaf6;
   border-radius: 16px;
   font-size: 13px;
-  color: #1D3557;
+  color: #1d3557;
 }
 
 .chip-remove {
@@ -240,19 +244,19 @@ textarea.form-control {
 }
 
 .btn-primary {
-  background-color: #1D3557;
-  border-color: #1D3557;
+  background-color: #1d3557;
+  border-color: #1d3557;
   color: #fff;
 }
 
 .btn-primary:hover:not(:disabled) {
-  background-color: #457B9D;
-  border-color: #457B9D;
+  background-color: #457b9d;
+  border-color: #457b9d;
   transform: translateY(-2px);
 }
 
 .btn-secondary {
-  background-color: #B23B3B;
+  background-color: #b23b3b;
   border: none;
   color: white;
 }

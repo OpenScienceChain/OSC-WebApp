@@ -31,7 +31,7 @@
 }
 
 .forbidden-message {
-  color: #6c757d;
+  color: #405366;
   margin-bottom: 2rem;
 }
 
@@ -51,11 +51,11 @@
 }
 
 .primary-button {
-  background-color: #1D3557;
+  background-color: #1d3557;
   color: white;
   border: none;
 }
 
 .primary-button:hover {
   background-color: #152538;
-} 
+}

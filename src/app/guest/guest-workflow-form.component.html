@@ -1,0 +1,401 @@
+<main id="main-content" class="create-workflow-container">
+  <header class="header">
+    <h1>{{ isEdit ? 'Manage Workflow' : 'Contribute Workflow' }}</h1>
+    <div class="header-divider"></div>
+  </header>
+
+  <section
+    *ngIf="!isEdit && !demo.session?.accountUsername"
+    class="workflow-access-note"
+    role="status"
+  >
+    <i class="bi bi-person-lock" aria-hidden="true"></i>
+    <div>
+      <h2>Sign in to contribute</h2>
+      <p>Create an account or sign in to connect artifacts in a workflow.</p>
+      <div class="workflow-access-actions">
+        <a
+          routerLink="/auth/sign-in"
+          [queryParams]="{ returnUrl: '/create-workflow' }"
+          >Sign in or create an account</a
+        >
+      </div>
+    </div>
+  </section>
+  <section
+    *ngIf="isEdit && (!demo.session?.accountUsername || accessDenied)"
+    class="workflow-access-note"
+    role="status"
+  >
+    <i class="bi bi-lock" aria-hidden="true"></i>
+    <div>
+      <h2>Workflow updates are restricted</h2>
+      <p>
+        {{
+          !demo.session?.accountUsername
+            ? 'Sign in with the account that contributed this workflow to manage it.'
+            : 'Only the contributing account can manage a confirmed workflow.'
+        }}
+      </p>
+      <div class="workflow-access-actions">
+        <a
+          *ngIf="!demo.session?.accountUsername"
+          routerLink="/auth/sign-in"
+          [queryParams]="{ returnUrl: '/update-workflow/' + id }"
+          >Sign in</a
+        >
+        <a [routerLink]="['/workflows', id]">
+          Back to workflow <i class="bi bi-arrow-right" aria-hidden="true"></i>
+        </a>
+      </div>
+    </div>
+  </section>
+  <p
+    *ngIf="
+      demo.session?.accountUsername && (!isEdit || editReady) && !accessDenied
+    "
+    class="workflow-guidance"
+  >
+    <i class="bi bi-info-circle" aria-hidden="true"></i>
+    <span>
+      Link up to three confirmed artifacts from
+      <strong>{{ organizationName }}</strong
+      >.
+    </span>
+  </p>
+  <p *ngIf="error" class="guest-form-note text-danger" role="alert">
+    {{ error }}
+  </p>
+
+  <form
+    *ngIf="(!isEdit && !!demo.session?.accountUsername) || editReady"
+    class="workflow-form"
+    (focusin)="formAnalytics.start()"
+    (input)="formAnalytics.start()"
+    (change)="formAnalytics.start()"
+    (ngSubmit)="submit()"
+    novalidate
+  >
+    <div class="form-grid">
+      <div class="left-column">
+        <div class="form-group">
+          <label for="workflow-title" class="field-label">Title</label>
+          <input
+            id="workflow-title"
+            name="title"
+            class="form-control"
+            type="text"
+            maxlength="200"
+            [readOnly]="isEdit"
+            [(ngModel)]="title"
+            (ngModelChange)="onChange()"
+            (blur)="markTouched('title')"
+            [class.is-invalid]="
+              showError('title') &&
+              (title.trim().length < 3 || title.trim().length > 200)
+            "
+            [attr.aria-invalid]="showError('title') && title.trim().length < 3"
+          />
+          <div
+            class="error-message"
+            *ngIf="showError('title') && title.trim().length < 3"
+            role="alert"
+          >
+            Title must be at least 3 characters long.
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="workflow-description" class="field-label"
+            >Description</label
+          >
+          <textarea
+            id="workflow-description"
+            name="description"
+            class="form-control"
+            rows="5"
+            maxlength="3000"
+            [readOnly]="isEdit"
+            [(ngModel)]="description"
+            (ngModelChange)="onChange()"
+            (blur)="markTouched('description')"
+            [class.is-invalid]="
+              showError('description') && description.trim().length < 50
+            "
+          ></textarea>
+          <div
+            class="error-message"
+            *ngIf="showError('description') && description.trim().length < 50"
+            role="alert"
+          >
+            Description must be at least 50 characters long.
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="workflow-keywords" class="field-label">Keywords</label>
+          <input
+            id="workflow-keywords"
+            name="keywords"
+            class="form-control"
+            type="text"
+            maxlength="960"
+            placeholder="Enter keywords, separated by commas"
+            [(ngModel)]="keywords"
+            (ngModelChange)="onChange()"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="workflow-comment" class="field-label"
+            >Submission Comment</label
+          >
+          <textarea
+            id="workflow-comment"
+            name="submissionComment"
+            class="form-control"
+            rows="3"
+            maxlength="1000"
+            [(ngModel)]="submissionComment"
+            (ngModelChange)="onChange()"
+            (blur)="markTouched('comment')"
+            [class.is-invalid]="
+              showError('comment') && submissionComment.trim().length < 20
+            "
+          ></textarea>
+          <div
+            class="error-message"
+            *ngIf="showError('comment') && submissionComment.trim().length < 20"
+            role="alert"
+          >
+            Submission comment must be at least 20 characters long.
+          </div>
+        </div>
+
+        <div class="form-group" *ngIf="!isEdit">
+          <label for="workflow-context" class="context-label"
+            >Type of workflow (optional)</label
+          >
+          <select
+            id="workflow-context"
+            name="context"
+            class="form-control"
+            [(ngModel)]="context"
+            (ngModelChange)="onChange()"
+          >
+            <option value="">Not specified</option>
+            <option value="REPRODUCIBLE_ANALYSIS">Reproducible analysis</option>
+            <option value="RESEARCH_DATASET">Research dataset</option>
+            <option value="SOFTWARE_RELEASE">Software release</option>
+            <option value="OTHER">Other</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="right-column">
+        <div class="form-group artifact-picker">
+          <label for="workflow-artifact-search" class="field-label"
+            >Linked Artifacts <span class="required-marker">*</span></label
+          >
+          <input
+            id="workflow-artifact-search"
+            class="form-control"
+            type="search"
+            maxlength="200"
+            placeholder="Search confirmed artifacts in your organization"
+            autocomplete="off"
+            [(ngModel)]="artifactSearch"
+            [ngModelOptions]="{ standalone: true }"
+            (focus)="showArtifactDropdown = true"
+            (input)="showArtifactDropdown = true"
+            [class.is-invalid]="submitted && selectedIds.size === 0"
+          />
+          <div *ngIf="showArtifactDropdown" class="dropdown-list">
+            <div class="dropdown-hint">
+              Confirmed artifacts in this organization
+            </div>
+            <button
+              type="button"
+              class="dropdown-item"
+              *ngFor="let artifact of matchingArtifacts"
+              (click)="selectArtifact(artifact.id)"
+            >
+              <span class="dropdown-item-title">{{ artifact.title }}</span>
+              <span class="dropdown-item-desc">{{
+                artifact.contributorAlias
+              }}</span>
+            </button>
+            <p *ngIf="!matchingArtifacts.length" class="dropdown-empty">
+              No matching confirmed artifacts.
+            </p>
+          </div>
+          <div
+            *ngIf="submitted && !selectedIds.size"
+            class="error-message"
+            role="alert"
+          >
+            Select at least one confirmed artifact.
+          </div>
+          <div class="selected-artifacts" *ngIf="selectedArtifacts.length">
+            <div
+              class="artifact-chip"
+              *ngFor="let artifact of selectedArtifacts"
+            >
+              <span>{{ artifact.title }}</span>
+              <button
+                type="button"
+                class="chip-remove"
+                (click)="removeArtifact(artifact.id)"
+                [attr.aria-label]="'Remove ' + artifact.title"
+              >
+                &times;
+              </button>
+            </div>
+          </div>
+          <p
+            *ngIf="demo.session?.accountUsername && !artifacts.length"
+            class="field-help"
+          >
+            No confirmed artifacts in this organization yet. Contribute an
+            artifact first, then return here.
+          </p>
+          <p class="field-help">
+            You can link up to three confirmed artifacts from this organization.
+          </p>
+        </div>
+
+        <div class="form-group">
+          <h2 class="field-label">GitHub Repositories</h2>
+          <div
+            class="repo-entry"
+            *ngFor="let repo of githubRepositories; let ri = index"
+          >
+            <div class="repo-heading">
+              <strong>Repository {{ ri + 1 }}</strong>
+              <button
+                type="button"
+                class="repo-remove"
+                (click)="removeRepository(ri)"
+              >
+                Remove
+              </button>
+            </div>
+            <label [for]="'repo-url-' + ri">GitHub URL</label>
+            <input
+              [id]="'repo-url-' + ri"
+              [name]="'repo-url-' + ri"
+              class="form-control"
+              type="url"
+              maxlength="400"
+              placeholder="https://github.com/owner/repository"
+              [(ngModel)]="repo.url"
+              (ngModelChange)="onChange()"
+              (blur)="markTouched('repo-' + ri); fetchRepository(repo)"
+              [class.is-invalid]="
+                showError('repo-' + ri) && !repositoryValid(repo)
+              "
+            />
+            <p class="field-help" *ngIf="repo.fetching" role="status">
+              Fetching repository details...
+            </p>
+            <p class="field-help" *ngIf="repo.fetchMessage" role="status">
+              {{ repo.fetchMessage }}
+            </p>
+            <label [for]="'repo-description-' + ri"
+              >Repository description</label
+            >
+            <input
+              [id]="'repo-description-' + ri"
+              [name]="'repo-description-' + ri"
+              class="form-control"
+              maxlength="500"
+              [(ngModel)]="repo.description"
+              (ngModelChange)="onChange()"
+            />
+            <label [for]="'repo-hash-' + ri">Commit hash</label>
+            <input
+              [id]="'repo-hash-' + ri"
+              [name]="'repo-hash-' + ri"
+              class="form-control"
+              placeholder="7–40 hexadecimal characters"
+              maxlength="40"
+              [(ngModel)]="repo.gitHash"
+              (ngModelChange)="onChange()"
+            />
+            <div
+              class="error-message"
+              *ngIf="showError('repo-' + ri) && !repositoryValid(repo)"
+              role="alert"
+            >
+              Use a GitHub repository URL and valid commit hash; complete any
+              content entries.
+            </div>
+            <div class="contents-section" *ngIf="repo.contents.length">
+              <strong>Repository contents</strong>
+              <div
+                class="content-entry"
+                *ngFor="let content of repo.contents; let ci = index"
+              >
+                <input
+                  [name]="'content-name-' + ri + '-' + ci"
+                  class="form-control"
+                  placeholder="Filename"
+                  maxlength="160"
+                  [(ngModel)]="content.filename"
+                  (ngModelChange)="onChange()"
+                />
+                <input
+                  [name]="'content-hash-' + ri + '-' + ci"
+                  class="form-control"
+                  placeholder="Hash (optional)"
+                  maxlength="128"
+                  [(ngModel)]="content.hash"
+                  (ngModelChange)="onChange()"
+                />
+                <button
+                  type="button"
+                  class="repo-remove"
+                  (click)="repo.contents.splice(ci, 1); onChange()"
+                  aria-label="Remove content"
+                >
+                  &times;
+                </button>
+              </div>
+            </div>
+            <button
+              type="button"
+              class="add-content"
+              *ngIf="repo.contents.length < 10"
+              (click)="addContent(repo)"
+            >
+              + Add File
+            </button>
+          </div>
+          <button
+            type="button"
+            class="add-repository"
+            *ngIf="githubRepositories.length < 3"
+            (click)="addRepository()"
+          >
+            + Add Repository
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-navigation">
+      <a class="btn btn-secondary" routerLink="/list-workflows"
+        >Cancel and Go Back</a
+      >
+      <button class="btn btn-primary" type="submit" [disabled]="!canSubmit">
+        {{
+          busy
+            ? 'Submitting...'
+            : isEdit
+              ? 'Save workflow update'
+              : 'Submit workflow'
+        }}
+      </button>
+    </div>
+  </form>
+</main>

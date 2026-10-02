@@ -1,14 +1,42 @@
 version: 2
 updates:
-  - package-ecosystem: "npm"
-    directory: "/"
+  - package-ecosystem: npm
+    directory: /
     schedule:
-      interval: "weekly"
-    labels:
-      - "dependencies"
-      - "javascript"
+      interval: weekly
+    cooldown:
+      default-days: 5
+      semver-major-days: 30
+      semver-minor-days: 7
+      semver-patch-days: 5
     groups:
-      non-major:
-        update-types:
-          - "minor"
-          - "patch"
+      npm-development:
+        dependency-type: development
+        exclude-patterns:
+          - '@parcel/watcher'
+          - cypress
+          - esbuild
+          - lmdb
+          - msgpackr-extract
+          - fsevents
+      npm-production:
+        dependency-type: production
+        exclude-patterns:
+          - '@parcel/watcher'
+          - cypress
+          - esbuild
+          - lmdb
+          - msgpackr-extract
+          - fsevents
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 5
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 5

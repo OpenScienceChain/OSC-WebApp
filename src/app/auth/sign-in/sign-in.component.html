@@ -1,65 +1,186 @@
-<div class="sign-in-container">
-  <div class="sign-in-form-container">
-    <div class="logo-container">
-      <img src="assets/images/OpenScienceChain_logo_horiz_white.png" alt="Open Science Chain Logo" class="logo">
+<main class="sign-in-page" aria-labelledby="sign-in-heading">
+  <section class="sign-in-panel">
+    <a
+      class="sign-in-brand"
+      routerLink="/"
+      aria-label="Open Science Chain home"
+    >
+      <img
+        src="assets/images/osc-logo-color-official.png"
+        alt="Open Science Chain"
+        class="logo"
+      />
+    </a>
+
+    <div class="sign-in-intro">
+      <p class="eyebrow">Contributor access</p>
+      <h1 id="sign-in-heading">Sign in to your account</h1>
+      <p>Register research outputs and manage the records you contribute.</p>
     </div>
 
-    <form [formGroup]="signInForm" class="sign-in-form">
+    <div
+      *ngIf="sessionExpired"
+      class="session-notice"
+      role="status"
+      aria-live="polite"
+      data-cy="session-expired"
+    >
+      <i class="bi bi-clock-history" aria-hidden="true"></i>
+      <div>
+        <strong>Your session ended</strong>
+        <p>
+          Sign in again to continue. Your artifact records were not changed.
+        </p>
+      </div>
+    </div>
+
+    <form
+      [formGroup]="signInForm"
+      class="sign-in-form"
+      novalidate
+      (ngSubmit)="onSubmit()"
+      [attr.aria-busy]="isLoading"
+    >
       <div class="form-group">
+        <label for="username">Username or email</label>
         <input
           type="text"
           id="username"
           formControlName="username"
           class="form-control"
           placeholder="username or email"
+          autocomplete="username"
           required
-          data-cy="username-input">
-        <div *ngIf="signInForm.get('username')?.invalid && signInForm.get('username')?.touched"
-             class="error-message"
-             data-cy="username-error">
+          [attr.aria-invalid]="
+            signInForm.get('username')?.invalid &&
+            signInForm.get('username')?.touched
+          "
+          [attr.aria-describedby]="
+            signInForm.get('username')?.invalid &&
+            signInForm.get('username')?.touched
+              ? 'username-error'
+              : null
+          "
+          data-cy="username-input"
+        />
+        <p
+          *ngIf="
+            signInForm.get('username')?.invalid &&
+            signInForm.get('username')?.touched
+          "
+          id="username-error"
+          class="error-message"
+          data-cy="username-error"
+        >
           Username is required
-        </div>
-      </div>
-
-      <div class="forgot-password">
-        <a href="#" (click)="onForgotCredentials($event)">Forgot password or username?</a>
+        </p>
       </div>
 
       <div class="form-group">
+        <div class="password-label-row">
+          <label for="password">Password</label>
+          <button
+            type="button"
+            class="forgot-password"
+            (click)="onForgotCredentials()"
+          >
+            Forgot password or username?
+          </button>
+        </div>
         <input
           type="password"
           id="password"
           formControlName="password"
           class="form-control"
           placeholder="password"
+          autocomplete="current-password"
           required
-          data-cy="password-input">
-        <div *ngIf="signInForm.get('password')?.invalid && signInForm.get('password')?.touched"
-             class="error-message"
-             data-cy="password-error">
+          [attr.aria-invalid]="
+            signInForm.get('password')?.invalid &&
+            signInForm.get('password')?.touched
+          "
+          [attr.aria-describedby]="
+            signInForm.get('password')?.invalid &&
+            signInForm.get('password')?.touched
+              ? 'password-error'
+              : null
+          "
+          data-cy="password-input"
+        />
+        <p
+          *ngIf="
+            signInForm.get('password')?.invalid &&
+            signInForm.get('password')?.touched
+          "
+          id="password-error"
+          class="error-message"
+          data-cy="password-error"
+        >
           Password is required
-        </div>
+        </p>
       </div>
 
-      <div class="form-actions">
-        <button type="button"
-                class="btn btn-primary"
-                [disabled]="signInForm.invalid"
-                (click)="onSubmit()"
-                data-cy="login-button">Sign In</button>
-      </div>
+      <button
+        type="submit"
+        class="submit-button btn-primary"
+        [disabled]="signInForm.invalid || isLoading"
+        data-cy="login-button"
+      >
+        <span *ngIf="!isLoading">Sign In</span>
+        <span *ngIf="isLoading" class="loading-label">
+          <span class="spinner" aria-hidden="true"></span>
+          Signing in
+        </span>
+      </button>
 
-      <!-- Mensaje de error de credenciales inválidas -->
-      <div *ngIf="invalidCredentials"
-           class="error-message text-center mt-3"
-           data-cy="invalid-credentials">
-        Username and/or password not valid, please try again
-      </div>
+      <p
+        *ngIf="invalidCredentials"
+        class="form-notice form-notice-error"
+        role="alert"
+        data-cy="invalid-credentials"
+      >
+        Username and/or password not valid. Please try again.
+      </p>
     </form>
 
-    <!-- Mensaje de recuperación de credenciales -->
-    <div *ngIf="showForgotMessage" class="forgot-message">
-      If you forgot your password or username, please send an email to block&#64;manager.com
+    <p
+      *ngIf="showForgotMessage"
+      class="form-notice"
+      role="status"
+      aria-live="polite"
+    >
+      Contact your Open Science Chain administrator to recover your username or
+      reset your password.
+    </p>
+  </section>
+
+  <aside class="sign-in-context" aria-label="Why sign in">
+    <span class="photo-credit">
+      Photo:
+      <a
+        href="https://unsplash.com/photos/a-scientist-is-working-in-a-laboratory-TOZsuh0MWJw"
+        target="_blank"
+        rel="noopener noreferrer"
+        >Adam Bezer / Unsplash</a
+      >
+    </span>
+    <div>
+      <p class="eyebrow">Your work, with its history intact</p>
+      <h2>Contribute with confidence</h2>
+      <ul>
+        <li>
+          <i class="bi bi-check2-circle" aria-hidden="true"></i> Keep metadata
+          connected to every artifact.
+        </li>
+        <li>
+          <i class="bi bi-check2-circle" aria-hidden="true"></i> Record updates
+          in a verifiable history.
+        </li>
+        <li>
+          <i class="bi bi-check2-circle" aria-hidden="true"></i> Collaborate
+          across research organizations.
+        </li>
+      </ul>
     </div>
-  </div>
-</div>
+  </aside>
+</main>

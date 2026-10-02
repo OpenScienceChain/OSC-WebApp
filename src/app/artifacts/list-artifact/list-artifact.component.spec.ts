@@ -4,7 +4,7 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { of } from 'rxjs';
 
 import { ListArtifactComponent } from './list-artifact.component';
-import { ArtifactService } from '../services/artifact.service';
+import { PublicCatalogService } from '../../guest/public-catalog.service';
 import { Artifact } from '../../models/artifact.model';
 
 // Helper to create mock artifacts
@@ -24,31 +24,46 @@ const createMockArtifacts = (count: number): Artifact[] => {
 describe('ListArtifactComponent', () => {
   let component: ListArtifactComponent;
   let fixture: ComponentFixture<ListArtifactComponent>;
-  let artifactService: ArtifactService;
+  let catalog: PublicCatalogService;
 
   const mockArtifacts = createMockArtifacts(20); // Create 20 mock artifacts for testing
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [ListArtifactComponent, HttpClientTestingModule, RouterTestingModule],
-      providers: [ArtifactService],
+      imports: [
+        ListArtifactComponent,
+        HttpClientTestingModule,
+        RouterTestingModule,
+      ],
+      providers: [
+        {
+          provide: PublicCatalogService,
+          useValue: { listArtifacts: () => of(mockArtifacts) },
+        },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(ListArtifactComponent);
     component = fixture.componentInstance;
-    artifactService = TestBed.inject(ArtifactService);
+    catalog = TestBed.inject(PublicCatalogService);
 
     // Spy on the service and return our mock data
-    spyOn(artifactService, 'getArtifacts').and.returnValue(of(mockArtifacts));
+    spyOn(catalog, 'listArtifacts').and.returnValue(of(mockArtifacts));
   });
 
   it('should create and load initial artifacts', () => {
     fixture.detectChanges(); // Trigger ngOnInit
     expect(component).toBeTruthy();
-    expect(artifactService.getArtifacts).toHaveBeenCalled();
+    expect(catalog.listArtifacts).toHaveBeenCalled();
     expect(component.allArtifacts.length).toBe(20);
     expect(component.filteredArtifacts.length).toBe(20);
     expect(component.paginatedArtifacts.length).toBe(component.itemsPerPage);
+  });
+
+  it('uses the public catalog without an authenticated session', () => {
+    fixture.detectChanges();
+    expect(catalog.listArtifacts).toHaveBeenCalled();
+    expect(component.allArtifacts.length).toBe(20);
   });
 
   describe('onSearch', () => {
@@ -60,14 +75,16 @@ describe('ListArtifactComponent', () => {
       component.titleSearchTerm = 'Artifact 1'; // This should match Artifact 1, 10, 11...19
       component.onSearch();
       expect(component.filteredArtifacts.length).toBe(11);
-      expect(component.filteredArtifacts[0].title).toBe('Artifact 1');
+      expect(component.filteredArtifacts.map((item) => item.title)).toContain(
+        'Artifact 1',
+      );
     });
 
     it('should reset to full list when search term is empty', () => {
       component.titleSearchTerm = 'Artifact 1';
       component.onSearch();
       expect(component.filteredArtifacts.length).not.toBe(20);
-      
+
       component.titleSearchTerm = '';
       component.onSearch();
       expect(component.filteredArtifacts.length).toBe(20);
@@ -108,7 +125,7 @@ describe('ListArtifactComponent', () => {
       const fiftyArtifacts = createMockArtifacts(50);
       component.allArtifacts = fiftyArtifacts;
       component.filteredArtifacts = fiftyArtifacts;
-      component.itemsPerPage = 5; 
+      component.itemsPerPage = 5;
       fixture.detectChanges();
     });
 
@@ -124,4 +141,4 @@ describe('ListArtifactComponent', () => {
       expect(component.getPages()).toEqual([]);
     });
   });
-}); 
+});

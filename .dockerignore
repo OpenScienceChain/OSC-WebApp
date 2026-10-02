@@ -1,0 +1,14 @@
+.angular
+.git
+.github
+.husky
+coverage
+cypress
+cypress.config.ts
+cypress.env.json
+dist
+node_modules
+npm-debug.log*
+docs/evidence
+bigfile*.bin
+random_files

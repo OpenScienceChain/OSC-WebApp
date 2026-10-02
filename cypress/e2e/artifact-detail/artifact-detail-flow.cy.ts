@@ -20,7 +20,9 @@ describe('Artifact detail flow – create two artifacts and verify details', () 
     return {
       title: `Cypress Artifact ${suffix} ${rand}`,
       description: `This is a Cypress-generated description for artifact ${suffix}. It must be well over fifty characters long, so here are some extra words to meet that limit.`,
-      keywords: Array.from({ length: 3 }, () => Math.random().toString(36).substring(2, 8)).join(', ')
+      keywords: Array.from({ length: 3 }, () =>
+        Math.random().toString(36).substring(2, 8),
+      ).join(', '),
     };
   };
 
@@ -31,10 +33,15 @@ describe('Artifact detail flow – create two artifacts and verify details', () 
     // Navigate to sign-in page via Contribute link if not already signed in
     cy.contains('Contribute').click();
 
-    cy.url().then(url => {
+    cy.url().then((url) => {
       if (url.includes('/auth/sign-in')) {
-        cy.get('input[formcontrolname="username"]').type(Cypress.env('PI1_EMAIL'));
-        cy.get('input[formcontrolname="password"]').type(Cypress.env('PI1_PASSWORD'), { log: false });
+        cy.get('input[formcontrolname="username"]').type(
+          Cypress.env('PI1_EMAIL'),
+        );
+        cy.get('input[formcontrolname="password"]').type(
+          Cypress.env('PI1_PASSWORD'),
+          { log: false },
+        );
         cy.get('.form-actions button').click();
         cy.url().should('not.include', '/auth/sign-in');
       }
@@ -45,12 +52,18 @@ describe('Artifact detail flow – create two artifacts and verify details', () 
     cy.contains('Contribute').click();
 
     cy.get('input[formcontrolname="title"]').type(artifact.title);
-    cy.get('textarea[formcontrolname="description"]').type(artifact.description);
-    cy.get('textarea[formcontrolname="submission_comment"]').type('Initial submission comment for E2E.');
+    cy.get('textarea[formcontrolname="description"]').type(
+      artifact.description,
+    );
+    cy.get('textarea[formcontrolname="submission_comment"]').type(
+      'Initial submission comment for E2E.',
+    );
     cy.get('input[formcontrolname="keywords"]').type(artifact.keywords);
 
     // upload sample file
-    cy.get('input[type="file"]').first().selectFile('cypress/fixtures/sample.txt', { force: true });
+    cy.get('input[type="file"]')
+      .first()
+      .selectFile('cypress/fixtures/sample.txt', { force: true });
 
     cy.wait(2000);
 
@@ -58,10 +71,11 @@ describe('Artifact detail flow – create two artifacts and verify details', () 
 
     cy.get('[data-cy="submit-btn"]').click();
 
-    cy.contains('Your artifact has been successfully submitted!').should('be.visible');
+    cy.contains('Your artifact has been successfully submitted!').should(
+      'be.visible',
+    );
 
     cy.get('[data-cy="submit-btn"]').should('be.disabled');
-
   };
 
   before(() => {
@@ -76,13 +90,17 @@ describe('Artifact detail flow – create two artifacts and verify details', () 
     cy.contains('VIEW ALL').click();
     cy.url().should('include', '/list-artifacts');
 
-    cy.get('input[placeholder="Artifact\'s title contains"]').clear().type(title);
+    cy.get('input[placeholder="Artifact\'s title contains"]')
+      .clear()
+      .type(title);
     cy.contains('button', 'Search').click();
 
     // one card expected
-    cy.get('app-artifact-card').should('have.length', 1).within(() => {
-      cy.contains('a.view-button', 'View').click();
-    });
+    cy.get('app-artifact-card')
+      .should('have.length', 1)
+      .within(() => {
+        cy.contains('a.view-button', 'View').click();
+      });
   };
 
   const assertDetailPage = (artifact: ArtifactInput) => {

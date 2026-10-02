@@ -21,7 +21,9 @@ describe('Artifact detail flow – create two artifacts and verify details', () 
     return {
       title: `Cypress Artifact ${suffix} ${rand}`,
       description: `This is a Cypress-generated description for artifact ${suffix}. It must be well over fifty characters long, so here are some extra words to meet that limit.`,
-      keywords: Array.from({ length: 3 }, () => Math.random().toString(36).substring(2, 8)).join(', ')
+      keywords: Array.from({ length: 3 }, () =>
+        Math.random().toString(36).substring(2, 8),
+      ).join(', '),
     };
   };
 
@@ -33,10 +35,15 @@ describe('Artifact detail flow – create two artifacts and verify details', () 
     // Navigate to sign-in page via Contribute link if not already signed in
     cy.contains('Contribute').click();
 
-    cy.url().then(url => {
+    cy.url().then((url) => {
       if (url.includes('/auth/sign-in')) {
-        cy.get('input[formcontrolname="username"]').type(Cypress.env('PI1_EMAIL'));
-        cy.get('input[formcontrolname="password"]').type(Cypress.env('PI1_PASSWORD'), { log: false });
+        cy.get('input[formcontrolname="username"]').type(
+          Cypress.env('PI1_EMAIL'),
+        );
+        cy.get('input[formcontrolname="password"]').type(
+          Cypress.env('PI1_PASSWORD'),
+          { log: false },
+        );
         cy.get('.form-actions button').click();
         cy.url().should('not.include', '/auth/sign-in');
       }
@@ -47,12 +54,18 @@ describe('Artifact detail flow – create two artifacts and verify details', () 
     cy.contains('Contribute').click();
 
     cy.get('input[formcontrolname="title"]').type(artifact.title);
-    cy.get('textarea[formcontrolname="description"]').type(artifact.description);
-    cy.get('textarea[formcontrolname="submission_comment"]').type('Initial submission comment for E2E.');
+    cy.get('textarea[formcontrolname="description"]').type(
+      artifact.description,
+    );
+    cy.get('textarea[formcontrolname="submission_comment"]').type(
+      'Initial submission comment for E2E.',
+    );
     cy.get('input[formcontrolname="keywords"]').type(artifact.keywords);
 
     // upload sample file
-    cy.get('input[type="file"]').first().selectFile('cypress/fixtures/sample.txt', { force: true });
+    cy.get('input[type="file"]')
+      .first()
+      .selectFile('cypress/fixtures/sample.txt', { force: true });
 
     cy.wait(2000);
 
@@ -60,7 +73,9 @@ describe('Artifact detail flow – create two artifacts and verify details', () 
 
     cy.get('[data-cy="submit-btn"]').click();
 
-    cy.contains('Your artifact has been successfully submitted!').should('be.visible');
+    cy.contains('Your artifact has been successfully submitted!').should(
+      'be.visible',
+    );
 
     cy.get('[data-cy="submit-btn"]').should('be.disabled');
 
@@ -75,7 +90,6 @@ describe('Artifact detail flow – create two artifacts and verify details', () 
 
     // Return to home to proceed with the next artifact flow
     cy.visit('/');
-
   };
 
   before(() => {
@@ -90,14 +104,18 @@ describe('Artifact detail flow – create two artifacts and verify details', () 
     cy.contains('VIEW ALL').click();
     cy.url().should('include', '/list-artifacts');
 
-    cy.get('input[placeholder="Artifact\'s title contains"]').clear().type(title);
+    cy.get('input[placeholder="Artifact\'s title contains"]')
+      .clear()
+      .type(title);
     cy.contains('button', 'Search').click();
 
     // one card expected
     cy.get('app-artifact-card').should('have.length', 1);
-    cy.get('app-artifact-card').first().within(() => {
-      cy.contains('a.view-button', 'View').click();
-    });
+    cy.get('app-artifact-card')
+      .first()
+      .within(() => {
+        cy.contains('a.view-button', 'View').click();
+      });
   };
 
   const assertDetailPage = (artifact: ArtifactInput) => {
@@ -107,29 +125,42 @@ describe('Artifact detail flow – create two artifacts and verify details', () 
     cy.get('.keyword-badge').contains(firstKeyword);
 
     // Assert action buttons exist and are enabled
-    cy.contains('button', 'Print full Manifest').should('be.visible').and('not.be.disabled');
-    cy.contains('button', 'Update Artifact').should('be.visible').and('not.be.disabled');
+    cy.contains('button', 'Print full Manifest')
+      .should('be.visible')
+      .and('not.be.disabled');
+    cy.contains('button', 'Update Artifact')
+      .should('be.visible')
+      .and('not.be.disabled');
 
     // Assert Footprint subtitle and value
     cy.contains('.section-heading', 'Footprint (SHA-256)').should('be.visible');
-    cy.get('code.text-break').invoke('text').should('match', /^[a-f0-9]{64}$/);
+    cy.get('code.text-break')
+      .invoke('text')
+      .should('match', /^[a-f0-9]{64}$/);
     // Capture current footprint if checking Artifact A and not yet stored
-    cy.get('code.text-break').invoke('text').then(fp => {
-      if (!artifactAFootprintBefore && artifact.title.includes('A')) {
-        artifactAFootprintBefore = (fp as string).trim();
-      }
-    });
+    cy.get('code.text-break')
+      .invoke('text')
+      .then((fp) => {
+        if (!artifactAFootprintBefore && artifact.title.includes('A')) {
+          artifactAFootprintBefore = (fp as string).trim();
+        }
+      });
 
     // Stub window.open and verify print writes manifest content
-    cy.window().then(win => {
+    cy.window().then((win) => {
       const docOpen = cy.stub().as('docOpen');
       const docWrite = cy.stub().as('docWrite');
       const docClose = cy.stub().as('docClose');
       const focus = cy.stub().as('focus');
-      cy.stub(win, 'open').as('winOpen').callsFake(() => ({
-        document: { open: docOpen, write: docWrite, close: docClose },
-        focus
-      }) as any);
+      cy.stub(win, 'open')
+        .as('winOpen')
+        .callsFake(
+          () =>
+            ({
+              document: { open: docOpen, write: docWrite, close: docClose },
+              focus,
+            }) as any,
+        );
     });
 
     cy.contains('button', 'Print full Manifest').click();
@@ -167,14 +198,23 @@ describe('Artifact detail flow – create two artifacts and verify details', () 
 
     // Change keywords
     const updatedKeyword = 'e2e-updated';
-    cy.get('input[formcontrolname="keywords"]').clear().type(`${updatedKeyword}`);
+    cy.get('input[formcontrolname="keywords"]')
+      .clear()
+      .type(`${updatedKeyword}`);
 
     // Upload a new file with a different name (ensures new footprint via Cypress fast-path)
     const contents = Cypress.Buffer.from('updated content ' + Date.now());
-    cy.get('input[type="file"]').first().selectFile({ contents, fileName: 'updated-e2e.txt', mimeType: 'text/plain' }, { force: true });
+    cy.get('input[type="file"]')
+      .first()
+      .selectFile(
+        { contents, fileName: 'updated-e2e.txt', mimeType: 'text/plain' },
+        { force: true },
+      );
 
     // Provide reason for update
-    cy.get('textarea[formcontrolname="submission_comment"]').clear().type('Reason for update via E2E flow.');
+    cy.get('textarea[formcontrolname="submission_comment"]')
+      .clear()
+      .type('Reason for update via E2E flow.');
 
     // Submit update
     cy.contains('button', 'Update').should('not.be.disabled').click();
@@ -195,9 +235,11 @@ describe('Artifact detail flow – create two artifacts and verify details', () 
 
     // Assert footprint has changed from original capture
     if (artifactAFootprintBefore) {
-      cy.get('code.text-break').invoke('text').should(fp => {
-        expect((fp as string).trim()).not.to.eq(artifactAFootprintBefore);
-      });
+      cy.get('code.text-break')
+        .invoke('text')
+        .should((fp) => {
+          expect((fp as string).trim()).not.to.eq(artifactAFootprintBefore);
+        });
     }
   });
 });

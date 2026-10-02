@@ -1,17 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { WorkflowsPreviewComponent } from './workflows-preview.component';
-import { WorkflowService } from '../../services/workflow.service';
+import { PublicCatalogService } from '../../guest/public-catalog.service';
 import { WorkflowListItem } from '../../models/workflow.model';
 import { of } from 'rxjs';
 import { Component, Input } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { CommonModule } from '@angular/common';
 import { RouterTestingModule } from '@angular/router/testing';
+import { AuthService } from '../../auth/auth.service';
 
 @Component({
   selector: 'app-workflow-card',
   template: '<div>{{workflow.title}}</div>',
-  standalone: true
+  standalone: true,
 })
 class MockWorkflowCardComponent {
   @Input() workflow!: WorkflowListItem;
@@ -35,11 +36,11 @@ const mockWorkflows: WorkflowListItem[] = [
     submissionState: 'SUCCESS',
     submittedAt: new Date(),
     updatedAt: null as any,
-  }
+  },
 ];
 
-class MockWorkflowService {
-  getWorkflows() {
+class MockCatalogService {
+  listWorkflows() {
     return of(mockWorkflows);
   }
 }
@@ -47,7 +48,7 @@ class MockWorkflowService {
 describe('WorkflowsPreviewComponent', () => {
   let component: WorkflowsPreviewComponent;
   let fixture: ComponentFixture<WorkflowsPreviewComponent>;
-  let workflowService: WorkflowService;
+  let catalog: PublicCatalogService;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -55,16 +56,17 @@ describe('WorkflowsPreviewComponent', () => {
         CommonModule,
         RouterTestingModule,
         WorkflowsPreviewComponent,
-        MockWorkflowCardComponent
+        MockWorkflowCardComponent,
       ],
       providers: [
-        { provide: WorkflowService, useClass: MockWorkflowService }
-      ]
+        { provide: PublicCatalogService, useClass: MockCatalogService },
+        { provide: AuthService, useValue: { isAuthenticated: () => true } },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(WorkflowsPreviewComponent);
     component = fixture.componentInstance;
-    workflowService = TestBed.inject(WorkflowService);
+    catalog = TestBed.inject(PublicCatalogService);
     fixture.detectChanges();
   });
 
@@ -78,19 +80,28 @@ describe('WorkflowsPreviewComponent', () => {
   });
 
   it('should display the section title', () => {
-    const titleElement = fixture.debugElement.query(By.css('.section-title'));
+    const titleElement = fixture.debugElement.query(
+      By.css('.preview-heading h3'),
+    );
     expect(titleElement).toBeTruthy();
     expect(titleElement.nativeElement.textContent).toContain('Workflows');
   });
 
-  it('should display a "VIEW ALL" link', () => {
-    const linkElement = fixture.debugElement.query(By.css('.view-all-link'));
+  it('should display a link to the workflow catalog', () => {
+    const linkElement = fixture.debugElement.query(
+      By.css('.preview-heading a'),
+    );
     expect(linkElement).toBeTruthy();
-    expect(linkElement.nativeElement.textContent.trim()).toBe('VIEW ALL');
+    expect(linkElement.nativeElement.textContent).toContain(
+      'View all workflows',
+    );
+    expect(linkElement.attributes['href']).toBe('/list-workflows');
   });
 
   it('should render workflow cards for each workflow', () => {
-    const cardElements = fixture.debugElement.queryAll(By.css('app-workflow-card'));
+    const cardElements = fixture.debugElement.queryAll(
+      By.css('app-workflow-card'),
+    );
     expect(cardElements.length).toBe(2);
   });
 
@@ -100,8 +111,8 @@ describe('WorkflowsPreviewComponent', () => {
     expect(textContent).toContain('Test Workflow 2');
   });
 
-  it('should call getWorkflows from the service', () => {
-    const spy = spyOn(workflowService, 'getWorkflows').and.callThrough();
+  it('should call listWorkflows from the public catalog', () => {
+    const spy = spyOn(catalog, 'listWorkflows').and.callThrough();
     component.ngOnInit();
     expect(spy).toHaveBeenCalled();
   });

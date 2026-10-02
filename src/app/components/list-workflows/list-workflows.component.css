@@ -1,58 +1,197 @@
-.workflows-container {
-  width: 100%;
+:host {
+  display: block;
+  background: #ffffff;
+}
+
+.catalog-page {
+  width: min(1220px, calc(100% - 40px));
+  min-height: calc(100vh - 72px);
   margin: 0 auto;
-  padding: 2rem;
-  font-family: 'Open Sans', sans-serif;
+  padding: 38px 0 70px;
 }
 
-.main-title {
-  text-align: left;
-  font-size: 54px;
-  font-weight: 700;
-  color: #1D3557;
-  margin-bottom: 0.5rem;
-  padding-left: 0;
+.page-header {
+  padding-bottom: 12px;
+  border-bottom: 1px solid #9ba4b5;
 }
 
-.title-divider {
-  width: 50%;
-  height: 1px;
-  background-color: #9BA4B5;
-  margin-bottom: 2rem;
+.eyebrow {
+  margin: 0 0 8px;
+  color: var(--osc-teal);
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
 }
 
-.content-wrapper {
-  margin: 0 auto;
-  max-width: 95%;
+.page-header h1 {
+  margin: 0;
+  color: var(--osc-navy);
+  font-size: clamp(2rem, 3vw, 3.375rem);
+  font-weight: 750;
 }
 
-.subtitle {
-  text-align: left;
-  padding-left: 3%;
-  font-size: 2rem;
-  color: #1D3557;
-  margin-bottom: 2rem;
-  font-weight: 700;
+.page-header p:last-child {
+  margin: 9px 0 0;
+  color: var(--osc-muted);
+  font-size: 17px;
+}
+
+.results {
+  padding-top: 34px;
+}
+
+.results-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.results-heading h2 {
+  margin: 0;
+  color: var(--osc-navy);
+  font-size: 24px;
+}
+
+.results-heading p {
+  margin: 0;
+  color: var(--osc-muted);
+  font-size: 14px;
 }
 
 .workflows-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
-  gap: 2rem;
-  justify-content: center;
-  max-width: 1280px;
-  margin: 0 auto;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
 }
 
-.workflow-card-wrapper {
+.state-message {
+  min-height: 180px;
   display: flex;
+  align-items: center;
   justify-content: center;
+  gap: 18px;
+  padding: 30px;
+  border: 1px solid var(--osc-line);
+  background: var(--osc-surface);
+  color: var(--osc-muted);
 }
 
-.loading-message {
-  text-align: center;
-  font-size: 1.2rem;
-  color: #6c757d;
-  margin-top: 3rem;
+.state-message > i {
+  color: var(--osc-teal);
+  font-size: 30px;
 }
 
+.state-message strong {
+  display: block;
+  color: var(--osc-ink);
+  font-size: 18px;
+}
+
+.state-message p {
+  margin: 4px 0 0;
+}
+
+.state-message button {
+  margin-top: 14px;
+  padding: 8px 14px;
+  border: 1px solid var(--osc-navy);
+  border-radius: 4px;
+  background: var(--osc-navy);
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.state-error {
+  border-color: #deb9bb;
+  background: #fff5f5;
+}
+
+.state-error > i {
+  color: var(--osc-error);
+}
+
+.loading-spinner {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  border: 3px solid #b7c8ce;
+  border-top-color: var(--osc-teal);
+  border-radius: 50%;
+  animation: spin 700ms linear infinite;
+}
+
+.pagination-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin-top: 36px;
+}
+
+.page-arrow,
+.page-number {
+  width: 42px;
+  height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #9cadb6;
+  border-radius: 4px;
+  background: #ffffff;
+  color: var(--osc-navy);
+  font-weight: 700;
+}
+
+.page-number:hover:not(.active),
+.page-arrow:hover:not(:disabled) {
+  background: var(--osc-surface);
+}
+
+.page-number.active {
+  border-color: var(--osc-navy);
+  background: var(--osc-navy);
+  color: #ffffff;
+}
+
+.page-arrow:disabled {
+  opacity: 0.45;
+}
+
+.page-ellipsis {
+  padding: 0 4px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 960px) {
+  .workflows-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .catalog-page {
+    width: calc(100% - 32px);
+    padding-top: 40px;
+  }
+
+  .page-header h1 {
+    font-size: 36px;
+  }
+
+  .workflows-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .results-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 6px;
+  }
+}

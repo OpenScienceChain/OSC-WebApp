@@ -1,0 +1,557 @@
+<main class="demo-page" aria-labelledby="demo-title">
+  <header class="demo-header">
+    <a
+      class="demo-brand"
+      href="/demo"
+      aria-label="Open Science Chain demonstration home"
+    >
+      <img
+        src="assets/images/osc-logo-white-transparent.png"
+        alt="Open Science Chain"
+      />
+    </a>
+    <span>US-RSE 2026 interactive demonstration</span>
+  </header>
+
+  <section class="hero" aria-labelledby="demo-title">
+    <div>
+      <p class="eyebrow">
+        A temporary, privacy-preserving research provenance demo
+      </p>
+      <h1 id="demo-title">See a fingerprint become a provenance record</h1>
+      <p class="hero-copy">
+        Choose a public demonstration organization, fingerprint one local file,
+        and follow the resulting artifact or workflow to the OSC permissioned
+        ledger. No account, name, email address, filename, or file content is
+        collected.
+      </p>
+    </div>
+    <aside class="privacy-card" aria-labelledby="privacy-heading">
+      <h2 id="privacy-heading">What stays on this device</h2>
+      <p>Your file bytes and original filename never leave the browser.</p>
+      <p>
+        Only SHA-256, byte size, lowercase extension, and controlled selections
+        are submitted.
+      </p>
+    </aside>
+  </section>
+
+  <section class="panel status-panel" aria-labelledby="status-heading">
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">Stable QR destination</p>
+        <h2 id="status-heading">Demonstration status</h2>
+      </div>
+      <button type="button" class="secondary-button" (click)="refreshStatus()">
+        Refresh status
+      </button>
+    </div>
+
+    <p *ngIf="statusLoading" role="status">Checking the live status…</p>
+    <div *ngIf="status" class="status-grid" aria-live="polite">
+      <div>
+        <span
+          class="status-badge"
+          [attr.data-state]="status.state"
+          data-cy="demo-state"
+        >
+          {{ status.state }}
+        </span>
+        <p class="status-message">{{ status.message }}</p>
+        <p>{{ stateDescription(status.state) }}</p>
+      </div>
+      <dl class="schedule">
+        <div>
+          <dt>Opens</dt>
+          <dd>
+            <time [attr.datetime]="status.opensAt">{{
+              status.opensAt | date: 'medium'
+            }}</time>
+          </dd>
+        </div>
+        <div>
+          <dt>Closes</dt>
+          <dd>
+            <time [attr.datetime]="status.closesAt">{{
+              status.closesAt | date: 'medium'
+            }}</time>
+          </dd>
+        </div>
+      </dl>
+    </div>
+    <p *ngIf="statusError" class="message error-message" role="alert">
+      {{ statusError }}
+    </p>
+    <p class="timezone-note">
+      Official window: October 20, 2026 at 8:00 AM Pacific through October 23,
+      2026 at 8:00 AM Pacific (maximum 72 hours).
+    </p>
+  </section>
+
+  <section
+    *ngIf="counters"
+    class="counter-grid"
+    aria-label="Anonymous public counters"
+  >
+    <article>
+      <strong>{{ counters.anonymousBrowserSessions }}</strong>
+      <span>Anonymous browser sessions</span>
+    </article>
+    <article>
+      <strong>{{ counters.confirmedArtifacts }}</strong>
+      <span>Confirmed artifacts</span>
+      <small>{{ counters.acceptedArtifacts }} accepted</small>
+    </article>
+    <article>
+      <strong>{{ counters.confirmedWorkflows }}</strong>
+      <span>Confirmed workflows</span>
+      <small>{{ counters.acceptedWorkflows }} accepted</small>
+    </article>
+    <article>
+      <strong>{{ counters.provenanceHistoryViews }}</strong>
+      <span>Provenance history views</span>
+    </article>
+  </section>
+
+  <section
+    *ngIf="status?.state === 'OPEN' && !session"
+    class="panel"
+    aria-labelledby="organization-heading"
+  >
+    <p class="step-label">Step 1</p>
+    <h2 id="organization-heading">Choose one write boundary</h2>
+    <p>
+      Both spaces are publicly browsable. Your short-lived guest capability is
+      permanently bound to the organization selected here.
+    </p>
+    <div
+      class="organization-grid"
+      role="group"
+      aria-label="Demonstration organization"
+    >
+      <button
+        *ngFor="let organization of organizations"
+        type="button"
+        class="organization-card"
+        [class.selected]="selectedOrganization === organization.slug"
+        [attr.aria-pressed]="selectedOrganization === organization.slug"
+        (click)="selectOrganization(organization.slug)"
+      >
+        <strong>{{ organization.name }}</strong>
+        <span>{{ organization.description }}</span>
+      </button>
+    </div>
+    <button
+      type="button"
+      class="primary-button"
+      data-cy="start-demo-session"
+      [disabled]="!selectedOrganization || sessionLoading"
+      (click)="startSession()"
+    >
+      {{
+        sessionLoading
+          ? 'Starting guest session…'
+          : 'Start 30-minute guest session'
+      }}
+    </button>
+    <p *ngIf="sessionError" class="message error-message" role="alert">
+      {{ sessionError }}
+    </p>
+  </section>
+
+  <section
+    *ngIf="session"
+    class="session-banner"
+    aria-label="Current guest session"
+  >
+    <div>
+      <span>Guest contributor</span>
+      <strong>{{ session.contributorAlias }}</strong>
+    </div>
+    <div>
+      <span>Write boundary</span>
+      <strong>{{ selectedOrganizationName }}</strong>
+    </div>
+    <div>
+      <span>Expires</span>
+      <strong
+        ><time [attr.datetime]="session.expiresAt">{{
+          session.expiresAt | date: 'shortTime'
+        }}</time></strong
+      >
+    </div>
+    <button
+      *ngIf="status?.state === 'OPEN'"
+      type="button"
+      class="secondary-button light"
+      [disabled]="sessionLoading"
+      (click)="refreshSession()"
+    >
+      Refresh session
+    </button>
+  </section>
+  <p *ngIf="sessionError && session" class="message error-message" role="alert">
+    {{ sessionError }}
+  </p>
+
+  <div *ngIf="session" class="contribution-layout">
+    <section class="panel" aria-labelledby="artifact-heading">
+      <p class="step-label">Step 2</p>
+      <h2 id="artifact-heading">Fingerprint a local file</h2>
+      <p>
+        Choose a non-empty file up to 10 MiB. OSC receives no file bytes and no
+        original filename.
+      </p>
+      <span class="field-label">Local file</span>
+      <label class="file-picker" for="demo-file">Choose local file</label>
+      <input
+        id="demo-file"
+        data-cy="demo-file"
+        class="file-input-private"
+        type="file"
+        accept=".csv,.json,.md,.pdf,.png,.tif,.tiff,.txt,.yaml,.yml"
+        [disabled]="
+          !interactionsAllowed || artifactHashing || artifactSubmitting
+        "
+        aria-describedby="file-help"
+        (change)="onFileSelected($event)"
+      />
+      <span *ngIf="artifactHash" class="file-selected" role="status">
+        Selected locally; filename withheld.
+      </span>
+      <p id="file-help" class="field-help">
+        Allowed extensions: {{ allowedExtensions }}. The local name is
+        deliberately not displayed.
+      </p>
+
+      <div *ngIf="artifactHashing" class="message" role="status">
+        Computing SHA-256 in this browser…
+      </div>
+      <dl
+        *ngIf="artifactHash"
+        class="fingerprint-summary"
+        data-cy="fingerprint-summary"
+      >
+        <div>
+          <dt>Size</dt>
+          <dd>{{ formatBytes(artifactSize) }}</dd>
+        </div>
+        <div>
+          <dt>Extension</dt>
+          <dd>.{{ artifactExtension }}</dd>
+        </div>
+        <div>
+          <dt>SHA-256</dt>
+          <dd>
+            <code>{{ artifactHash }}</code>
+          </dd>
+        </div>
+      </dl>
+
+      <label class="field-label" for="artifact-context"
+        >Controlled research context</label
+      >
+      <select
+        id="artifact-context"
+        [(ngModel)]="artifactContext"
+        [disabled]="!interactionsAllowed || artifactSubmitting"
+      >
+        <option
+          *ngFor="let context of researchContexts"
+          [ngValue]="context.value"
+        >
+          {{ context.label }}
+        </option>
+      </select>
+      <button
+        type="button"
+        class="primary-button"
+        data-cy="submit-demo-artifact"
+        [disabled]="!artifactReady"
+        (click)="submitArtifact()"
+      >
+        {{
+          artifactSubmitting ? 'Submitting fingerprint…' : 'Submit fingerprint'
+        }}
+      </button>
+      <p *ngIf="artifactError" class="message error-message" role="alert">
+        {{ artifactError }}
+      </p>
+    </section>
+
+    <section class="panel" aria-labelledby="workflow-heading">
+      <p class="step-label">Step 3</p>
+      <h2 id="workflow-heading">Link a workflow</h2>
+      <p>
+        Select one to three artifacts created by this guest alias in
+        {{ selectedOrganizationName }}.
+      </p>
+      <fieldset
+        class="artifact-options"
+        [disabled]="!interactionsAllowed || workflowSubmitting"
+      >
+        <legend>Your organization-bound artifacts</legend>
+        <label
+          *ngFor="
+            let artifact of ownArtifactOptions;
+            trackBy: trackArtifactOption
+          "
+        >
+          <input
+            type="checkbox"
+            [checked]="selectedArtifactIds.has(artifact.id)"
+            (change)="toggleArtifact(artifact.id, $any($event.target).checked)"
+          />
+          <span>{{ artifact.title }}</span>
+          <small>{{ artifact.state }}</small>
+        </label>
+        <p *ngIf="ownArtifactOptions.length === 0" class="field-help">
+          Submit an artifact first. It will appear here as soon as it is
+          accepted.
+        </p>
+      </fieldset>
+      <label class="field-label" for="workflow-context"
+        >Controlled research context</label
+      >
+      <select
+        id="workflow-context"
+        [(ngModel)]="workflowContext"
+        [disabled]="!interactionsAllowed || workflowSubmitting"
+      >
+        <option
+          *ngFor="let context of researchContexts"
+          [ngValue]="context.value"
+        >
+          {{ context.label }}
+        </option>
+      </select>
+      <button
+        type="button"
+        class="primary-button"
+        data-cy="submit-demo-workflow"
+        [disabled]="!workflowReady"
+        (click)="submitWorkflow()"
+      >
+        {{ workflowSubmitting ? 'Submitting workflow…' : 'Create workflow' }}
+      </button>
+      <p *ngIf="workflowError" class="message error-message" role="alert">
+        {{ workflowError }}
+      </p>
+    </section>
+  </div>
+
+  <section
+    *ngIf="createdArtifacts.length"
+    class="panel"
+    aria-labelledby="artifact-results-heading"
+  >
+    <p class="step-label">Live confirmation</p>
+    <h2 id="artifact-results-heading">Artifact results</h2>
+    <article
+      *ngFor="let artifact of createdArtifacts"
+      class="result-card"
+      data-cy="artifact-result"
+    >
+      <div class="result-heading">
+        <div>
+          <h3>{{ artifact.title }}</h3>
+          <p>{{ artifact.organization }} · {{ artifact.contributorAlias }}</p>
+        </div>
+        <span class="state-chip">{{ artifact.submissionState }}</span>
+      </div>
+      <dl class="result-details">
+        <div>
+          <dt>Record ID</dt>
+          <dd>
+            <code>{{ artifact.id }}</code>
+          </dd>
+        </div>
+        <div>
+          <dt>Generated manifest</dt>
+          <dd>{{ artifact.manifestName }}</dd>
+        </div>
+        <div>
+          <dt>File verification</dt>
+          <dd>
+            {{ artifact.verified ? 'Verified' : 'Awaiting verification' }}
+          </dd>
+        </div>
+        <div>
+          <dt>Transaction</dt>
+          <dd>
+            <code>{{ artifact.blockchainTxId || 'Pending' }}</code>
+          </dd>
+        </div>
+      </dl>
+      <p *ngIf="artifact.submissionError" class="message error-message">
+        {{ artifact.submissionError }}
+      </p>
+      <button
+        type="button"
+        class="secondary-button"
+        (click)="loadArtifactHistory(artifact)"
+      >
+        Inspect provenance history
+      </button>
+      <div
+        *ngIf="artifactHistoryFor === artifact.id"
+        class="history-panel"
+        aria-live="polite"
+      >
+        <p *ngIf="artifactHistoryLoading">Loading ledger history…</p>
+        <ol *ngIf="!artifactHistoryLoading && artifactHistory.length">
+          <li *ngFor="let item of artifactHistory">
+            <strong
+              ><code>{{ historyTransaction(item) }}</code></strong
+            >
+            <time *ngIf="item.timestamp" [attr.datetime]="item.timestamp">{{
+              item.timestamp | date: 'medium'
+            }}</time>
+          </li>
+        </ol>
+        <p *ngIf="!artifactHistoryLoading && !artifactHistory.length">
+          No ledger history is available yet.
+        </p>
+      </div>
+    </article>
+  </section>
+
+  <section
+    *ngIf="createdWorkflows.length"
+    class="panel"
+    aria-labelledby="workflow-results-heading"
+  >
+    <p class="step-label">Live confirmation</p>
+    <h2 id="workflow-results-heading">Workflow results</h2>
+    <article
+      *ngFor="let workflow of createdWorkflows"
+      class="result-card"
+      data-cy="workflow-result"
+    >
+      <div class="result-heading">
+        <div>
+          <h3>{{ workflow.title }}</h3>
+          <p>{{ workflow.organization }} · {{ workflow.contributorAlias }}</p>
+        </div>
+        <span class="state-chip">{{ workflow.submissionState }}</span>
+      </div>
+      <dl class="result-details">
+        <div>
+          <dt>Record ID</dt>
+          <dd>
+            <code>{{ workflow.id }}</code>
+          </dd>
+        </div>
+        <div>
+          <dt>Linked artifacts</dt>
+          <dd>{{ workflow.artifactIds.length }}</dd>
+        </div>
+        <div>
+          <dt>Transaction</dt>
+          <dd>
+            <code>{{ workflow.blockchainTxId || 'Pending' }}</code>
+          </dd>
+        </div>
+      </dl>
+      <button
+        type="button"
+        class="secondary-button"
+        (click)="viewWorkflowHistory(workflow)"
+      >
+        Inspect workflow history
+      </button>
+      <div
+        *ngIf="workflowHistoryFor === workflow.id"
+        class="history-panel"
+        aria-live="polite"
+      >
+        <p *ngIf="workflowHistoryLoading">Loading workflow history…</p>
+        <ol *ngIf="!workflowHistoryLoading && workflowHistory.length">
+          <li *ngFor="let item of workflowHistory">
+            <strong
+              ><code>{{ historyTransaction(item) }}</code></strong
+            >
+            <time *ngIf="item.timestamp" [attr.datetime]="item.timestamp">
+              {{ item.timestamp | date: 'medium' }}
+            </time>
+          </li>
+        </ol>
+        <p *ngIf="!workflowHistoryLoading && !workflowHistory.length">
+          No workflow history is available yet.
+        </p>
+      </div>
+    </article>
+  </section>
+
+  <section class="panel" aria-labelledby="catalog-heading">
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">Public, controlled records</p>
+        <h2 id="catalog-heading">Browse both demonstration spaces</h2>
+      </div>
+      <div class="filter-group" aria-label="Filter records by organization">
+        <button
+          type="button"
+          [attr.aria-pressed]="catalogOrganization === 'all'"
+          (click)="setCatalogOrganization('all')"
+        >
+          Both
+        </button>
+        <button
+          type="button"
+          [attr.aria-pressed]="catalogOrganization === 'neuroscience-gateway'"
+          (click)="setCatalogOrganization('neuroscience-gateway')"
+        >
+          Neuroscience
+        </button>
+        <button
+          type="button"
+          [attr.aria-pressed]="catalogOrganization === 'citizen-science'"
+          (click)="setCatalogOrganization('citizen-science')"
+        >
+          Citizen Science
+        </button>
+      </div>
+    </div>
+    <p *ngIf="catalogLoading" role="status">Loading public records…</p>
+    <p *ngIf="catalogError" class="message error-message" role="alert">
+      {{ catalogError }}
+    </p>
+    <div *ngIf="!catalogLoading && !catalogError" class="catalog-columns">
+      <div>
+        <h3>Artifacts</h3>
+        <article *ngFor="let artifact of catalogArtifacts" class="catalog-card">
+          <span>{{ artifact.organization }}</span>
+          <h4>{{ artifact.title }}</h4>
+          <p>{{ artifact.description }}</p>
+          <small
+            >{{ artifact.submissionState }} ·
+            {{ artifact.contributorAlias }}</small
+          >
+        </article>
+        <p *ngIf="catalogArtifacts.length === 0">No public artifacts yet.</p>
+      </div>
+      <div>
+        <h3>Workflows</h3>
+        <article *ngFor="let workflow of catalogWorkflows" class="catalog-card">
+          <span>{{ workflow.organization }}</span>
+          <h4>{{ workflow.title }}</h4>
+          <p>{{ workflow.description }}</p>
+          <small
+            >{{ workflow.submissionState }} ·
+            {{ workflow.artifactIds.length }} linked artifact(s)</small
+          >
+        </article>
+        <p *ngIf="catalogWorkflows.length === 0">No public workflows yet.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer class="demo-footer">
+    <p>
+      This temporary demonstration collects formative usability and operational
+      evidence. It does not establish production readiness, adoption, or high
+      availability.
+    </p>
+  </footer>
+</main>

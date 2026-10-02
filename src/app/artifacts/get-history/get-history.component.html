@@ -1,112 +1,287 @@
-<div class="container py-4">
-  <h2 class="page-headline mb-3">Dive into your Artifact's Full History 📜</h2>
-  <div class="mb-3 content-block">
-    <p class="mb-1"><strong>Title:</strong> {{ artifactTitle }}</p>
-    <p class="mb-1"><strong>Description:</strong> {{ artifactDescription }}</p>
-    <p class="mb-1" *ngIf="artifactId"><strong>ID:</strong> {{ 'osc-is-artifact-' + artifactId }}</p>
-    <div class="mt-2 d-flex gap-2">
-      <button class="btn btn-outline-primary" (click)="onRefresh()">Refresh History</button>
-      <a class="btn btn-primary" [routerLink]="['/update-artifact', artifactId]">Update this Artifact</a>
-      <a class="btn btn-outline-primary" [routerLink]="['/artifacts', artifactId]">See Artifact's Detail</a>
-    </div>
-  </div>
+<main class="history-page" aria-labelledby="history-heading">
+  <header class="history-hero">
+    <div class="content-width">
+      <nav class="breadcrumbs" aria-label="Breadcrumb">
+        <a routerLink="/list-artifacts">Artifacts</a>
+        <i class="bi bi-chevron-right" aria-hidden="true"></i>
+        <a *ngIf="artifactId" [routerLink]="['/artifacts', artifactId]">
+          {{ artifactTitle || 'Artifact detail' }}
+        </a>
+        <i class="bi bi-chevron-right" aria-hidden="true"></i>
+        <span aria-current="page">Provenance history</span>
+      </nav>
 
-  <div *ngIf="isLoading">Loading history…</div>
-
-  <div *ngIf="!isLoading && errorMessage" class="text-danger">{{ errorMessage }}</div>
-
-  <div *ngIf="!isLoading && totalItems === 0" class="text-muted">No history found.</div>
-
-  <div class="history-list" *ngIf="!isLoading && totalItems > 0">
-    <div class="history-toolbar d-flex justify-content-between align-items-center mb-2">
-      <div class="pager-info">Showing 10 items per page (of {{ totalItems }} total)</div>
-      <div class="custom-pager" *ngIf="totalUiPages > 1">
-        <button class="page-arrow" (click)="onPrev()" [disabled]="uiPage === 1">&laquo;</button>
-        <ng-container *ngFor="let page of getUiPages()">
-          <span class="page-ellipsis" *ngIf="page === '...'">...</span>
-          <button *ngIf="page !== '...'" class="page-number" [class.active]="uiPage === page" (click)="onGoToPage(+page)">{{ page }}</button>
-        </ng-container>
-        <button class="page-arrow" (click)="onNext()" [disabled]="uiPage === totalUiPages">&raquo;</button>
-      </div>
-    </div>
-    <div class="history-card card shadow-sm mb-3" *ngFor="let item of displayedItems; let i = index">
-      <div class="card-header d-flex justify-content-between align-items-center">
+      <div class="hero-layout">
         <div>
-          <strong>{{ item.timestamp | date:'medium' }}</strong>
+          <p class="eyebrow">Permissioned provenance record</p>
+          <h1 id="history-heading">Artifact history</h1>
+          <p class="artifact-title">
+            {{ artifactTitle || 'Research artifact' }}
+          </p>
+          <p *ngIf="artifactDescription" class="artifact-description">
+            {{ artifactDescription }}
+          </p>
         </div>
-        <div>
-          <span class="badge" [ngClass]="{
-                   'tag-current': isFirstPage && i === 0,
-                   'tag-initial': isLastPage && i === (displayedItems.length - 1) && !item.isDelete,
-                   'tag-delete': (!isFirstPage || i !== 0) && item.isDelete,
-                   'tag-update': (!isFirstPage || i !== 0) && !item.isDelete && !(isLastPage && i === (displayedItems.length - 1))
-                 }">
-            {{ isFirstPage && i === 0 ? 'Current State' : (isLastPage && i === (displayedItems.length - 1) && !item.isDelete ? 'Initial State' : (item.isDelete ? 'Deleted' : 'Snapshot')) }}
-          </span>
-          <a class="permalink" [routerLink]="['/artifacts', artifactId, 'history', item.txId]" [state]="{ snapshot: item, isCurrent: (isFirstPage && i === 0), isInitial: (isLastPage && i === (displayedItems.length - 1) && !item.isDelete) }" title="Open snapshot detail">🔗</a>
-        </div>
-      </div>
-      <div class="card-body">
-        <div *ngIf="item.value as v; else noValue">
-          <div class="row g-3">
-            <div class="col-md-6">
-              <h6 class="section-title">Meta</h6>
-              <p class="mb-1"><strong>Submission State:</strong>
-                <span class="badge ms-1" [ngClass]="{
-                  'bg-success': v.submissionState === 'SUCCESS' || v.submissionState === 'CONFIRMED' || v.submissionState === 'APPROVED',
-                  'bg-warning': v.submissionState === 'PENDING',
-                  'bg-danger':  v.submissionState === 'FAILED' || v.submissionState === 'REJECTED',
-                  'bg-secondary': v.submissionState !== 'SUCCESS' && v.submissionState !== 'CONFIRMED' && v.submissionState !== 'APPROVED' && v.submissionState !== 'PENDING' && v.submissionState !== 'FAILED' && v.submissionState !== 'REJECTED'
-                }">{{ v.submissionState }}</span>
-              </p>
-              <p class="mb-1"><strong>Footprint:</strong> <span class="text-break">{{ v.footprint || '—' }}</span></p>
-            </div>
-            <div class="col-md-6">
-              <h6 class="section-title">Ownership</h6>
-              <p class="mb-1"><strong>Submitter:</strong> {{ v.submitterUsername }}</p>
-              <p class="mb-1"><strong>Email:</strong> {{ v.submitterEmail }}</p>
-            </div>
-            <div class="col-12" *ngIf="v.manifest?.length">
-              <h6 class="section-title">Manifest ({{ v.manifest.length }})</h6>
-              <div class="table-responsive">
-                <table class="table table-sm align-middle">
-                  <thead class="table-light">
-                    <tr>
-                      <th>Filename</th>
-                      <th>Hash</th>
-                      <th>Alg.</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr *ngFor="let m of v.manifest | slice:0:3">
-                      <td class="filename">{{ m.filename }}</td>
-                      <td class="hash text-truncate">{{ m.hash }}</td>
-                      <td class="algorithm">{{ m.algorithm }}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
+        <dl class="history-summary" aria-label="History summary">
+          <div>
+            <dt>Artifact ID</dt>
+            <dd>
+              <code>{{ artifactId }}</code>
+            </dd>
           </div>
+          <div>
+            <dt>Accepted events</dt>
+            <dd>{{ isLoading ? 'Loading' : totalItems }}</dd>
+          </div>
+          <div>
+            <dt>Evidence source</dt>
+            <dd>Hyperledger Fabric</dd>
+          </div>
+        </dl>
+      </div>
+
+      <div class="page-actions" *ngIf="artifactId">
+        <button
+          type="button"
+          class="button button-secondary"
+          (click)="onRefresh()"
+          [disabled]="isLoading"
+        >
+          <i class="bi bi-arrow-clockwise" aria-hidden="true"></i>
+          Refresh evidence
+        </button>
+        <a
+          class="button button-primary"
+          [routerLink]="['/artifacts', artifactId]"
+        >
+          <i class="bi bi-file-earmark-text" aria-hidden="true"></i>
+          Artifact detail
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <section class="history-content" aria-labelledby="timeline-heading">
+    <div class="content-width">
+      <div
+        *ngIf="isLoading"
+        class="state-panel"
+        role="status"
+        aria-live="polite"
+      >
+        <span class="spinner" aria-hidden="true"></span>
+        <div>
+          <h2>Loading provenance history</h2>
+          <p>Retrieving accepted revisions and their evidence.</p>
         </div>
-        <ng-template #noValue>
-          <div class="text-muted">No value included for this event.</div>
-        </ng-template>
+      </div>
+
+      <div
+        *ngIf="!isLoading && errorMessage"
+        class="state-panel state-error"
+        role="alert"
+      >
+        <i class="bi bi-exclamation-triangle" aria-hidden="true"></i>
+        <div>
+          <h2>History is temporarily unavailable</h2>
+          <p>{{ errorMessage }} The artifact record remains unchanged.</p>
+          <button type="button" class="text-action" (click)="onRetry()">
+            Try again
+          </button>
+        </div>
+      </div>
+
+      <div
+        *ngIf="!isLoading && !errorMessage && totalItems === 0"
+        class="state-panel"
+      >
+        <i class="bi bi-clock-history" aria-hidden="true"></i>
+        <div>
+          <h2>No accepted history yet</h2>
+          <p>
+            This artifact does not currently have provenance events to display.
+          </p>
+          <a
+            *ngIf="artifactId"
+            class="text-action"
+            [routerLink]="['/artifacts', artifactId]"
+            >Return to artifact detail</a
+          >
+        </div>
+      </div>
+
+      <div
+        *ngIf="!isLoading && !errorMessage && totalItems > 0"
+        class="timeline-shell"
+      >
+        <div class="timeline-heading">
+          <div>
+            <p class="eyebrow">Ordered newest to oldest</p>
+            <h2 id="timeline-heading">Accepted ledger events</h2>
+          </div>
+          <p>
+            Showing {{ globalStartIndex + 1 }}-{{
+              globalStartIndex + displayedItems.length
+            }}
+            of {{ totalItems }}
+          </p>
+        </div>
+
+        <ol class="timeline">
+          <li
+            *ngFor="
+              let item of displayedItems;
+              let i = index;
+              trackBy: trackByTxId
+            "
+            class="timeline-item"
+          >
+            <div class="timeline-marker" aria-hidden="true">
+              <span>{{ getVersionNumber(i) }}</span>
+            </div>
+            <article class="history-card" [attr.aria-labelledby]="'event-' + i">
+              <header class="event-header">
+                <div>
+                  <p class="event-kicker">Version {{ getVersionNumber(i) }}</p>
+                  <h3 [id]="'event-' + i">{{ getEventLabel(item, i) }}</h3>
+                  <time [attr.datetime]="item.timestamp">{{
+                    item.timestamp | date: 'medium'
+                  }}</time>
+                </div>
+                <span
+                  class="event-state"
+                  [class.event-current]="isFirstPage && i === 0"
+                  [class.event-deleted]="item.isDelete"
+                >
+                  {{ getEventLabel(item, i) }}
+                </span>
+              </header>
+
+              <div
+                *ngIf="item.value as value; else noSnapshot"
+                class="event-evidence"
+              >
+                <dl class="evidence-grid">
+                  <div>
+                    <dt>Contributor</dt>
+                    <dd>{{ value.submitterUsername || 'Not recorded' }}</dd>
+                  </div>
+                  <div>
+                    <dt>Submission state</dt>
+                    <dd>
+                      <span
+                        class="status"
+                        [ngClass]="getStatusClass(value.submissionState)"
+                        >{{ value.submissionState || 'Unknown' }}</span
+                      >
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Manifest</dt>
+                    <dd>
+                      {{ value.manifest.length || 0 }} file
+                      {{
+                        (value.manifest.length || 0) === 1 ? 'entry' : 'entries'
+                      }}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Verification</dt>
+                    <dd>
+                      {{
+                        value.verified
+                          ? 'Verified fingerprint'
+                          : 'Not yet verified'
+                      }}
+                    </dd>
+                  </div>
+                </dl>
+
+                <div class="technical-evidence">
+                  <div>
+                    <span>Transaction ID</span>
+                    <code [title]="item.txId">{{
+                      shortIdentifier(item.txId)
+                    }}</code>
+                  </div>
+                  <div>
+                    <span>Artifact footprint</span>
+                    <code [title]="value.footprint || ''">{{
+                      shortIdentifier(value.footprint)
+                    }}</code>
+                  </div>
+                </div>
+              </div>
+
+              <ng-template #noSnapshot>
+                <p class="no-snapshot">
+                  This event does not include a readable artifact snapshot.
+                </p>
+              </ng-template>
+
+              <footer class="event-footer">
+                <a
+                  [routerLink]="[
+                    '/artifacts',
+                    artifactId,
+                    'history',
+                    item.txId,
+                  ]"
+                  [state]="{
+                    snapshot: item,
+                    isCurrent: isFirstPage && i === 0,
+                    isInitial:
+                      isLastPage &&
+                      i === displayedItems.length - 1 &&
+                      !item.isDelete,
+                  }"
+                >
+                  Inspect complete snapshot
+                  <i class="bi bi-arrow-right" aria-hidden="true"></i>
+                </a>
+              </footer>
+            </article>
+          </li>
+        </ol>
+
+        <nav
+          *ngIf="totalUiPages > 1"
+          class="pager"
+          aria-label="Artifact history pages"
+        >
+          <button
+            type="button"
+            (click)="onPrev()"
+            [disabled]="uiPage === 1"
+            aria-label="Previous history page"
+          >
+            <i class="bi bi-chevron-left" aria-hidden="true"></i>
+          </button>
+          <ng-container *ngFor="let page of getUiPages()">
+            <span *ngIf="page === '...'" class="ellipsis" aria-hidden="true"
+              >...</span
+            >
+            <button
+              *ngIf="page !== '...'"
+              type="button"
+              (click)="onGoToPage(+page)"
+              [class.active]="uiPage === page"
+              [attr.aria-current]="uiPage === page ? 'page' : null"
+              [attr.aria-label]="'History page ' + page"
+            >
+              {{ page }}
+            </button>
+          </ng-container>
+          <button
+            type="button"
+            (click)="onNext()"
+            [disabled]="uiPage === totalUiPages"
+            aria-label="Next history page"
+          >
+            <i class="bi bi-chevron-right" aria-hidden="true"></i>
+          </button>
+        </nav>
       </div>
     </div>
-
-    <!-- Pagination controls -->
-    <div class="mt-3 d-flex justify-content-center" *ngIf="totalUiPages > 1">
-      <div class="custom-pager">
-        <button class="page-arrow" (click)="onPrev()" [disabled]="uiPage === 1">&laquo;</button>
-        <ng-container *ngFor="let page of getUiPages()">
-          <span class="page-ellipsis" *ngIf="page === '...'">...</span>
-          <button *ngIf="page !== '...'" class="page-number" [class.active]="uiPage === page" (click)="onGoToPage(+page)">{{ page }}</button>
-        </ng-container>
-        <button class="page-arrow" (click)="onNext()" [disabled]="uiPage === totalUiPages">&raquo;</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-
+  </section>
+</main>

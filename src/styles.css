@@ -1,25 +1,19 @@
-/* You can add global styles to this file, and also import other style files */
-
-/* Importar OpenSans desde Google Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700&display=swap');
-
-/* Importar Bootstrap Icons */
 @import 'bootstrap-icons/font/bootstrap-icons.css';
-
-/* Importar Toastr styles */
 @import 'ngx-toastr/toastr';
 
-/* Aplicar OpenSans a toda la aplicación */
-* {
-  font-family: 'Open Sans', sans-serif !important;
-}
-
-body, html {
-  font-family: 'Open Sans', sans-serif !important;
-}
-
-/* Variables para tamaños de fuente responsivos */
 :root {
+  --osc-navy: #163a59;
+  --osc-navy-deep: #102f47;
+  --osc-teal: #167568;
+  --osc-teal-dark: #105d54;
+  --osc-ink: #172a37;
+  --osc-muted: #526977;
+  --osc-line: #cbd8df;
+  --osc-surface: #f3f7f8;
+  --osc-error: #a4282f;
+  --osc-focus-inner: #ffffff;
+  --osc-focus-outer: #102f47;
+  --osc-font: Inter, Aptos, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   --font-size-small: 0.875rem;
   --font-size-normal: 1rem;
   --font-size-medium: 1.25rem;
@@ -27,11 +21,79 @@ body, html {
   --font-size-xlarge: 2rem;
 }
 
-/* Media queries para ajustar tamaños en pantallas diferentes */
-@media (max-width: 768px) {
-  :root {
-    --font-size-medium: 1.1rem;
-    --font-size-large: 1.3rem;
-    --font-size-xlarge: 1.7rem;
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  letter-spacing: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 73px;
+}
+
+html,
+body {
+  min-height: 100%;
+  margin: 0;
+  font-family: var(--osc-font);
+  color: var(--osc-ink);
+  background: #ffffff;
+}
+
+body {
+  line-height: 1.5;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+a,
+button {
+  touch-action: manipulation;
+}
+
+:root :focus-visible {
+  outline: 2px solid var(--osc-focus-inner);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 5px var(--osc-focus-outer);
+}
+
+::selection {
+  background: #c5eee6;
+  color: #102f47;
+}
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media (max-width: 760px) {
+  html {
+    scroll-padding-top: 65px;
   }
 }

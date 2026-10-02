@@ -1,0 +1,126 @@
+name: CI
+
+on:
+  push:
+    branches: [master, develop, 'feature/**', 'release/**']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: webapp-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  dependency-review:
+    name: Dependency review
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
+        with:
+          fail-on-severity: moderate
+
+  quality:
+    name: Quality, tests, and build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
+      - name: Test supply-chain scanner
+        run: python3 -m unittest scripts/security/test_check_npm_supply_chain.py
+      - name: Scan lockfile before installation
+        run: python3 scripts/security/check_npm_supply_chain.py --repo . --skip-installed
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 24.20.0
+          package-manager-cache: false
+      - name: Prove dependency lifecycle scripts are suppressed
+        run: python3 scripts/security/test_lifecycle_suppression.py
+      - name: Install reviewed dependencies
+        run: bash scripts/security/secure-install.sh --ci
+      - name: Check changed source files
+        if: github.event_name != 'workflow_dispatch'
+        shell: bash
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          if [ -z "$BASE_SHA" ] || ! git cat-file -e "$BASE_SHA^{commit}" 2>/dev/null; then
+            base_ref="${GITHUB_BASE_REF:-develop}"
+            BASE_SHA="$(git merge-base HEAD "origin/$base_ref" 2>/dev/null || git rev-parse HEAD^)"
+          fi
+          mapfile -t formatted < <(git diff --name-only --diff-filter=ACMR "$BASE_SHA" "$GITHUB_SHA" -- 'src/**/*.ts' 'src/**/*.html' 'src/**/*.css' 'src/**/*.scss' 'cypress/**/*.ts')
+          mapfile -t linted < <(git diff --name-only --diff-filter=ACMR "$BASE_SHA" "$GITHUB_SHA" -- 'src/**/*.ts' 'cypress/**/*.ts')
+          if [ "${#formatted[@]}" -gt 0 ]; then
+            ./node_modules/.bin/prettier --check "${formatted[@]}"
+          fi
+          if [ "${#linted[@]}" -gt 0 ]; then
+            ./node_modules/.bin/eslint "${linted[@]}"
+          fi
+      - name: Check maintained source duplication
+        run: npm run duplication:check
+      - name: Check legacy lint non-regression
+        run: npm run lint:baseline
+      - name: Unit tests with coverage
+        run: npm run test:ci
+      - name: Production build
+        run: npm run build:production
+      - name: WCAG accessibility checks
+        run: |
+          ./node_modules/.bin/playwright install --with-deps chromium
+          npm run test:a11y
+      - name: Audit production dependencies
+        run: npm audit --omit=dev --audit-level=critical
+      - name: Generate CycloneDX SBOM
+        run: npm sbom --sbom-format cyclonedx > sbom.cdx.json
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: webapp-evidence
+          path: |
+            coverage/
+            playwright-report/
+            test-results/
+            sbom.cdx.json
+          if-no-files-found: warn
+          retention-days: 14
+
+  secret-scan:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
+      - name: Scan Git history for secrets
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          if [ -z "$BASE_SHA" ] || ! git cat-file -e "$BASE_SHA^{commit}" 2>/dev/null; then
+            BASE_SHA="$(git merge-base HEAD origin/master 2>/dev/null || git rev-parse HEAD^)"
+          fi
+          docker run --rm -v "$PWD:/repo:ro" ghcr.io/gitleaks/gitleaks@sha256:691af3c7c5a48b16f187ce3446d5f194838f91238f27270ed36eef6359a574d9 git --no-banner --redact --log-opts="$BASE_SHA..HEAD" /repo
+
+  codeql:
+    name: CodeQL
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+      packages: read
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: github/codeql-action/init@24c7eb380a2dc368f2d129e4c65e51d172983a1e # v4
+        with:
+          languages: javascript-typescript
+      - uses: github/codeql-action/analyze@24c7eb380a2dc368f2d129e4c65e51d172983a1e # v4

@@ -4,40 +4,97 @@
     <div class="header-divider"></div>
   </header>
 
-  <form [formGroup]="workflowForm" (ngSubmit)="onSubmit()" class="workflow-form">
+  <form
+    [formGroup]="workflowForm"
+    (ngSubmit)="onSubmit()"
+    class="workflow-form"
+  >
     <div class="form-grid">
       <!-- Left Column -->
       <div class="left-column">
         <div class="form-group">
           <label for="title" class="field-label">Title</label>
-          <input id="title" type="text" formControlName="title" class="form-control" readonly>
-          <small class="text-muted">Title cannot be changed after creation.</small>
+          <input
+            id="title"
+            type="text"
+            formControlName="title"
+            class="form-control"
+            maxlength="200"
+            readonly
+          />
+          <small class="text-muted"
+            >Title cannot be changed after creation.</small
+          >
         </div>
 
         <div class="form-group">
           <label for="description" class="field-label">Description</label>
-          <textarea id="description" formControlName="description" class="form-control" rows="5" readonly></textarea>
-          <small class="text-muted">Description cannot be changed after creation.</small>
+          <textarea
+            id="description"
+            formControlName="description"
+            class="form-control"
+            rows="5"
+            maxlength="3000"
+            readonly
+          ></textarea>
+          <small class="text-muted"
+            >Description cannot be changed after creation.</small
+          >
         </div>
 
         <div class="form-group">
           <label for="keywords" class="field-label">Keywords</label>
-          <input id="keywords" type="text" formControlName="keywords" class="form-control" placeholder="Enter keywords, separated by commas">
+          <input
+            id="keywords"
+            type="text"
+            formControlName="keywords"
+            class="form-control"
+            maxlength="1000"
+            placeholder="Enter keywords, separated by commas"
+          />
         </div>
 
         <div class="form-group">
-          <label for="submission_comment" class="field-label">Submission Comment</label>
+          <label for="submission_comment" class="field-label"
+            >Submission Comment</label
+          >
           <textarea
             id="submission_comment"
             formControlName="submission_comment"
+            maxlength="1000"
             class="form-control"
             rows="3"
-            [ngClass]="{'is-invalid': workflowForm.get('submission_comment')?.invalid && workflowForm.get('submission_comment')?.touched}"
+            [ngClass]="{
+              'is-invalid':
+                workflowForm.get('submission_comment')?.invalid &&
+                workflowForm.get('submission_comment')?.touched,
+            }"
           ></textarea>
-          <div *ngIf="workflowForm.get('submission_comment')?.invalid && workflowForm.get('submission_comment')?.touched" class="error-message">
-            <small *ngIf="workflowForm.get('submission_comment')?.errors?.['required']">Submission comment is required</small>
-            <small *ngIf="workflowForm.get('submission_comment')?.errors?.['minlength']">Submission comment must be at least 20 characters long</small>
-            <small *ngIf="workflowForm.get('submission_comment')?.errors?.['maxlength']">Submission comment cannot exceed 1000 characters</small>
+          <div
+            *ngIf="
+              workflowForm.get('submission_comment')?.invalid &&
+              workflowForm.get('submission_comment')?.touched
+            "
+            class="error-message"
+          >
+            <small
+              *ngIf="
+                workflowForm.get('submission_comment')?.errors?.['required']
+              "
+              >Submission comment is required</small
+            >
+            <small
+              *ngIf="
+                workflowForm.get('submission_comment')?.errors?.['minlength']
+              "
+              >Submission comment must be at least 20 characters long</small
+            >
+            <small
+              *ngIf="
+                workflowForm.get('submission_comment')?.errors?.['maxlength']
+              "
+              >Submission comment cannot exceed 1000 characters</small
+            >
           </div>
         </div>
       </div>
@@ -51,13 +108,20 @@
             type="text"
             class="form-control"
             placeholder="Search artifacts by title or click to browse..."
+            maxlength="200"
             [value]="artifactSearchQuery"
             (input)="onArtifactSearch($any($event.target).value)"
             (focus)="onArtifactSearchFocus()"
             (blur)="onArtifactSearchBlur()"
+          />
+          <div
+            class="dropdown-list"
+            *ngIf="showArtifactDropdown && filteredArtifacts.length > 0"
           >
-          <div class="dropdown-list" *ngIf="showArtifactDropdown && filteredArtifacts.length > 0">
-            <div class="dropdown-hint" *ngIf="!artifactSearchQuery || artifactSearchQuery.length < 2">
+            <div
+              class="dropdown-hint"
+              *ngIf="!artifactSearchQuery || artifactSearchQuery.length < 2"
+            >
               Recent artifacts
             </div>
             <div
@@ -65,14 +129,38 @@
               *ngFor="let artifact of filteredArtifacts"
               (mousedown)="selectArtifact(artifact)"
             >
-              <span class="dropdown-item-title">{{ artifact.title.length > 50 ? (artifact.title | slice:0:50) + '...' : artifact.title }}</span>
-              <span class="dropdown-item-desc">{{ artifact.description.length > 60 ? (artifact.description | slice:0:60) + '...' : artifact.description }}</span>
+              <span class="dropdown-item-title">{{
+                artifact.title.length > 50
+                  ? (artifact.title | slice: 0 : 50) + '...'
+                  : artifact.title
+              }}</span>
+              <span class="dropdown-item-desc">{{
+                artifact.description.length > 60
+                  ? (artifact.description | slice: 0 : 60) + '...'
+                  : artifact.description
+              }}</span>
             </div>
           </div>
-          <div class="selected-artifacts mt-2" *ngIf="selectedArtifacts.length > 0">
-            <div class="artifact-chip" *ngFor="let artifact of selectedArtifacts">
-              <span>{{ artifact.title.length > 40 ? (artifact.title | slice:0:40) + '...' : artifact.title }}</span>
-              <button type="button" class="chip-remove" (click)="removeArtifact(artifact.id)">&times;</button>
+          <div
+            class="selected-artifacts mt-2"
+            *ngIf="selectedArtifacts.length > 0"
+          >
+            <div
+              class="artifact-chip"
+              *ngFor="let artifact of selectedArtifacts"
+            >
+              <span>{{
+                artifact.title.length > 40
+                  ? (artifact.title | slice: 0 : 40) + '...'
+                  : artifact.title
+              }}</span>
+              <button
+                type="button"
+                class="chip-remove"
+                (click)="removeArtifact(artifact.id)"
+              >
+                &times;
+              </button>
             </div>
           </div>
         </div>
@@ -81,67 +169,158 @@
         <div class="form-group">
           <label class="field-label">GitHub Repositories</label>
           <div formArrayName="githubRepositories">
-            <div *ngFor="let repo of repoForms.controls; let ri = index" class="repo-entry card mb-3">
+            <div
+              *ngFor="let repo of repoForms.controls; let ri = index"
+              class="repo-entry card mb-3"
+            >
               <div class="card-body" [formGroupName]="ri">
-                <div class="d-flex justify-content-between align-items-center mb-2">
+                <div
+                  class="d-flex justify-content-between align-items-center mb-2"
+                >
                   <strong>Repository {{ ri + 1 }}</strong>
-                  <button type="button" class="btn btn-sm btn-outline-danger" (click)="removeRepository(ri)">Remove</button>
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-outline-danger"
+                    (click)="removeRepository(ri)"
+                  >
+                    Remove
+                  </button>
                 </div>
                 <input
                   formControlName="url"
+                  maxlength="400"
                   class="form-control mb-1"
                   placeholder="GitHub URL (e.g., https://github.com/org/repo)"
-                  [ngClass]="{'is-invalid': repo.get('url')?.invalid && repo.get('url')?.touched}"
+                  [ngClass]="{
+                    'is-invalid':
+                      repo.get('url')?.invalid && repo.get('url')?.touched,
+                  }"
                   (blur)="onRepoUrlBlur(ri)"
+                />
+                <div
+                  *ngIf="repo.get('url')?.invalid && repo.get('url')?.touched"
+                  class="error-message mb-2"
                 >
-                <div *ngIf="repo.get('url')?.invalid && repo.get('url')?.touched" class="error-message mb-2">
-                  <small *ngIf="repo.get('url')?.errors?.['required']">URL is required</small>
-                  <small *ngIf="repo.get('url')?.errors?.['pattern']">Must be a valid GitHub URL (https://github.com/owner/repo)</small>
+                  <small *ngIf="repo.get('url')?.errors?.['required']"
+                    >URL is required</small
+                  >
+                  <small *ngIf="repo.get('url')?.errors?.['pattern']"
+                    >Must be a valid GitHub URL
+                    (https://github.com/owner/repo)</small
+                  >
                 </div>
 
-                <div *ngIf="getRepoFetchState(ri).loading" class="fetch-status mb-2">
-                  <small class="text-muted"><i class="bi bi-arrow-repeat spin"></i> Fetching repository info...</small>
+                <div
+                  *ngIf="getRepoFetchState(ri).loading"
+                  class="fetch-status mb-2"
+                >
+                  <small class="text-muted"
+                    ><i class="bi bi-arrow-repeat spin"></i> Fetching repository
+                    info...</small
+                  >
                 </div>
-                <div *ngIf="getRepoFetchState(ri).error" class="fetch-status mb-2">
-                  <small class="text-warning">{{ getRepoFetchState(ri).error }} — you can fill the fields manually.</small>
+                <div
+                  *ngIf="getRepoFetchState(ri).error"
+                  class="fetch-status mb-2"
+                >
+                  <small class="text-warning"
+                    >{{ getRepoFetchState(ri).error }} — you can fill the fields
+                    manually.</small
+                  >
                 </div>
 
-                <input formControlName="description" class="form-control mb-2" placeholder="Repository description">
-                <input formControlName="gitHash" class="form-control mb-2" placeholder="Latest commit hash">
+                <input
+                  formControlName="description"
+                  class="form-control mb-2"
+                  maxlength="500"
+                  placeholder="Repository description"
+                />
+                <input
+                  formControlName="gitHash"
+                  class="form-control mb-2"
+                  maxlength="40"
+                  placeholder="Latest commit hash"
+                />
 
                 <div class="contents-section">
-                  <div class="d-flex justify-content-between align-items-center">
-                    <label class="small fw-bold mb-0">Contents ({{ getContents(ri).length }} items)</label>
-                    <button type="button" class="btn btn-sm btn-link p-0" (click)="toggleContentsExpand(ri)">
+                  <div
+                    class="d-flex justify-content-between align-items-center"
+                  >
+                    <label class="small fw-bold mb-0"
+                      >Contents ({{ getContents(ri).length }} items)</label
+                    >
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-link p-0"
+                      (click)="toggleContentsExpand(ri)"
+                    >
                       {{ isContentsExpanded(ri) ? 'Hide' : 'Show' }}
                     </button>
                   </div>
                   <div *ngIf="isContentsExpanded(ri)" class="mt-2">
                     <div formArrayName="contents">
-                      <ng-container *ngFor="let content of getContents(ri).controls; let ci = index">
+                      <ng-container
+                        *ngFor="
+                          let content of getContents(ri).controls;
+                          let ci = index
+                        "
+                      >
                         <div class="d-flex gap-2 mb-2">
-                          <div [formGroupName]="ci" class="d-flex gap-2 flex-grow-1">
-                            <input formControlName="filename" class="form-control form-control-sm" placeholder="Filename">
-                            <input formControlName="hash" class="form-control form-control-sm" placeholder="File hash (optional for folders)">
+                          <div
+                            [formGroupName]="ci"
+                            class="d-flex gap-2 flex-grow-1"
+                          >
+                            <input
+                              formControlName="filename"
+                              class="form-control form-control-sm"
+                              maxlength="160"
+                              placeholder="Filename"
+                            />
+                            <input
+                              formControlName="hash"
+                              class="form-control form-control-sm"
+                              maxlength="128"
+                              placeholder="File hash (optional for folders)"
+                            />
                           </div>
-                          <button type="button" class="btn btn-sm btn-outline-secondary" (click)="removeContent(ri, ci)">&times;</button>
+                          <button
+                            type="button"
+                            class="btn btn-sm btn-outline-secondary"
+                            (click)="removeContent(ri, ci)"
+                          >
+                            &times;
+                          </button>
                         </div>
                       </ng-container>
                     </div>
-                    <button type="button" class="btn btn-sm btn-outline-secondary" (click)="addContent(ri)">+ Add File</button>
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-outline-secondary"
+                      (click)="addContent(ri)"
+                    >
+                      + Add File
+                    </button>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-          <button type="button" class="btn btn-outline-primary btn-sm" (click)="addRepository()">+ Add Repository</button>
+          <button
+            type="button"
+            class="btn btn-outline-primary btn-sm"
+            (click)="addRepository()"
+          >
+            + Add Repository
+          </button>
         </div>
       </div>
     </div>
 
     <!-- Navigation Buttons -->
     <div class="form-navigation">
-      <button type="button" class="btn btn-secondary" (click)="goBack()">Cancel</button>
+      <button type="button" class="btn btn-secondary" (click)="goBack()">
+        Cancel
+      </button>
       <button
         type="submit"
         class="btn btn-primary"
@@ -149,7 +328,12 @@
       >
         {{ isSubmitting ? 'Saving...' : 'Save Changes' }}
       </button>
-      <a *ngIf="updateSuccess" class="btn btn-success" [routerLink]="['/workflows', workflow?.id]">View updated workflow</a>
+      <a
+        *ngIf="updateSuccess"
+        class="btn btn-success"
+        [routerLink]="['/workflows', workflow?.id]"
+        >View updated workflow</a
+      >
     </div>
   </form>
 </div>

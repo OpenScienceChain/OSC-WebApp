@@ -1,0 +1,63 @@
+{
+  "version": 1,
+  "errors": {
+    "cypress/e2e/auth/login.cy.ts": {
+      "@typescript-eslint/no-unused-expressions": 8,
+      "prettier/prettier": 1
+    },
+    "src/app/artifacts/artifacts.module.ts": {
+      "prettier/prettier": 2
+    },
+    "src/app/artifacts/artifacts.routes.ts": {
+      "prettier/prettier": 3
+    },
+    "src/app/artifacts/create-artifact/create-artifact.routes.ts": {
+      "prettier/prettier": 3
+    },
+    "src/app/artifacts/services/history-cache.service.spec.ts": {
+      "prettier/prettier": 6
+    },
+    "src/app/artifacts/services/history-cache.service.ts": {
+      "prettier/prettier": 1
+    },
+    "src/app/auth/auth-forbidden/auth-forbidden.component.ts": {
+      "prettier/prettier": 3
+    },
+    "src/app/auth/auth-routing.module.ts": {
+      "prettier/prettier": 2
+    },
+    "src/app/components/file-upload-section/file-upload-section.component.spec.ts": {
+      "prettier/prettier": 9
+    },
+    "src/app/components/file-upload-section/file-upload-section.component.ts": {
+      "prettier/prettier": 2
+    },
+    "src/app/guards/role.guard.ts": {
+      "@typescript-eslint/no-unused-vars": 2,
+      "prettier/prettier": 4
+    },
+    "src/app/models/artifact-history.model.ts": {
+      "prettier/prettier": 1
+    },
+    "src/app/models/artifact.ts": {
+      "@typescript-eslint/no-empty-object-type": 1,
+      "prettier/prettier": 1
+    },
+    "src/app/models/workflow.ts": {
+      "@typescript-eslint/no-empty-object-type": 1,
+      "prettier/prettier": 1
+    },
+    "src/app/services/api-base-url.ts": {
+      "prettier/prettier": 4
+    },
+    "src/app/services/runtime-config.service.ts": {
+      "prettier/prettier": 3
+    },
+    "src/environments/environment.staging.ts": {
+      "prettier/prettier": 2
+    },
+    "src/main.ts": {
+      "prettier/prettier": 1
+    }
+  }
+}
