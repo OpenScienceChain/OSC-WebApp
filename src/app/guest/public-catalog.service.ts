@@ -1,6 +1,14 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable, catchError, forkJoin, map, of, switchMap, throwError } from 'rxjs';
+import {
+  Observable,
+  catchError,
+  forkJoin,
+  map,
+  of,
+  switchMap,
+  throwError,
+} from 'rxjs';
 import { ArtifactService } from '../artifacts/services/artifact.service';
 import { Artifact } from '../models/artifact.model';
 import { WorkflowListItem } from '../models/workflow.model';
@@ -38,18 +46,20 @@ export class PublicCatalogService {
           lastTimeUpdated: record.lastUpdatedAt ?? null,
           updatedAt: record.lastUpdatedAt ?? null,
         })),
-        ...examples.flatMap((example) => example.artifacts.map((record) => ({
-          id: record.id,
-          title: record.title,
-          description: record.description,
-          keywords: record.keywords,
-          submittedAt: record.submittedAt,
-          verified: false,
-          submissionState: record.submissionState,
-          lastTimeVerified: null,
-          lastTimeUpdated: record.updatedAt,
-          updatedAt: record.updatedAt,
-        }))),
+        ...examples.flatMap((example) =>
+          example.artifacts.map((record) => ({
+            id: record.id,
+            title: record.title,
+            description: record.description,
+            keywords: record.keywords,
+            submittedAt: record.submittedAt,
+            verified: false,
+            submissionState: record.submissionState,
+            lastTimeVerified: null,
+            lastTimeUpdated: record.updatedAt,
+            updatedAt: record.updatedAt,
+          })),
+        ),
       ]),
     );
   }
@@ -66,15 +76,17 @@ export class PublicCatalogService {
           submittedAt: new Date(record.submittedAt),
           updatedAt: new Date(record.submittedAt),
         })),
-        ...examples.flatMap((example) => example.workflows.map((record) => ({
-          id: record.id,
-          title: record.title,
-          description: record.description,
-          keywords: [],
-          submissionState: record.submissionState,
-          submittedAt: new Date(record.submittedAt),
-          updatedAt: new Date(record.updatedAt ?? record.submittedAt),
-        }))),
+        ...examples.flatMap((example) =>
+          example.workflows.map((record) => ({
+            id: record.id,
+            title: record.title,
+            description: record.description,
+            keywords: [],
+            submissionState: record.submissionState,
+            submittedAt: new Date(record.submittedAt),
+            updatedAt: new Date(record.updatedAt ?? record.submittedAt),
+          })),
+        ),
       ]),
     );
   }

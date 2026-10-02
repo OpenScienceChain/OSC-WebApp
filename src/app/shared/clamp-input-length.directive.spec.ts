@@ -9,10 +9,18 @@ describe('ClampInputLengthDirective', () => {
     input.setSelectionRange(5, 5);
     const limits: number[] = [];
     directive.lengthLimit.subscribe((limit) => limits.push(limit));
-    directive.onBeforeInput({ target: input, inputType: 'insertText', data: '6' } as unknown as InputEvent);
+    directive.onBeforeInput({
+      target: input,
+      inputType: 'insertText',
+      data: '6',
+    } as unknown as InputEvent);
     expect(limits).toEqual([5]);
     input.setSelectionRange(4, 5);
-    directive.onBeforeInput({ target: input, inputType: 'insertText', data: '6' } as unknown as InputEvent);
+    directive.onBeforeInput({
+      target: input,
+      inputType: 'insertText',
+      data: '6',
+    } as unknown as InputEvent);
     expect(limits).toEqual([5]);
   });
 });

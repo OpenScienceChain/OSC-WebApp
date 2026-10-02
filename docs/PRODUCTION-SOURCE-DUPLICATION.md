@@ -7,7 +7,7 @@ are outside the scan. The JSON report is saved at
 artifact.
 
 The target is at most 3% duplicated lines. The initial scan has 133 clone
-blocks, 4,691 duplicated lines, and 18.41% duplication across 120 source
+blocks, 4,715 duplicated lines, and 18.33% duplication across 121 source
 files. CI uses `.jscpd-baseline.json` to allow only these existing clone
 fingerprints and fails if any new clone appears. The current debt is concentrated
 in create/update and guest forms, their component styles, guest detail styles,

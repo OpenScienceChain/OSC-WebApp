@@ -20,10 +20,7 @@ describe('printFileHashes', () => {
     } as unknown as Window;
     spyOn(window, 'open').and.returnValue(popup);
 
-    printFileHashes([
-      { hash: 'hash-one' },
-      { hash: 'hash-two' },
-    ]);
+    printFileHashes([{ hash: 'hash-one' }, { hash: 'hash-two' }]);
     tick(20);
 
     expect(content.textContent).toBe('hash-one\nhash-two');

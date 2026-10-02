@@ -1,15 +1,20 @@
-import { of } from 'rxjs';
+import { of, Subject } from 'rxjs';
 import { GuestArtifactFormComponent } from './guest-artifact-form.component';
 import { GuestWorkflowFormComponent } from './guest-workflow-form.component';
 import { DemoCatalogArtifact } from './demo.models';
 
 describe('Guest portal form boundaries', () => {
+  const analytics = { track: jasmine.createSpy('track') };
+
+  beforeEach(() => analytics.track.calls.reset());
+
   it('shows the original metadata format checks on blur', () => {
     const form = new GuestArtifactFormComponent(
       { snapshot: { paramMap: { get: () => null } } } as any,
       {} as any,
       {} as any,
       {} as any,
+      analytics as any,
     );
     form.keywords = 'science,,analysis';
     expect(form.fieldError('keywords')).toContain('empty entries');
@@ -45,6 +50,7 @@ describe('Guest portal form boundaries', () => {
         success: jasmine.createSpy('success'),
         warning: jasmine.createSpy('warning'),
       } as any,
+      analytics as any,
     );
     const selected = [
       new File(['synthetic notes'], 'notes.txt', { type: 'text/plain' }),
@@ -91,6 +97,7 @@ describe('Guest portal form boundaries', () => {
       {} as any,
       {} as any,
       { warning: jasmine.createSpy('warning') } as any,
+      analytics as any,
     );
     const files = Array.from(
       { length: 501 },
@@ -111,6 +118,7 @@ describe('Guest portal form boundaries', () => {
       {} as any,
       {} as any,
       { warning: jasmine.createSpy('warning') } as any,
+      analytics as any,
     );
     spyOn<any>(form, 'sha256').and.returnValue(Promise.resolve('a'.repeat(64)));
     const files = Array.from(
@@ -139,6 +147,7 @@ describe('Guest portal form boundaries', () => {
       {} as any,
       {} as any,
       {} as any,
+      analytics as any,
     );
     form.keepManifestUnchanged = true;
     const preventDefault = jasmine.createSpy('preventDefault');
@@ -185,6 +194,7 @@ describe('Guest portal form boundaries', () => {
       { snapshot: { paramMap: { get: () => null } } } as any,
       {} as any,
       {} as any,
+      analytics as any,
     );
     form.loadArtifacts();
     expect(demo.listArtifacts).toHaveBeenCalledWith(organization);
@@ -211,6 +221,7 @@ describe('Guest portal form boundaries', () => {
         success: jasmine.createSpy('success'),
         warning: jasmine.createSpy('warning'),
       } as any,
+      analytics as any,
     );
     form.status = { state: 'OPEN' } as any;
     form.baseline = {
@@ -240,6 +251,7 @@ describe('Guest portal form boundaries', () => {
       {} as any,
       { session: { accountUsername: 'researcher' } } as any,
       {} as any,
+      analytics as any,
     );
     form.status = { state: 'OPEN' } as any;
     form.baseline = { footprint: 'a'.repeat(64) } as any;
@@ -252,5 +264,139 @@ describe('Guest portal form boundaries', () => {
     form.onManifestChoice();
     expect(form.fingerprint).toBe('');
     expect(form.canSubmit).toBeFalse();
+  });
+
+  it('records artifact form stages only with template routes and accepted responses', () => {
+    const response = new Subject<{ id: string }>();
+    const demo = {
+      session: { accountUsername: 'researcher' },
+      createArtifact: jasmine
+        .createSpy('createArtifact')
+        .and.returnValue(response.asObservable()),
+    };
+    const form = new GuestArtifactFormComponent(
+      { snapshot: { paramMap: { get: () => null } } } as any,
+      { navigate: jasmine.createSpy('navigate') } as any,
+      demo as any,
+      { success: jasmine.createSpy('success') } as any,
+      analytics as any,
+    );
+    form.status = { state: 'OPEN' } as any;
+    form.title = 'Synthetic artifact';
+    form.description =
+      'A synthetic artifact description with enough characters for the form.';
+    form.submissionComment = 'A synthetic submission comment.';
+    form.fingerprint = 'a'.repeat(64);
+    form.markTouched('title');
+    form.formAnalytics.start();
+    form.links = 'http://example.com';
+    form.markTouched('links');
+    form.markTouched('links');
+    form.links = '';
+
+    form.submit();
+    expect(demo.createArtifact).toHaveBeenCalledTimes(1);
+    expect(analytics.track.calls.allArgs()).toEqual([
+      ['FORM_START', '/contribute'],
+      ['VALIDATION_ERROR', '/contribute'],
+      ['SUBMISSION_ATTEMPT', '/contribute'],
+    ]);
+
+    response.next({ id: 'record-id' });
+    expect(analytics.track.calls.mostRecent().args).toEqual([
+      'ARTIFACT_SUBMITTED',
+      '/contribute',
+    ]);
+  });
+
+  it('does not count a rejected artifact request as submitted', () => {
+    const response = new Subject<{ id: string }>();
+    const form = new GuestArtifactFormComponent(
+      { snapshot: { paramMap: { get: () => null } } } as any,
+      {} as any,
+      {
+        session: { accountUsername: 'researcher' },
+        createArtifact: () => response.asObservable(),
+      } as any,
+      { error: jasmine.createSpy('error') } as any,
+      analytics as any,
+    );
+    form.status = { state: 'OPEN' } as any;
+    form.title = 'Synthetic artifact';
+    form.description =
+      'A synthetic artifact description with enough characters for the form.';
+    form.submissionComment = 'A synthetic submission comment.';
+    form.fingerprint = 'a'.repeat(64);
+    form.submit();
+    response.error({ status: 500 });
+    expect(analytics.track.calls.allArgs()).toEqual([
+      ['FORM_START', '/contribute'],
+      ['SUBMISSION_ATTEMPT', '/contribute'],
+    ]);
+  });
+
+  it('records workflow form stages only after accepted responses', () => {
+    const response = new Subject<{ id: string }>();
+    const demo = {
+      session: { accountUsername: 'researcher' },
+      createWorkflow: jasmine
+        .createSpy('createWorkflow')
+        .and.returnValue(response.asObservable()),
+    };
+    const form = new GuestWorkflowFormComponent(
+      demo as any,
+      { snapshot: { paramMap: { get: () => null } } } as any,
+      { navigate: jasmine.createSpy('navigate') } as any,
+      {} as any,
+      analytics as any,
+    );
+    form.status = { state: 'OPEN' } as any;
+    form.title = 'Synthetic workflow';
+    form.description =
+      'A synthetic workflow description with enough characters for the form.';
+    form.selectedIds.add('artifact-id');
+    form.markTouched('comment');
+    form.markTouched('comment');
+    form.submissionComment = 'A synthetic workflow comment.';
+
+    form.submit();
+    expect(demo.createWorkflow).toHaveBeenCalledTimes(1);
+    expect(analytics.track.calls.allArgs()).toEqual([
+      ['FORM_START', '/create-workflow'],
+      ['VALIDATION_ERROR', '/create-workflow'],
+      ['SUBMISSION_ATTEMPT', '/create-workflow'],
+    ]);
+
+    response.next({ id: 'workflow-id' });
+    expect(analytics.track.calls.mostRecent().args).toEqual([
+      'WORKFLOW_SUBMITTED',
+      '/create-workflow',
+    ]);
+  });
+
+  it('does not count a rejected workflow request as submitted', () => {
+    const response = new Subject<{ id: string }>();
+    const form = new GuestWorkflowFormComponent(
+      {
+        session: { accountUsername: 'researcher' },
+        createWorkflow: () => response.asObservable(),
+      } as any,
+      { snapshot: { paramMap: { get: () => null } } } as any,
+      {} as any,
+      {} as any,
+      analytics as any,
+    );
+    form.status = { state: 'OPEN' } as any;
+    form.title = 'Synthetic workflow';
+    form.description =
+      'A synthetic workflow description with enough characters for the form.';
+    form.selectedIds.add('artifact-id');
+    form.submissionComment = 'A synthetic workflow comment.';
+    form.submit();
+    response.error({ status: 500 });
+    expect(analytics.track.calls.allArgs()).toEqual([
+      ['FORM_START', '/create-workflow'],
+      ['SUBMISSION_ATTEMPT', '/create-workflow'],
+    ]);
   });
 });

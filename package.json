@@ -15,6 +15,7 @@
     "build:ssr": "ng build --configuration=production,ssr",
     "serve:ssr:OSC-WebApp": "node dist/osc-web-app/server/server.mjs",
     "format:check": "prettier --check \"src/**/*.{ts,html,css,scss}\" \"cypress/**/*.ts\"",
+    "lint:baseline": "node scripts/quality/check-eslint-baseline.mjs",
     "duplication:check": "jscpd --config .jscpd.json --baseline .jscpd-baseline.json --fail-on-new-clones 0 --fail-on-empty src server.ts",
     "duplication:baseline": "jscpd --config .jscpd.json --baseline .jscpd-baseline.json --update-baseline --fail-on-empty src server.ts",
     "lint": "eslint \"src/**/*.ts\" \"cypress/**/*.ts\"",
@@ -97,6 +98,11 @@
     ]
   },
   "overrides": {
-    "qs": "6.16.0"
+    "qs": "6.16.0",
+    "piscina": "5.3.2",
+    "webpack-dev-middleware": "7.4.6",
+    "sockjs": {
+      "uuid": "11.1.1"
+    }
   }
 }

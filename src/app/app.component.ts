@@ -127,12 +127,12 @@ export class AppComponent implements OnInit {
   private trackRoute(url: string): void {
     const route = this.analytics.routeTemplate(url);
     if (!route) return;
-    const eventType: AnalyticsEventType = route.includes('/history')
-      ? 'HISTORY_VIEW'
-      : route === '/artifacts/:id' || route === '/workflows/:id'
-        ? 'RECORD_VIEW'
-        : 'PAGE_VIEW';
-    this.analytics.track(eventType, route);
+    this.analytics.track('PAGE_VIEW', route);
+    if (route.includes('/history')) {
+      this.analytics.track('HISTORY_VIEW', route);
+    } else if (route === '/artifacts/:id' || route === '/workflows/:id') {
+      this.analytics.track('RECORD_VIEW', route);
+    }
   }
 
   private trackAction(eventType: AnalyticsEventType): void {

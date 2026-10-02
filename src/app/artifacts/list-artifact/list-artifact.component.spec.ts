@@ -36,7 +36,10 @@ describe('ListArtifactComponent', () => {
         RouterTestingModule,
       ],
       providers: [
-        { provide: PublicCatalogService, useValue: { listArtifacts: () => of(mockArtifacts) } },
+        {
+          provide: PublicCatalogService,
+          useValue: { listArtifacts: () => of(mockArtifacts) },
+        },
       ],
     }).compileComponents();
 

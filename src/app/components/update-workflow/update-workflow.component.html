@@ -14,19 +14,44 @@
       <div class="left-column">
         <div class="form-group">
           <label for="title" class="field-label">Title</label>
-          <input id="title" type="text" formControlName="title" class="form-control" maxlength="200" readonly>
-          <small class="text-muted">Title cannot be changed after creation.</small>
+          <input
+            id="title"
+            type="text"
+            formControlName="title"
+            class="form-control"
+            maxlength="200"
+            readonly
+          />
+          <small class="text-muted"
+            >Title cannot be changed after creation.</small
+          >
         </div>
 
         <div class="form-group">
           <label for="description" class="field-label">Description</label>
-          <textarea id="description" formControlName="description" class="form-control" rows="5" maxlength="3000" readonly></textarea>
-          <small class="text-muted">Description cannot be changed after creation.</small>
+          <textarea
+            id="description"
+            formControlName="description"
+            class="form-control"
+            rows="5"
+            maxlength="3000"
+            readonly
+          ></textarea>
+          <small class="text-muted"
+            >Description cannot be changed after creation.</small
+          >
         </div>
 
         <div class="form-group">
           <label for="keywords" class="field-label">Keywords</label>
-          <input id="keywords" type="text" formControlName="keywords" class="form-control" maxlength="1000" placeholder="Enter keywords, separated by commas">
+          <input
+            id="keywords"
+            type="text"
+            formControlName="keywords"
+            class="form-control"
+            maxlength="1000"
+            placeholder="Enter keywords, separated by commas"
+          />
         </div>
 
         <div class="form-group">
@@ -204,8 +229,18 @@
                   >
                 </div>
 
-                <input formControlName="description" class="form-control mb-2" maxlength="500" placeholder="Repository description">
-                <input formControlName="gitHash" class="form-control mb-2" maxlength="40" placeholder="Latest commit hash">
+                <input
+                  formControlName="description"
+                  class="form-control mb-2"
+                  maxlength="500"
+                  placeholder="Repository description"
+                />
+                <input
+                  formControlName="gitHash"
+                  class="form-control mb-2"
+                  maxlength="40"
+                  placeholder="Latest commit hash"
+                />
 
                 <div class="contents-section">
                   <div
@@ -231,9 +266,22 @@
                         "
                       >
                         <div class="d-flex gap-2 mb-2">
-                          <div [formGroupName]="ci" class="d-flex gap-2 flex-grow-1">
-                            <input formControlName="filename" class="form-control form-control-sm" maxlength="160" placeholder="Filename">
-                            <input formControlName="hash" class="form-control form-control-sm" maxlength="128" placeholder="File hash (optional for folders)">
+                          <div
+                            [formGroupName]="ci"
+                            class="d-flex gap-2 flex-grow-1"
+                          >
+                            <input
+                              formControlName="filename"
+                              class="form-control form-control-sm"
+                              maxlength="160"
+                              placeholder="Filename"
+                            />
+                            <input
+                              formControlName="hash"
+                              class="form-control form-control-sm"
+                              maxlength="128"
+                              placeholder="File hash (optional for folders)"
+                            />
                           </div>
                           <button
                             type="button"

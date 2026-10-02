@@ -20,6 +20,8 @@ import {
 } from './demo.models';
 import { DemoService } from './demo.service';
 import { ClampInputLengthDirective } from '../shared/clamp-input-length.directive';
+import { UxAnalyticsService } from '../analytics/ux-analytics.service';
+import { FormAnalytics } from '../analytics/form-analytics';
 
 const MAX_FILE_BYTES = 50 * 1024 * 1024;
 const MAX_FILE_COUNT = 500;
@@ -45,6 +47,7 @@ const ALLOWED_EXTENSIONS = new Set([
 export class GuestArtifactFormComponent implements OnInit, OnDestroy {
   readonly isEdit: boolean;
   readonly id: string;
+  readonly formAnalytics: FormAnalytics;
   baseline?: DemoCatalogArtifact;
   accessDenied = false;
   status?: DemoStatus;
@@ -83,9 +86,13 @@ export class GuestArtifactFormComponent implements OnInit, OnDestroy {
     private readonly router: Router,
     public readonly demo: DemoService,
     private readonly toastr: ToastrService,
+    analytics: UxAnalyticsService,
   ) {
-    this.id = route.snapshot.paramMap.get('id') || '';
-    this.isEdit = !!this.id;
+    const id = route.snapshot.paramMap.get('id') || '';
+    const analyticsRoute = id ? '/update-artifact/:id' : '/contribute';
+    this.formAnalytics = new FormAnalytics(analytics, analyticsRoute);
+    this.id = id;
+    this.isEdit = !!id;
   }
 
   ngOnInit(): void {
@@ -178,6 +185,7 @@ export class GuestArtifactFormComponent implements OnInit, OnDestroy {
   }
 
   onChange(field?: string): void {
+    this.formAnalytics.start();
     this.requestId = '';
     this.error = '';
     if (field) delete this.lengthWarnings[field];
@@ -185,6 +193,8 @@ export class GuestArtifactFormComponent implements OnInit, OnDestroy {
 
   onLengthLimit(field: string, max: number): void {
     if (this.lengthWarnings[field]) return;
+    this.formAnalytics.start();
+    this.formAnalytics.validationError();
     const label =
       (
         {
@@ -205,7 +215,31 @@ export class GuestArtifactFormComponent implements OnInit, OnDestroy {
   }
 
   markTouched(field: string): void {
-    this.touched.add(field);
+    this.formAnalytics.markTouched(
+      field,
+      this.touched,
+      this.invalidField(field),
+    );
+  }
+
+  private invalidField(field: string): boolean {
+    if (field === 'title')
+      return (
+        !this.isEdit &&
+        (this.title.trim().length < 3 || this.title.trim().length > 200)
+      );
+    if (field === 'description')
+      return (
+        !this.isEdit &&
+        (this.description.trim().length < 50 ||
+          this.description.trim().length > 3000)
+      );
+    if (field === 'submissionComment')
+      return (
+        this.submissionComment.trim().length < 20 ||
+        this.submissionComment.trim().length > 1000
+      );
+    return !!this.fieldError(field);
   }
 
   fieldError(field: string): string {
@@ -311,6 +345,7 @@ export class GuestArtifactFormComponent implements OnInit, OnDestroy {
       files.some((file) => file.size < 1) ||
       unsupported
     ) {
+      this.formAnalytics.validationError();
       this.fileError =
         files.length > MAX_FILE_COUNT
           ? 'Choose at most 500 files.'
@@ -380,11 +415,14 @@ export class GuestArtifactFormComponent implements OnInit, OnDestroy {
   }
 
   submit(): void {
+    this.formAnalytics.attempt();
     if (!this.demo.session?.accountUsername) {
       this.error = 'Sign in to your contributor account before submitting.';
       return;
     }
     if (!this.canSubmit) {
+      if (this.status?.state === 'OPEN' && !this.busy && !this.hashing)
+        this.formAnalytics.validationError();
       this.error =
         this.metadataError() ||
         'Complete the required fields and select a supported file.';
@@ -399,6 +437,7 @@ export class GuestArtifactFormComponent implements OnInit, OnDestroy {
     if (this.isEdit) {
       const changes = this.editChanges(metadata);
       if (!Object.keys(changes).length) {
+        this.formAnalytics.validationError();
         this.error =
           'Change at least one editable field or choose a replacement file.';
         this.busy = false;
@@ -435,6 +474,7 @@ export class GuestArtifactFormComponent implements OnInit, OnDestroy {
   }
 
   private finish(id: string): void {
+    this.formAnalytics.accepted('ARTIFACT_SUBMITTED');
     this.busy = false;
     this.requestId = '';
     this.toastr.success(

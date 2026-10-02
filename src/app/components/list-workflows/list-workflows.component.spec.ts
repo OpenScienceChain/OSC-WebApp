@@ -7,22 +7,28 @@ import { PublicCatalogService } from '../../guest/public-catalog.service';
 import { ListWorkflowsComponent } from './list-workflows.component';
 
 describe('ListWorkflowsComponent', () => {
-  const workflows: WorkflowListItem[] = Array.from({ length: 7 }, (_, index) => ({
-    id: `workflow-${index + 1}`,
-    title: `Workflow ${index + 1}`,
-    description: `Description ${index + 1}`,
-    keywords: [],
-    submissionState: 'SUCCESS',
-    submittedAt: new Date('2026-09-28T12:00:00Z'),
-    updatedAt: new Date('2026-09-28T12:00:00Z'),
-  }));
+  const workflows: WorkflowListItem[] = Array.from(
+    { length: 7 },
+    (_, index) => ({
+      id: `workflow-${index + 1}`,
+      title: `Workflow ${index + 1}`,
+      description: `Description ${index + 1}`,
+      keywords: [],
+      submissionState: 'SUCCESS',
+      submittedAt: new Date('2026-09-28T12:00:00Z'),
+      updatedAt: new Date('2026-09-28T12:00:00Z'),
+    }),
+  );
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [ListWorkflowsComponent, RouterTestingModule],
       providers: [
         { provide: AuthService, useValue: { isAuthenticated: () => true } },
-        { provide: PublicCatalogService, useValue: { listWorkflows: () => of(workflows) } },
+        {
+          provide: PublicCatalogService,
+          useValue: { listWorkflows: () => of(workflows) },
+        },
       ],
     }).compileComponents();
   });
@@ -34,9 +40,13 @@ describe('ListWorkflowsComponent', () => {
 
     expect(component.totalPages).toBe(2);
     expect(component.paginatedWorkflows.length).toBe(6);
-    expect(fixture.nativeElement.querySelectorAll('app-workflow-card').length).toBe(6);
+    expect(
+      fixture.nativeElement.querySelectorAll('app-workflow-card').length,
+    ).toBe(6);
 
-    const pageTwo = fixture.nativeElement.querySelector('[aria-label="Page 2"]');
+    const pageTwo = fixture.nativeElement.querySelector(
+      '[aria-label="Page 2"]',
+    );
     pageTwo.click();
     fixture.detectChanges();
 
@@ -44,7 +54,9 @@ describe('ListWorkflowsComponent', () => {
     expect(component.paginatedWorkflows.map((item) => item.id)).toEqual([
       'workflow-7',
     ]);
-    expect(fixture.nativeElement.querySelectorAll('app-workflow-card').length).toBe(1);
+    expect(
+      fixture.nativeElement.querySelectorAll('app-workflow-card').length,
+    ).toBe(1);
     expect(pageTwo.getAttribute('aria-current')).toBe('page');
   });
 

@@ -86,15 +86,19 @@ describe('PublicCatalogService', () => {
   });
 
   it('combines demo and curated artifacts without calling legacy catalog routes', () => {
-    demo.listArtifacts.and.returnValue(of([{
-      id: 'demo-1',
-      title: 'Member artifact',
-      description: 'Member-submitted record',
-      keywords: ['member'],
-      submittedAt: '2026-09-30T00:00:00Z',
-      verified: false,
-      submissionState: 'SUCCESS',
-    } as any]));
+    demo.listArtifacts.and.returnValue(
+      of([
+        {
+          id: 'demo-1',
+          title: 'Member artifact',
+          description: 'Member-submitted record',
+          keywords: ['member'],
+          submittedAt: '2026-09-30T00:00:00Z',
+          verified: false,
+          submissionState: 'SUCCESS',
+        } as any,
+      ]),
+    );
     service.listArtifacts().subscribe((records) => {
       expect(records.map((record) => record.title)).toEqual([
         'Member artifact',
@@ -106,27 +110,39 @@ describe('PublicCatalogService', () => {
   });
 
   it('combines demo and curated workflows without calling legacy catalog routes', () => {
-    demo.listWorkflows.and.returnValue(of([{
-      id: 'demo-workflow',
-      title: 'Member workflow',
-      description: 'Member-submitted workflow',
-      submittedAt: '2026-09-30T00:00:00Z',
-      submissionState: 'SUCCESS',
-    } as any]));
-    showcase.examples.and.returnValue(of({ examples: [{
-      ...curated,
-      workflows: [{
-        id: 'curated-workflow',
-        title: 'EEG source provenance',
-        description: 'Curated source grouping',
-        organizationSlug: 'neuroscience-gateway',
-        submissionState: 'SUCCESS',
-        blockchainTxId: 'tx-2',
-        artifactIds: ['artifact-1'],
-        submittedAt: '2026-09-29T00:00:00Z',
-        updatedAt: null,
-      }],
-    }] }));
+    demo.listWorkflows.and.returnValue(
+      of([
+        {
+          id: 'demo-workflow',
+          title: 'Member workflow',
+          description: 'Member-submitted workflow',
+          submittedAt: '2026-09-30T00:00:00Z',
+          submissionState: 'SUCCESS',
+        } as any,
+      ]),
+    );
+    showcase.examples.and.returnValue(
+      of({
+        examples: [
+          {
+            ...curated,
+            workflows: [
+              {
+                id: 'curated-workflow',
+                title: 'EEG source provenance',
+                description: 'Curated source grouping',
+                organizationSlug: 'neuroscience-gateway',
+                submissionState: 'SUCCESS',
+                blockchainTxId: 'tx-2',
+                artifactIds: ['artifact-1'],
+                submittedAt: '2026-09-29T00:00:00Z',
+                updatedAt: null,
+              },
+            ],
+          },
+        ],
+      }),
+    );
     service.listWorkflows().subscribe((records) => {
       expect(records.map((record) => record.title)).toEqual([
         'Member workflow',

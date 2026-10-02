@@ -25,7 +25,12 @@ import { ClampInputLengthDirective } from '../../shared/clamp-input-length.direc
 @Component({
   selector: 'app-update-workflow',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule, ClampInputLengthDirective],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    RouterModule,
+    ClampInputLengthDirective,
+  ],
   templateUrl: './update-workflow.component.html',
   styleUrls: ['./update-workflow.component.css'],
 })

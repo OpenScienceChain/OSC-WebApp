@@ -175,7 +175,9 @@ describe('old portal guest flow against the local mock', () => {
       );
       cy.get('#repo-hash-0').should('have.value', 'a'.repeat(40));
       cy.wait('@repoContents').its('response.body').should('have.length', 1);
-      cy.get('.content-entry input').first().should('have.value', 'analysis.py');
+      cy.get('.content-entry input')
+        .first()
+        .should('have.value', 'analysis.py');
       cy.screenshot('restored-workflow-form-desktop', { capture: 'fullPage' });
       cy.intercept('POST', '**/api/v1/demo/workflows').as('createdWorkflow');
       cy.contains('button', 'Submit workflow').click();

@@ -273,8 +273,18 @@
                   >
                 </div>
 
-                <input formControlName="description" class="form-control mb-2" maxlength="500" placeholder="Repository description">
-                <input formControlName="gitHash" class="form-control mb-2" maxlength="40" placeholder="Latest commit hash">
+                <input
+                  formControlName="description"
+                  class="form-control mb-2"
+                  maxlength="500"
+                  placeholder="Repository description"
+                />
+                <input
+                  formControlName="gitHash"
+                  class="form-control mb-2"
+                  maxlength="40"
+                  placeholder="Latest commit hash"
+                />
 
                 <div class="contents-section">
                   <div
@@ -300,9 +310,22 @@
                         "
                       >
                         <div class="d-flex gap-2 mb-2">
-                          <div [formGroupName]="ci" class="d-flex gap-2 flex-grow-1">
-                            <input formControlName="filename" class="form-control form-control-sm" maxlength="160" placeholder="Filename">
-                            <input formControlName="hash" class="form-control form-control-sm" maxlength="128" placeholder="File hash (optional for folders)">
+                          <div
+                            [formGroupName]="ci"
+                            class="d-flex gap-2 flex-grow-1"
+                          >
+                            <input
+                              formControlName="filename"
+                              class="form-control form-control-sm"
+                              maxlength="160"
+                              placeholder="Filename"
+                            />
+                            <input
+                              formControlName="hash"
+                              class="form-control form-control-sm"
+                              maxlength="128"
+                              placeholder="File hash (optional for folders)"
+                            />
                           </div>
                           <button
                             type="button"

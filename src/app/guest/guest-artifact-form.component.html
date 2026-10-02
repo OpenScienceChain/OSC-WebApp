@@ -55,7 +55,9 @@
   <form
     *ngIf="(!isEdit && !!demo.session?.accountUsername) || !!baseline"
     class="artifact-form"
-    data-ux-submit="SUBMISSION_ATTEMPT"
+    (focusin)="formAnalytics.start()"
+    (input)="formAnalytics.start()"
+    (change)="formAnalytics.start()"
     (ngSubmit)="submit()"
   >
     <div class="form-grid">
@@ -70,6 +72,7 @@
             [(ngModel)]="title"
             #titleModel="ngModel"
             (ngModelChange)="onChange('title')"
+            (blur)="markTouched('title')"
             (lengthLimit)="onLengthLimit('title', $event)"
             [readOnly]="isEdit"
             [class.is-invalid]="
@@ -127,6 +130,7 @@
             [(ngModel)]="description"
             #descriptionModel="ngModel"
             (ngModelChange)="onChange('description')"
+            (blur)="markTouched('description')"
             (lengthLimit)="onLengthLimit('description', $event)"
             [readOnly]="isEdit"
             [class.is-invalid]="
@@ -369,6 +373,7 @@
             [(ngModel)]="submissionComment"
             #commentModel="ngModel"
             (ngModelChange)="onChange('submissionComment')"
+            (blur)="markTouched('submissionComment')"
             (lengthLimit)="onLengthLimit('submissionComment', $event)"
             [class.is-invalid]="
               (commentModel.invalid && commentModel.touched) ||

@@ -13,13 +13,21 @@ import { ToastrService } from 'ngx-toastr';
 import { WorkflowService } from '../../services/workflow.service';
 import { ArtifactService } from '../../artifacts/services/artifact.service';
 import { Artifact } from '../../models/artifact.model';
-import { CreateWorkflowDTO, GitHubRepository } from '../../models/workflow.model';
+import {
+  CreateWorkflowDTO,
+  GitHubRepository,
+} from '../../models/workflow.model';
 import { ClampInputLengthDirective } from '../../shared/clamp-input-length.directive';
 
 @Component({
   selector: 'app-create-workflow',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule, ClampInputLengthDirective],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    RouterModule,
+    ClampInputLengthDirective,
+  ],
   templateUrl: './create-workflow.component.html',
   styleUrls: ['./create-workflow.component.css'],
 })

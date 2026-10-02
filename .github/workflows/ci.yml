@@ -67,6 +67,8 @@ jobs:
           fi
       - name: Check maintained source duplication
         run: npm run duplication:check
+      - name: Check legacy lint non-regression
+        run: npm run lint:baseline
       - name: Unit tests with coverage
         run: npm run test:ci
       - name: Production build

@@ -8,11 +8,9 @@ import { ClampInputLengthDirective } from '../../shared/clamp-input-length.direc
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, ClampInputLengthDirective],
   templateUrl: './artifact-metadata-form.component.html',
-  styleUrls: ['./artifact-metadata-form.component.css']
+  styleUrls: ['./artifact-metadata-form.component.css'],
 })
 export class ArtifactMetadataFormComponent {
   @Input() artifactForm!: FormGroup;
   @Input() isUpdateMode = false;
 }
-
-

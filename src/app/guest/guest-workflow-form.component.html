@@ -68,9 +68,11 @@
   </p>
 
   <form
-    data-ux-submit="SUBMISSION_ATTEMPT"
     *ngIf="(!isEdit && !!demo.session?.accountUsername) || editReady"
     class="workflow-form"
+    (focusin)="formAnalytics.start()"
+    (input)="formAnalytics.start()"
+    (change)="formAnalytics.start()"
     (ngSubmit)="submit()"
     novalidate
   >

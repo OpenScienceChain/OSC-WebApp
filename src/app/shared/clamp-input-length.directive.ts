@@ -11,8 +11,12 @@ export class ClampInputLengthDirective {
   onBeforeInput(event: InputEvent): void {
     const field = event.target as HTMLInputElement | HTMLTextAreaElement;
     if (event.inputType.startsWith('delete') || field.maxLength < 0) return;
-    const selected = Math.max(0, (field.selectionEnd || 0) - (field.selectionStart || 0));
-    const incoming = event.data?.length || event.dataTransfer?.getData('text')?.length || 1;
+    const selected = Math.max(
+      0,
+      (field.selectionEnd || 0) - (field.selectionStart || 0),
+    );
+    const incoming =
+      event.data?.length || event.dataTransfer?.getData('text')?.length || 1;
     if (field.value.length - selected + incoming > field.maxLength)
       this.lengthLimit.emit(field.maxLength);
   }

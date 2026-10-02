@@ -11,6 +11,8 @@ import {
 } from './demo.models';
 import { DemoService } from './demo.service';
 import { ClampInputLengthDirective } from '../shared/clamp-input-length.directive';
+import { UxAnalyticsService } from '../analytics/ux-analytics.service';
+import { FormAnalytics } from '../analytics/form-analytics';
 
 interface WorkflowRepository {
   url: string;
@@ -30,6 +32,7 @@ interface WorkflowRepository {
 export class GuestWorkflowFormComponent implements OnInit, OnDestroy {
   readonly isEdit: boolean;
   readonly id: string;
+  readonly formAnalytics: FormAnalytics;
   editReady = false;
   accessDenied = false;
   status?: DemoStatus;
@@ -56,9 +59,13 @@ export class GuestWorkflowFormComponent implements OnInit, OnDestroy {
     private readonly route: ActivatedRoute,
     private readonly router: Router,
     private readonly http: HttpClient,
+    analytics: UxAnalyticsService,
   ) {
-    this.id = route.snapshot.paramMap.get('id') || '';
-    this.isEdit = !!this.id;
+    const id = route.snapshot.paramMap.get('id') || '';
+    const analyticsRoute = id ? '/update-workflow/:id' : '/create-workflow';
+    this.formAnalytics = new FormAnalytics(analytics, analyticsRoute);
+    this.id = id;
+    this.isEdit = !!id;
   }
 
   ngOnInit(): void {
@@ -191,10 +198,15 @@ export class GuestWorkflowFormComponent implements OnInit, OnDestroy {
   }
 
   markTouched(field: string): void {
-    this.touched.add(field);
+    this.formAnalytics.markTouched(
+      field,
+      this.touched,
+      this.invalidField(field),
+    );
   }
 
   onChange(): void {
+    this.formAnalytics.start();
     this.requestId = '';
     this.error = '';
   }
@@ -345,8 +357,10 @@ export class GuestWorkflowFormComponent implements OnInit, OnDestroy {
   }
 
   submit(): void {
+    this.formAnalytics.attempt();
     this.submitted = true;
     if (!this.canSubmit) {
+      if (!this.formValid) this.formAnalytics.validationError();
       this.error =
         'Complete the required fields and select 1–3 confirmed artifacts.';
       return;
@@ -379,6 +393,7 @@ export class GuestWorkflowFormComponent implements OnInit, OnDestroy {
         });
     operation.subscribe({
       next: (workflow) => {
+        this.formAnalytics.accepted('WORKFLOW_SUBMITTED');
         this.busy = false;
         this.requestId = '';
         this.router.navigate(['/workflows', workflow.id]);
@@ -402,5 +417,26 @@ export class GuestWorkflowFormComponent implements OnInit, OnDestroy {
         }
       },
     });
+  }
+
+  private invalidField(field: string): boolean {
+    if (field === 'title')
+      return this.title.trim().length < 3 || this.title.trim().length > 200;
+    if (field === 'description')
+      return (
+        this.description.trim().length < 50 ||
+        this.description.trim().length > 3000
+      );
+    if (field === 'comment')
+      return (
+        this.submissionComment.trim().length < 20 ||
+        this.submissionComment.trim().length > 1000
+      );
+    const repository = this.githubRepositories[Number(field.slice(5))];
+    return (
+      field.startsWith('repo-') &&
+      !!repository &&
+      !this.repositoryValid(repository)
+    );
   }
 }

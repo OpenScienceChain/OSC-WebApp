@@ -122,6 +122,32 @@ describe('AppComponent', () => {
       // Verificar que se llamó al método updateBackButtonVisibility
       expect(component['updateBackButtonVisibility']).toHaveBeenCalled();
     });
+
+    it('tracks page views plus specialized events using route templates', () => {
+      const track = spyOn(component.analytics, 'track');
+      const artifactId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+      const workflowId = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+
+      [
+        `/artifacts/${artifactId}`,
+        `/artifacts/${artifactId}/history/ledger-revision-1`,
+        `/workflows/${workflowId}`,
+        `/workflows/${workflowId}/history`,
+      ].forEach((url, index) =>
+        routerEventsSubject.next(new NavigationEnd(index + 1, url, url)),
+      );
+
+      expect(track.calls.allArgs()).toEqual([
+        ['PAGE_VIEW', '/artifacts/:id'],
+        ['RECORD_VIEW', '/artifacts/:id'],
+        ['PAGE_VIEW', '/artifacts/:id/history/:txId'],
+        ['HISTORY_VIEW', '/artifacts/:id/history/:txId'],
+        ['PAGE_VIEW', '/workflows/:id'],
+        ['RECORD_VIEW', '/workflows/:id'],
+        ['PAGE_VIEW', '/workflows/:id/history'],
+        ['HISTORY_VIEW', '/workflows/:id/history'],
+      ]);
+    });
   });
 
   describe('Navigation Methods', () => {
