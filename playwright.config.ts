@@ -8,7 +8,14 @@ export default defineConfig({
   expect: { timeout: 10_000 },
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : 'list',
-  use: { baseURL, screenshot: 'only-on-failure', trace: 'retain-on-failure' },
+  use: {
+    baseURL,
+    ignoreHTTPSErrors:
+      process.env.PLAYWRIGHT_LIVE === '1' &&
+      baseURL.startsWith('https://demo.localho.st:'),
+    screenshot: 'only-on-failure',
+    trace: 'retain-on-failure',
+  },
   projects: [
     {
       name: 'desktop',

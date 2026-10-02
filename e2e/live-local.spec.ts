@@ -6,6 +6,39 @@ test.skip(
   'Run only against an explicitly selected live Fabric stack.',
 );
 
+test('signed-out visitor can reject analytics and send partial anonymous feedback', async ({
+  page,
+  context,
+}) => {
+  const analyticsEvents: string[] = [];
+  let surveySubmission: Record<string, unknown> | null = null;
+  page.on('request', (request) => {
+    const pathname = new URL(request.url()).pathname;
+    if (pathname.endsWith('/analytics/events')) analyticsEvents.push(pathname);
+    if (pathname.endsWith('/ux-feedback') && request.method() === 'POST') {
+      surveySubmission = request.postDataJSON() as Record<string, unknown>;
+    }
+  });
+
+  await page.goto('/feedback');
+  await expect(
+    page.getByRole('heading', { name: 'Share feedback' }),
+  ).toBeVisible();
+  await page.getByRole('button', { name: 'Reject', exact: true }).click();
+  await page
+    .getByLabel('Would research workflow automation be useful to you?')
+    .selectOption('MAYBE');
+  await page.getByRole('button', { name: 'Send feedback' }).click();
+  await expect(
+    page.getByText('Thank you for sharing your feedback.'),
+  ).toBeVisible();
+  expect(surveySubmission).toEqual({ automationInterest: 'MAYBE' });
+  expect(analyticsEvents).toEqual([]);
+  expect(
+    (await context.cookies()).some((cookie) => cookie.name === '__Host-osc_ux'),
+  ).toBe(false);
+});
+
 type ApiResult<T> = { status: number; body: T };
 
 async function api<T>(
@@ -161,9 +194,10 @@ test('local account ownership and confirmed artifact/workflow revisions', async 
         const result = await api<{
           items: { txId: string; revision: number }[];
         }>(page, 'GET', `/public/artifacts/${artifactId}/history`);
-        artifactRevision = result.status === 200
-          ? result.body.items.find((item) => item.revision === 2)
-          : undefined;
+        artifactRevision =
+          result.status === 200
+            ? result.body.items.find((item) => item.revision === 2)
+            : undefined;
         return Boolean(artifactRevision);
       },
       { timeout: 90_000, intervals: [1000, 2000, 3000] },
@@ -179,9 +213,7 @@ test('local account ownership and confirmed artifact/workflow revisions', async 
     ).body.footprint,
   ).toBe(originalFootprint);
   expect(artifactRevision).toBeDefined();
-  await page.goto(
-    `/artifacts/${artifactId}/history/${artifactRevision!.txId}`,
-  );
+  await page.goto(`/artifacts/${artifactId}/history/${artifactRevision!.txId}`);
   await expect
     .poll(
       async () => {
