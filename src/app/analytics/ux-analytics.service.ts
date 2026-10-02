@@ -1,7 +1,8 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, signal } from '@angular/core';
 
-export type AnalyticsChoice = 'undecided' | 'accepted' | 'rejected';
+export type AnalyticsChoice =
+  'undecided' | 'accepted' | 'rejected' | 'deletion-pending';
 export type AnalyticsEventType =
   | 'PAGE_VIEW'
   | 'CATALOG_SEARCH'
@@ -18,6 +19,7 @@ export type AnalyticsEventType =
 
 const CHOICE_KEY = 'osc-ux-analytics-choice-v1';
 const THIRTY_DAYS = 30 * 24 * 60 * 60 * 1000;
+const DELETION_WARNING = 'Deletion was not confirmed. Please retry.';
 const ROUTES = new Set([
   '/',
   '/feedback',
@@ -42,14 +44,16 @@ const ROUTES = new Set([
 export class UxAnalyticsService {
   readonly choice = signal<AnalyticsChoice>(this.readChoice());
   readonly busy = signal(false);
-  readonly error = signal('');
-  readonly deletionFailed = signal(false);
+  readonly error = signal(
+    this.choice() === 'deletion-pending' ? DELETION_WARNING : '',
+  );
+  readonly deletionFailed = signal(this.choice() === 'deletion-pending');
   private trackingAllowed = this.choice() === 'accepted';
 
   constructor(private readonly http: HttpClient) {}
 
   accept(onAccepted: () => void): void {
-    if (this.busy()) return;
+    if (this.busy() || this.choice() === 'deletion-pending') return;
     this.busy.set(true);
     this.error.set('');
     this.http
@@ -87,8 +91,14 @@ export class UxAnalyticsService {
   }
 
   revoke(): void {
-    if (this.busy() || this.choice() !== 'accepted') return;
+    if (
+      this.busy() ||
+      (this.choice() !== 'accepted' && this.choice() !== 'deletion-pending')
+    )
+      return;
     this.trackingAllowed = false;
+    // Withdrawal survives reload even if deletion fails or is interrupted.
+    this.saveChoice('deletion-pending');
     this.busy.set(true);
     this.error.set('');
     this.http
@@ -100,7 +110,7 @@ export class UxAnalyticsService {
           this.busy.set(false);
           if (result.deleted !== true) {
             this.deletionFailed.set(true);
-            this.error.set('Deletion was not confirmed. Please retry.');
+            this.error.set(DELETION_WARNING);
             return;
           }
           this.deletionFailed.set(false);
@@ -109,7 +119,7 @@ export class UxAnalyticsService {
         error: () => {
           this.busy.set(false);
           this.deletionFailed.set(true);
-          this.error.set('Deletion was not confirmed. Please retry.');
+          this.error.set(DELETION_WARNING);
         },
       });
   }
@@ -128,7 +138,10 @@ export class UxAnalyticsService {
       )
       .subscribe({
         error: (error) => {
-          if (error.status === 401 || error.status === 403) {
+          if (
+            (error.status === 401 || error.status === 403) &&
+            this.choice() !== 'deletion-pending'
+          ) {
             this.trackingAllowed = false;
             this.clearChoice();
           }
@@ -170,7 +183,8 @@ export class UxAnalyticsService {
         CHOICE_KEY,
         JSON.stringify({
           choice,
-          expiresAt: Date.now() + THIRTY_DAYS,
+          expiresAt:
+            choice === 'deletion-pending' ? null : Date.now() + THIRTY_DAYS,
         }),
       );
     }
@@ -186,6 +200,8 @@ export class UxAnalyticsService {
     if (typeof localStorage === 'undefined') return 'undecided';
     try {
       const value = JSON.parse(localStorage.getItem(CHOICE_KEY) || 'null');
+      // Pending deletion must not expire into a new consent prompt.
+      if (value?.choice === 'deletion-pending') return 'deletion-pending';
       if (
         value?.expiresAt > Date.now() &&
         (value.choice === 'accepted' || value.choice === 'rejected')

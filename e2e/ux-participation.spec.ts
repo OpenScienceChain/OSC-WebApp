@@ -1,7 +1,7 @@
 import { expect, test, type Page, type Request } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
-async function setup(page: Page, eventStatus = 200) {
+async function setup(page: Page, eventStatus = 200, deletionFailure?: number) {
   const analytics: Request[] = [];
   const feedback: Request[] = [];
   await page.route('**/assets/runtime-config.json', (route) =>
@@ -15,12 +15,18 @@ async function setup(page: Page, eventStatus = 200) {
     const request = route.request();
     if (request.url().includes('/analytics/')) {
       analytics.push(request);
+      const failedDeletion =
+        request.method() === 'DELETE' && deletionFailure !== undefined;
       return route.fulfill({
-        status: request.url().endsWith('/events') ? eventStatus : 200,
+        status: failedDeletion
+          ? deletionFailure
+          : request.url().endsWith('/events')
+            ? eventStatus
+            : 200,
         contentType: 'application/json',
         body: JSON.stringify(
           request.method() === 'DELETE'
-            ? { consented: false, deleted: true }
+            ? { consented: false, deleted: !failedDeletion }
             : { accepted: true, consented: true },
         ),
       });
@@ -155,6 +161,78 @@ test('accept tracks only allowlisted route and deletion stops events', async ({
   expect(analytics).toHaveLength(3);
   await checkA11y(page);
 });
+
+for (const deletionStatus of [503, 200]) {
+  test(`failed deletion (${deletionStatus}) stays off and retryable across reload`, async ({
+    page,
+  }) => {
+    const { analytics } = await setup(page, 200, deletionStatus);
+    await page.goto('/feedback');
+    await page
+      .getByRole('button', { name: 'Accept', exact: true })
+      .first()
+      .click();
+    await expect.poll(() => analytics.length).toBe(2);
+    await page.getByText('Privacy choices').click();
+    await page
+      .getByRole('button', { name: 'Delete analytics history' })
+      .click();
+    const warning = page.getByRole('alert').filter({ hasText: 'Please retry' });
+    await expect(warning).toBeVisible();
+    await expect(page.getByText('Optional analytics are off.')).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: 'Accept', exact: true }),
+    ).toHaveCount(0);
+    expect(
+      await page.evaluate(() =>
+        JSON.parse(localStorage.getItem('osc-ux-analytics-choice-v1')!),
+      ),
+    ).toEqual({ choice: 'deletion-pending', expiresAt: null });
+
+    await page.reload();
+    await expect(warning).toBeVisible();
+    const retry = page.getByRole('button', {
+      name: 'Retry deleting analytics history',
+    });
+    await expect(retry).toBeEnabled();
+    await expect(
+      page.getByRole('region', { name: 'Analytics choice' }),
+    ).toHaveCount(0);
+    await expect(
+      page.getByRole('button', { name: 'Accept', exact: true }),
+    ).toHaveCount(0);
+    await page.getByRole('link', { name: 'Home', exact: true }).last().click();
+    await expect(page).toHaveURL(/\/$/);
+    await expect(warning).toBeVisible();
+    expect(analytics).toHaveLength(3);
+    await retry.click();
+    await expect.poll(() => analytics.length).toBe(4);
+    await expect(warning).toBeVisible();
+    await expect(retry).toBeEnabled();
+    await checkA11y(page);
+
+    await page.route('**/api/v1/demo/analytics/session', (route) => {
+      if (route.request().method() !== 'DELETE') return route.fallback();
+      analytics.push(route.request());
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ deleted: true }),
+      });
+    });
+    await retry.click();
+    await expect(warning).toHaveCount(0);
+    await expect(retry).toHaveCount(0);
+    await page.reload();
+    await page.getByText('Privacy choices').click();
+    await expect(page.getByText('Optional analytics are off.')).toBeVisible();
+    expect(analytics).toHaveLength(5);
+    await page.getByRole('button', { name: 'Accept', exact: true }).click();
+    await expect.poll(() => analytics.length).toBe(7);
+    expect(analytics[5].method()).toBe('POST');
+    expect(analytics[6].url()).toMatch(/\/events$/);
+  });
+}
 
 test('expired analytics session clears the accepted choice', async ({
   page,

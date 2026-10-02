@@ -222,25 +222,37 @@
       <a routerLink="/research-example">Research example</a>
       <a routerLink="/feedback">Share feedback</a>
     </nav>
-    <details class="privacy-settings">
+    <details class="privacy-settings" [open]="analytics.deletionFailed()">
       <summary>Privacy choices</summary>
       <p *ngIf="analytics.choice() === 'accepted'">
         Optional analytics are on. You can delete this browser's analytics
         history.
       </p>
-      <p *ngIf="analytics.choice() === 'rejected'">
+      <p
+        *ngIf="
+          analytics.choice() === 'rejected' ||
+          analytics.choice() === 'deletion-pending'
+        "
+      >
         Optional analytics are off.
       </p>
       <p *ngIf="analytics.choice() === 'undecided'">
         Choose whether to allow optional analytics.
       </p>
       <button
-        *ngIf="analytics.choice() === 'accepted'"
+        *ngIf="
+          analytics.choice() === 'accepted' ||
+          analytics.choice() === 'deletion-pending'
+        "
         type="button"
         [disabled]="analytics.busy()"
         (click)="analytics.revoke()"
       >
-        Delete analytics history
+        {{
+          analytics.choice() === 'deletion-pending'
+            ? 'Retry deleting analytics history'
+            : 'Delete analytics history'
+        }}
       </button>
       <div
         *ngIf="

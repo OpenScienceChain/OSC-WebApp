@@ -52,6 +52,9 @@
   flex-basis: 100%;
   color: #8c2727;
 }
+.privacy-settings .privacy-error {
+  color: #ffb4ab;
+}
 .privacy-settings {
   max-width: 240px;
 }
