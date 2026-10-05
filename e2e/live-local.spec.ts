@@ -154,9 +154,8 @@ test('local account ownership and confirmed artifact/workflow revisions', async 
     .toBe('SUCCESS:true');
 
   await page.goto(`/artifacts/${artifactId}`);
-  await expect(
-    page.getByRole('link', { name: /Update Artifact/i }),
-  ).toBeVisible();
+  const manageArtifact = page.getByRole('link', { name: 'Manage Artifact' });
+  await expect(manageArtifact).toBeVisible();
   const originalFootprint = (
     await api<{ footprint: string }>(
       page,
@@ -164,7 +163,7 @@ test('local account ownership and confirmed artifact/workflow revisions', async 
       `/public/artifacts/${artifactId}`,
     )
   ).body.footprint;
-  await page.goto(`/update-artifact/${artifactId}`);
+  await manageArtifact.click();
   await page
     .getByRole('switch', { name: 'Keep current manifest and footprint' })
     .check();

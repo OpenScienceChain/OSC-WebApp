@@ -106,6 +106,7 @@ export class GuestArtifactFormComponent implements OnInit, OnDestroy {
         this.activeAccount = session?.accountUsername;
         if (this.isEdit && this.activeAccount) {
           this.accessDenied = false;
+          this.baseline = undefined;
           this.loadEdit();
         } else if (this.isEdit) {
           this.baseline = undefined;
@@ -125,11 +126,13 @@ export class GuestArtifactFormComponent implements OnInit, OnDestroy {
   }
 
   private loadEdit(): void {
+    const account = this.activeAccount;
     forkJoin({
       mine: this.demo.getMyArtifacts(),
       detail: this.demo.getPublicArtifact(this.id),
     }).subscribe({
       next: ({ mine, detail }) => {
+        if (this.activeAccount !== account) return;
         if (
           !mine.some(
             (item) => item.id === this.id && item.submissionState === 'SUCCESS',
@@ -147,7 +150,9 @@ export class GuestArtifactFormComponent implements OnInit, OnDestroy {
         this.acknowledgement = detail.acknowledgements || '';
         this.otherAgency = (detail.fundingAgencies || []).join(', ');
       },
-      error: () => (this.accessDenied = true),
+      error: () => {
+        if (this.activeAccount === account) this.accessDenied = true;
+      },
     });
   }
 

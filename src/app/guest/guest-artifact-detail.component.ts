@@ -310,20 +310,30 @@ import { safeExternalUrl } from '../shared/safe-external-url';
               class="primary-action"
               [routerLink]="['/artifacts', artifact.id, 'history']"
               ><i class="bi bi-clock-history" aria-hidden="true"></i>History</a
-            ><a
-              *ngIf="canEdit"
-              class="primary-action"
-              [routerLink]="['/update-artifact', artifact.id]"
-              ><i class="bi bi-pencil-square" aria-hidden="true"></i>Update
-              Artifact</a
             >
             <a
-              *ngIf="!canEdit && !demo.session"
-              class="secondary-action"
-              routerLink="/auth/sign-in"
-              >Sign in to update</a
+              class="primary-action"
+              [routerLink]="['/update-artifact', artifact.id]"
+              ><i class="bi bi-pencil-square" aria-hidden="true"></i>Manage
+              Artifact</a
             >
           </div>
+          <p
+            *ngIf="
+              demo.session?.accountUsername &&
+              (!confirmed || (ownershipChecked && !canEdit))
+            "
+            class="manage-restriction"
+            role="status"
+          >
+            {{
+              !confirmed
+                ? 'Artifact management is available after ledger confirmation.'
+                : ownershipCheckFailed
+                  ? 'Artifact management could not be verified right now.'
+                  : 'Only the contributing account can manage this artifact.'
+            }}
+          </p>
         </ng-container>
       </div>
     </main>
@@ -336,6 +346,8 @@ export class GuestArtifactDetailComponent implements OnInit {
   isLoading = true;
   errorMessage = '';
   canEdit = false;
+  ownershipChecked = false;
+  ownershipCheckFailed = false;
   copied = false;
   copyMessage = '';
   private copyReset?: ReturnType<typeof setTimeout>;
@@ -363,6 +375,8 @@ export class GuestArtifactDetailComponent implements OnInit {
     this.isLoading = true;
     this.errorMessage = '';
     this.canEdit = false;
+    this.ownershipChecked = false;
+    this.ownershipCheckFailed = false;
     this.catalog.artifact(this.id).subscribe({
       next: (artifact) => {
         this.artifact = artifact;
@@ -377,14 +391,19 @@ export class GuestArtifactDetailComponent implements OnInit {
   }
 
   private checkOwnership(): void {
-    if (!this.demo.session || !this.confirmed) return;
+    if (!this.demo.session?.accountUsername || !this.confirmed) return;
     this.demo.getMyArtifacts().subscribe({
       next: (items) => {
         this.canEdit = items.some(
           (item) => item.id === this.id && item.submissionState === 'SUCCESS',
         );
+        this.ownershipChecked = true;
       },
-      error: () => (this.canEdit = false),
+      error: () => {
+        this.canEdit = false;
+        this.ownershipCheckFailed = true;
+        this.ownershipChecked = true;
+      },
     });
   }
 

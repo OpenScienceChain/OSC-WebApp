@@ -2,7 +2,7 @@
   <header class="header">
     <h1>
       {{
-        isEdit ? 'Update Artifact' : "Add a New Artifact to your Org's Vault!"
+        isEdit ? 'Manage Artifact' : "Add a New Artifact to your Org's Vault!"
       }}
     </h1>
     <div class="header-divider"></div>
@@ -24,23 +24,31 @@
   </section>
   <section
     *ngIf="isEdit && (!demo.session?.accountUsername || accessDenied)"
-    class="form-note"
+    class="artifact-access-note"
     role="status"
   >
-    <p>
-      {{
-        !demo.session?.accountUsername
-          ? 'Sign in with the account that contributed this artifact to manage it.'
-          : 'This artifact is not available to update from this account.'
-      }}
-    </p>
-    <a
-      *ngIf="!demo.session?.accountUsername"
-      routerLink="/auth/sign-in"
-      [queryParams]="{ returnUrl: '/update-artifact/' + id }"
-      >Sign in</a
-    >
-    <a [routerLink]="['/artifacts', id]">Back to artifact</a>
+    <i class="bi bi-lock" aria-hidden="true"></i>
+    <div>
+      <h2>Artifact updates are restricted</h2>
+      <p>
+        {{
+          !demo.session?.accountUsername
+            ? 'Sign in with the account that contributed this artifact to manage it.'
+            : 'Only the contributing account can manage a confirmed artifact.'
+        }}
+      </p>
+      <div class="artifact-access-actions">
+        <a
+          *ngIf="!demo.session?.accountUsername"
+          routerLink="/auth/sign-in"
+          [queryParams]="{ returnUrl: '/update-artifact/' + id }"
+          >Sign in</a
+        >
+        <a [routerLink]="['/artifacts', id]">
+          Back to artifact <i class="bi bi-arrow-right" aria-hidden="true"></i>
+        </a>
+      </div>
+    </div>
   </section>
   <div
     *ngIf="demo.session?.accountUsername && !accessDenied"

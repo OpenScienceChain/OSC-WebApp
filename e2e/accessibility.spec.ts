@@ -224,6 +224,32 @@ test.describe('public views', () => {
     await checkPage(page);
   });
 
+  test('artifact management offers sign-in when signed out', async ({
+    page,
+  }) => {
+    await mockDemo(page);
+    await page.goto(`/artifacts/${artifactId}`);
+    await expect(
+      page.getByRole('link', { name: 'Manage Artifact' }),
+    ).toBeVisible();
+    await page.getByRole('link', { name: 'Manage Artifact' }).click();
+    await expect(
+      page.getByRole('heading', { name: 'Manage Artifact' }),
+    ).toBeVisible();
+    await expect(
+      page.getByText('Artifact updates are restricted'),
+    ).toBeVisible();
+    await expect(
+      page
+        .locator('#main-content')
+        .getByRole('link', { name: 'Sign in', exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('link', { name: 'Back to artifact' }),
+    ).toBeVisible();
+    await checkPage(page);
+  });
+
   test('workflow detail paginates linked artifacts and confirms ID copy', async ({
     page,
   }) => {
@@ -403,6 +429,53 @@ test.describe('public views', () => {
 });
 
 test.describe('owner views', () => {
+  test('artifact management restricts another contributor', async ({
+    page,
+  }) => {
+    await mockDemo(page, true);
+    await page.route('**/api/v1/demo/mine/artifacts', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: '[]',
+      }),
+    );
+    await page.goto(`/artifacts/${artifactId}`);
+    await expect(
+      page.getByText('Only the contributing account can manage this artifact.'),
+    ).toBeVisible();
+    await page.getByRole('link', { name: 'Manage Artifact' }).click();
+    await expect(
+      page.getByText('Artifact updates are restricted'),
+    ).toBeVisible();
+    await expect(
+      page.getByText(
+        'Only the contributing account can manage a confirmed artifact.',
+      ),
+    ).toBeVisible();
+    await expect(page.locator('form.artifact-form')).toHaveCount(0);
+    await checkPage(page);
+  });
+
+  test('artifact management opens the owner update form', async ({ page }) => {
+    await mockDemo(page, true);
+    await page.goto(`/artifacts/${artifactId}`);
+    await page.getByRole('link', { name: 'Manage Artifact' }).click();
+    await expect(
+      page.getByRole('heading', { name: 'Manage Artifact' }),
+    ).toBeVisible();
+    await expect(page.getByText('Artifact updates are restricted')).toHaveCount(
+      0,
+    );
+    await expect(page.getByLabel('Title', { exact: true })).toHaveValue(
+      artifact.title,
+    );
+    await expect(
+      page.getByRole('button', { name: 'Submit revision' }),
+    ).toBeVisible();
+    await checkPage(page);
+  });
+
   test('signed-in account is available in another tab', async ({
     page,
   }, testInfo) => {
