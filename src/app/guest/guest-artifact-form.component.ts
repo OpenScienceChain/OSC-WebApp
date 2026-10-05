@@ -42,7 +42,10 @@ const ALLOWED_EXTENSIONS = new Set([
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule, ClampInputLengthDirective],
   templateUrl: './guest-artifact-form.component.html',
-  styleUrls: ['./guest-artifact-form.component.css'],
+  styleUrls: [
+    './guest-artifact-form.component.css',
+    './guest-artifact-create.component.css',
+  ],
 })
 export class GuestArtifactFormComponent implements OnInit, OnDestroy {
   readonly isEdit: boolean;
