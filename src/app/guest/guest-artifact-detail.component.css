@@ -286,6 +286,26 @@
   overflow-wrap: anywhere;
 }
 
+.contributor-name,
+.contributor-organization {
+  display: block;
+}
+
+.contributor-name {
+  color: #163a59;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.contributor-organization {
+  margin-top: 2px;
+  color: #49616c;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
 .identity-list code {
   color: #264d5d;
   font-size: 13px;

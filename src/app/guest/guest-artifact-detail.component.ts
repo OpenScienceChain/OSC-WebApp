@@ -193,7 +193,14 @@ import { safeExternalUrl } from '../shared/safe-external-url';
               <dl class="identity-list">
                 <div>
                   <dt>Contributor</dt>
-                  <dd>{{ artifact.contributorAlias }}</dd>
+                  <dd class="contributor-detail">
+                    <span class="contributor-name">{{
+                      artifact.contributorAlias
+                    }}</span>
+                    <span class="contributor-organization">{{
+                      artifact.organization
+                    }}</span>
+                  </dd>
                 </div>
                 <div>
                   <dt>ID</dt>

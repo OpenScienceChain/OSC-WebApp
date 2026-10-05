@@ -162,7 +162,14 @@ import { safeExternalUrl } from '../shared/safe-external-url';
               <dl class="identity-list">
                 <div>
                   <dt>Contributor</dt>
-                  <dd>{{ workflow.contributorAlias }}</dd>
+                  <dd class="contributor-detail">
+                    <span class="contributor-name">{{
+                      workflow.contributorAlias
+                    }}</span>
+                    <span class="contributor-organization">{{
+                      workflow.organization
+                    }}</span>
+                  </dd>
                 </div>
                 <div>
                   <dt>ID</dt>

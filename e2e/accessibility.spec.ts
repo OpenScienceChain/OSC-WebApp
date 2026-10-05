@@ -282,9 +282,12 @@ test.describe('public views', () => {
       'Submitted',
       'Last Updated',
     ]);
-    await expect(page.locator('.record-identity dd').first()).toHaveText(
+    await expect(page.locator('.record-identity .contributor-name')).toHaveText(
       artifact.contributorAlias,
     );
+    await expect(
+      page.locator('.record-identity .contributor-organization'),
+    ).toHaveText(artifact.organization);
     const contributorLabel = await page
       .locator('.record-identity dt')
       .first()
@@ -297,6 +300,17 @@ test.describe('public views', () => {
     expect(contributorValue).not.toBeNull();
     expect(contributorValue!.y).toBeGreaterThan(
       contributorLabel!.y + contributorLabel!.height,
+    );
+    const contributorName = await page
+      .locator('.record-identity .contributor-name')
+      .boundingBox();
+    const contributorOrganization = await page
+      .locator('.record-identity .contributor-organization')
+      .boundingBox();
+    expect(contributorName).not.toBeNull();
+    expect(contributorOrganization).not.toBeNull();
+    expect(contributorOrganization!.y).toBeGreaterThan(
+      contributorName!.y + contributorName!.height,
     );
     await expect(page.locator('.ledger-facts')).toContainText(
       'peer0.nsg.osc.example',
@@ -449,9 +463,12 @@ test.describe('public views', () => {
       'Organization',
       'Submitted',
     ]);
-    await expect(page.locator('.record-identity dd').first()).toHaveText(
+    await expect(page.locator('.record-identity .contributor-name')).toHaveText(
       workflow.contributorAlias,
     );
+    await expect(
+      page.locator('.record-identity .contributor-organization'),
+    ).toHaveText(workflow.organization);
     const metadataBox = await page.locator('.record-context').boundingBox();
     const identityBox = await page.locator('.record-identity').boundingBox();
     expect(metadataBox).not.toBeNull();
@@ -528,9 +545,12 @@ test.describe('public views', () => {
       'Organization',
       'Submitted',
     ]);
-    await expect(page.locator('.record-identity dd').first()).toHaveText(
+    await expect(page.locator('.record-identity .contributor-name')).toHaveText(
       workflow.contributorAlias,
     );
+    await expect(
+      page.locator('.record-identity .contributor-organization'),
+    ).toHaveText(workflow.organization);
     await checkPage(page);
   });
 
