@@ -335,6 +335,30 @@ test.describe('owner views', () => {
     await checkPage(page);
   });
 
+  test('artifact update remains restricted for another account', async ({
+    page,
+  }) => {
+    await mockDemo(page, true);
+    await page.route('**/api/v1/demo/mine/artifacts', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: '[]',
+      }),
+    );
+    await page.goto(`/update-artifact/${artifactId}`);
+    await expect(
+      page.getByText(
+        'This artifact is not available to update from this account.',
+      ),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('link', { name: 'Back to artifact' }),
+    ).toBeVisible();
+    await expect(page.getByLabel('Title', { exact: true })).toHaveCount(0);
+    await checkPage(page);
+  });
+
   test('workflow submit follows form validity', async ({ page }) => {
     await mockDemo(page, true);
     await page.goto('/create-workflow');
@@ -371,11 +395,29 @@ test.describe('owner views', () => {
     await expect(submit).toBeDisabled();
   });
 
-  test('artifact revision can retain its manifest without selecting files', async ({
+  test('artifact revision retains fields and can keep its manifest', async ({
     page,
-  }) => {
+  }, testInfo) => {
     await mockDemo(page, true);
     await page.goto(`/update-artifact/${artifactId}`);
+    await expect(
+      page.getByRole('heading', { name: 'Update Artifact' }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: 'Artifact metadata' }),
+    ).toBeVisible();
+    await expect(page.getByText('Contributor', { exact: true })).toBeVisible();
+    await expect(page.getByLabel('Title', { exact: true })).toHaveAttribute(
+      'readonly',
+      '',
+    );
+    await expect(
+      page.getByLabel('Description', { exact: true }),
+    ).toHaveAttribute('readonly', '');
+    await expect(
+      page.getByLabel('Type of research output (optional)'),
+    ).toHaveCount(0);
+    await expect(page.getByLabel('Funding Agencies')).toBeVisible();
     const keepManifest = page.getByRole('switch', {
       name: 'Keep current manifest and footprint',
     });
@@ -409,6 +451,61 @@ test.describe('owner views', () => {
       page.getByRole('button', { name: 'Submit revision' }),
     ).toBeEnabled();
     await checkPage(page);
+    if (process.env['SAVE_PREVIEW'])
+      await page.screenshot({
+        path: testInfo.outputPath('artifact-update.png'),
+        fullPage: true,
+      });
+  });
+
+  test('workflow revision keeps editable connections and existing metadata', async ({
+    page,
+  }, testInfo) => {
+    await mockDemo(page, true);
+    await page.goto(`/update-workflow/${workflowId}`);
+    await expect(
+      page.getByRole('heading', { name: 'Manage Workflow' }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: 'Workflow metadata' }),
+    ).toBeVisible();
+    await expect(page.getByText('Contributor', { exact: true })).toBeVisible();
+    await expect(page.getByLabel('Title', { exact: true })).toHaveAttribute(
+      'readonly',
+      '',
+    );
+    await expect(
+      page.getByLabel('Description', { exact: true }),
+    ).toHaveAttribute('readonly', '');
+    await expect(page.getByLabel('Type of workflow (optional)')).toHaveCount(0);
+    await expect(
+      page.getByRole('heading', { name: 'GitHub Repositories' }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: 'Remove Microscopy dataset' }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: 'Save workflow update' }),
+    ).toBeEnabled();
+    await page
+      .getByRole('button', { name: 'Remove Microscopy dataset' })
+      .click();
+    await expect(
+      page.getByRole('button', { name: 'Save workflow update' }),
+    ).toBeDisabled();
+    await page
+      .getByPlaceholder('Search confirmed artifacts in your organization')
+      .click();
+    await page.getByRole('button', { name: /Microscopy dataset/ }).click();
+    await expect(
+      page.getByRole('button', { name: 'Save workflow update' }),
+    ).toBeEnabled();
+    await checkPage(page);
+    if (process.env['SAVE_PREVIEW'])
+      await page.screenshot({
+        path: testInfo.outputPath('workflow-update.png'),
+        fullPage: true,
+      });
   });
 
   for (const path of [

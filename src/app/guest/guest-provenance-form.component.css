@@ -49,6 +49,19 @@
   font-size: 20px;
 }
 
+.provenance-form-view .account-required p {
+  margin: 0 0 10px;
+  line-height: 1.5;
+}
+
+.provenance-form-view .account-required a {
+  display: inline-block;
+  margin-right: 18px;
+  color: #0b665c;
+  font-weight: 700;
+  text-underline-offset: 3px;
+}
+
 .provenance-form-view .contribution-context {
   display: grid;
   grid-template-columns: 36px minmax(0, 1fr) minmax(0, 1fr);
@@ -166,6 +179,12 @@
   color: #657d89;
   font-size: 14px;
   opacity: 1;
+}
+
+.provenance-form-view .form-control[readonly] {
+  border-color: #bacbd0;
+  background: #edf2f3;
+  color: #3d5966;
 }
 
 .provenance-form-view .form-control:focus-visible,
@@ -346,6 +365,43 @@
 .provenance-form-view .selected-files code {
   overflow-wrap: anywhere;
   word-break: break-all;
+}
+
+.provenance-form-view .manifest-choice {
+  width: min(100%, 560px);
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #d8e0e3;
+  color: #234653;
+}
+
+.provenance-form-view .manifest-choice-control {
+  gap: 10px;
+}
+
+.provenance-form-view .manifest-choice .form-check-input {
+  border-color: #75909c;
+}
+
+.provenance-form-view .manifest-choice .form-check-input:checked {
+  border-color: #0e665c;
+  background-color: #0e665c;
+}
+
+.provenance-form-view .manifest-choice label {
+  margin: 0;
+  color: #163a59;
+  font-size: 15px;
+}
+
+.provenance-form-view .manifest-choice p,
+.provenance-form-view .retained-footprint {
+  color: #496473;
+  font-size: 14px;
+}
+
+.provenance-form-view .retained-footprint code {
+  overflow-wrap: anywhere;
 }
 
 .provenance-form-view .form-navigation {

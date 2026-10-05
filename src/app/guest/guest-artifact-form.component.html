@@ -1,14 +1,11 @@
-<main
-  id="main-content"
-  class="create-artifact-container"
-  [class.provenance-form-view]="!isEdit"
->
+<main id="main-content" class="create-artifact-container provenance-form-view">
   <header class="header">
-    <p *ngIf="!isEdit" class="page-kicker">Scientific artifact</p>
+    <p class="page-kicker">
+      {{ isEdit ? 'Artifact revision' : 'Scientific artifact' }}
+    </p>
     <h1>
       {{ isEdit ? 'Update Artifact' : 'Submit an artifact' }}
     </h1>
-    <div *ngIf="isEdit" class="header-divider"></div>
   </header>
 
   <section
@@ -27,7 +24,7 @@
   </section>
   <section
     *ngIf="isEdit && (!demo.session?.accountUsername || accessDenied)"
-    class="form-note"
+    class="form-note account-required"
     role="status"
   >
     <p>
@@ -49,19 +46,19 @@
     *ngIf="demo.session?.accountUsername && !accessDenied"
     class="contribution-context"
   >
-    <ng-container *ngIf="isEdit; else newContributionContext">
+    <i
+      class="bi"
+      [class.bi-pencil-square]="isEdit"
+      [class.bi-file-earmark-plus]="!isEdit"
+      aria-hidden="true"
+    ></i>
+    <div>
       <span>Organization</span><strong>{{ organizationName }}</strong>
-    </ng-container>
-    <ng-template #newContributionContext>
-      <i class="bi bi-file-earmark-plus" aria-hidden="true"></i>
-      <div>
-        <span>Organization</span><strong>{{ organizationName }}</strong>
-      </div>
-      <div class="contribution-account">
-        <span>Contributor</span
-        ><strong>{{ demo.session?.accountUsername }}</strong>
-      </div>
-    </ng-template>
+    </div>
+    <div class="contribution-account">
+      <span>Contributor</span
+      ><strong>{{ demo.session?.accountUsername }}</strong>
+    </div>
   </div>
   <p *ngIf="error && !accessDenied" class="form-note text-danger" role="alert">
     {{ error }}
@@ -77,9 +74,9 @@
   >
     <div class="form-grid">
       <div class="left-column">
-        <div *ngIf="!isEdit" class="column-heading">
+        <div class="column-heading">
           <p>Record details</p>
-          <h2>Describe the artifact</h2>
+          <h2>{{ isEdit ? 'Artifact metadata' : 'Describe the artifact' }}</h2>
         </div>
         <div class="form-group">
           <label for="title" class="field-label">Title</label>
@@ -295,7 +292,7 @@
       </div>
 
       <div class="right-column">
-        <div *ngIf="!isEdit" class="column-heading">
+        <div class="column-heading">
           <p>Supporting information</p>
           <h2>Funding and notes</h2>
         </div>
