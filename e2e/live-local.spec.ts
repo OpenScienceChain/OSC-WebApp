@@ -41,6 +41,32 @@ test('signed-out visitor can reject analytics and send partial anonymous feedbac
 
 type ApiResult<T> = { status: number; body: T };
 
+async function showAccountActions(page: Page): Promise<void> {
+  const menu = page.getByRole('button', { name: 'Open navigation menu' });
+  if (
+    (await menu.isVisible()) &&
+    (await menu.getAttribute('aria-expanded')) === 'false'
+  ) {
+    await menu.click();
+  }
+}
+
+async function signOut(page: Page): Promise<void> {
+  await showAccountActions(page);
+  await page.getByRole('button', { name: 'Sign out' }).click();
+  await expect
+    .poll(() =>
+      page.evaluate(() => localStorage.getItem('osc-usrse26-account-session')),
+    )
+    .toBeNull();
+  await showAccountActions(page);
+  await expect(
+    page
+      .getByRole('navigation', { name: 'Primary navigation' })
+      .getByRole('link', { name: 'Sign in' }),
+  ).toBeVisible();
+}
+
 async function api<T>(
   page: Page,
   method: string,
@@ -81,6 +107,7 @@ async function register(
   await page.getByLabel('Choose a PIN').fill(pin);
   await page.getByRole('button', { name: 'Create account' }).last().click();
   await expect(page).toHaveURL(/\/$/);
+  await showAccountActions(page);
   await expect(page.getByRole('button', { name: 'Sign out' })).toBeVisible();
 }
 
@@ -98,6 +125,7 @@ async function signIn(
     .last()
     .click();
   await expect(page).toHaveURL(/\/$/);
+  await showAccountActions(page);
   await expect(page.getByRole('button', { name: 'Sign out' })).toBeVisible();
 }
 
@@ -304,11 +332,11 @@ test('local account ownership and confirmed artifact/workflow revisions', async 
     .toBe(true);
   await page.goto(`/workflows/${workflowId}/history`);
   await expect(
-    page.getByRole('heading', { name: /Workflow's Full History/i }),
+    page.getByRole('region', { name: 'Revision history' }),
   ).toBeVisible();
+  await expect(page.getByText('Showing 2 public ledger events')).toBeVisible();
 
-  await page.getByRole('button', { name: 'Sign out' }).click();
-  await expect(page.getByRole('link', { name: 'Sign in' })).toBeVisible();
+  await signOut(page);
   await register(page, other, otherPin);
   const unauthorizedArtifact = await api(
     page,
@@ -335,10 +363,12 @@ test('local account ownership and confirmed artifact/workflow revisions', async 
   expect(unauthorizedArtifact.status).toBe(404);
   expect(unauthorizedWorkflow.status).toBe(404);
   await page.goto(`/workflows/${workflowId}`);
+  await page.getByRole('link', { name: /Manage Workflow/i }).click();
   await expect(
-    page.getByRole('link', { name: /Manage Workflow/i }),
-  ).toHaveCount(0);
-  await page.getByRole('button', { name: 'Sign out' }).click();
+    page.getByRole('heading', { name: 'Workflow updates are restricted' }),
+  ).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Submit' })).toHaveCount(0);
+  await signOut(page);
   await signIn(page, owner, ownerPin);
   await page.goto(`/workflows/${workflowId}`);
   await expect(

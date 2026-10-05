@@ -142,7 +142,7 @@ test('public catalogs include curated records outside the demo feed', async ({
     'EEG Eye State',
   );
   await page.getByRole('link', { name: 'History' }).click();
-  await expect(page.getByText('Showing 1 public ledger events')).toBeVisible();
+  await expect(page.getByText('Showing 1 public ledger event')).toBeVisible();
 
   await page.goto('/list-artifacts');
   await page.getByLabel('Title contains').fill('Snapshot Serengeti');

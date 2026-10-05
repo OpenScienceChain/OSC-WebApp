@@ -68,6 +68,10 @@ async function setup(page: Page, eventStatus = 200, deletionFailure?: number) {
 }
 
 async function checkA11y(page: Page): Promise<void> {
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await expect
+    .poll(() => page.evaluate(() => window.scrollY))
+    .toBeLessThanOrEqual(4);
   await expect
     .poll(() =>
       page.evaluate(
@@ -78,7 +82,15 @@ async function checkA11y(page: Page): Promise<void> {
   const result = await new AxeBuilder({ page })
     .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
     .analyze();
-  expect(result.violations.map((item) => item.id)).toEqual([]);
+  expect(
+    result.violations.map((item) => ({
+      id: item.id,
+      nodes: item.nodes.map((node) => ({
+        target: node.target,
+        summary: node.failureSummary,
+      })),
+    })),
+  ).toEqual([]);
 }
 
 test('reject is equal choice and sends only aggregate reject', async ({
