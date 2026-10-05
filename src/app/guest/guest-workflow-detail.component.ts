@@ -159,63 +159,59 @@ import { safeExternalUrl } from '../shared/safe-external-url';
               <h2 id="workflow-details-heading">
                 Who registered this workflow
               </h2>
-              <table class="detail-table">
-                <tbody>
-                  <tr>
-                    <th scope="row">ID</th>
-                    <td>
-                      <code>{{ workflow.id }}</code>
-                      <button
-                        type="button"
-                        class="copy-id"
-                        [class.is-copied]="copied"
-                        (click)="copyId()"
-                        [title]="
-                          copied ? 'Workflow ID copied' : 'Copy workflow ID'
-                        "
-                        [attr.aria-label]="
-                          copied ? 'Workflow ID copied' : 'Copy workflow ID'
-                        "
-                      >
-                        <i
-                          [class]="
-                            copied ? 'bi bi-check-lg' : 'bi bi-clipboard'
-                          "
-                          [class.copied]="copied"
-                          aria-hidden="true"
-                        ></i>
-                      </button>
-                      <span
-                        *ngIf="copyMessage"
-                        class="copy-feedback"
-                        [class.is-error]="!copied"
+              <dl class="identity-list">
+                <div>
+                  <dt>Contributor</dt>
+                  <dd>{{ workflow.contributorAlias }}</dd>
+                </div>
+                <div>
+                  <dt>ID</dt>
+                  <dd>
+                    <code>{{ workflow.id }}</code>
+                    <button
+                      type="button"
+                      class="copy-id"
+                      [class.is-copied]="copied"
+                      (click)="copyId()"
+                      [title]="
+                        copied ? 'Workflow ID copied' : 'Copy workflow ID'
+                      "
+                      [attr.aria-label]="
+                        copied ? 'Workflow ID copied' : 'Copy workflow ID'
+                      "
+                    >
+                      <i
+                        [class]="copied ? 'bi bi-check-lg' : 'bi bi-clipboard'"
+                        [class.copied]="copied"
                         aria-hidden="true"
-                      >
-                        <i *ngIf="copied" class="bi bi-check-circle-fill"></i>
-                        {{ copied ? 'Copied' : 'Could not copy ID' }}
-                      </span>
-                      <span
-                        class="visually-hidden"
-                        role="status"
-                        aria-live="polite"
-                        >{{ copyMessage }}</span
-                      >
-                    </td>
-                  </tr>
-                  <tr>
-                    <th scope="row">Organization</th>
-                    <td>{{ workflow.organization }}</td>
-                  </tr>
-                  <tr>
-                    <th scope="row">Submitter</th>
-                    <td>{{ workflow.contributorAlias }}</td>
-                  </tr>
-                  <tr>
-                    <th scope="row">Submitted</th>
-                    <td>{{ workflow.submittedAt | date: 'medium' }}</td>
-                  </tr>
-                </tbody>
-              </table>
+                      ></i>
+                    </button>
+                    <span
+                      *ngIf="copyMessage"
+                      class="copy-feedback"
+                      [class.is-error]="!copied"
+                      aria-hidden="true"
+                    >
+                      <i *ngIf="copied" class="bi bi-check-circle-fill"></i>
+                      {{ copied ? 'Copied' : 'Could not copy ID' }}
+                    </span>
+                    <span
+                      class="visually-hidden"
+                      role="status"
+                      aria-live="polite"
+                      >{{ copyMessage }}</span
+                    >
+                  </dd>
+                </div>
+                <div>
+                  <dt>Organization</dt>
+                  <dd>{{ workflow.organization }}</dd>
+                </div>
+                <div>
+                  <dt>Submitted</dt>
+                  <dd>{{ workflow.submittedAt | date: 'medium' }}</dd>
+                </div>
+              </dl>
             </aside>
           </div>
           <section

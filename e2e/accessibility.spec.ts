@@ -344,6 +344,35 @@ test.describe('public views', () => {
     await expect(
       page.getByRole('heading', { name: workflow.title }),
     ).toBeVisible();
+    await expect(page.locator('.record-identity dt')).toHaveText([
+      'Contributor',
+      'ID',
+      'Organization',
+      'Submitted',
+    ]);
+    await expect(page.locator('.record-identity dd').first()).toHaveText(
+      workflow.contributorAlias,
+    );
+    const metadataBox = await page.locator('.record-context').boundingBox();
+    const identityBox = await page.locator('.record-identity').boundingBox();
+    expect(metadataBox).not.toBeNull();
+    expect(identityBox).not.toBeNull();
+    expect(identityBox!.y).toBeGreaterThan(
+      metadataBox!.y + metadataBox!.height,
+    );
+    const contributorLabel = await page
+      .locator('.record-identity dt')
+      .first()
+      .boundingBox();
+    const contributorValue = await page
+      .locator('.record-identity dd')
+      .first()
+      .boundingBox();
+    expect(contributorLabel).not.toBeNull();
+    expect(contributorValue).not.toBeNull();
+    expect(contributorValue!.y).toBeGreaterThan(
+      contributorLabel!.y + contributorLabel!.height,
+    );
     await expect(page.locator('.linked-records li')).toHaveCount(6);
     await expect(page.getByText('Page 1 of 2')).toBeVisible();
     await expect(
@@ -376,6 +405,33 @@ test.describe('public views', () => {
     await expect(
       page.getByText('Workflow updates are restricted'),
     ).toBeVisible();
+    await checkPage(page);
+  });
+
+  test('workflow identity stays stacked without metadata', async ({ page }) => {
+    await mockDemo(page);
+    await page.route(`**/api/v1/demo/public/workflows/${workflowId}`, (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          ...workflow,
+          keywords: [],
+          submissionComment: '',
+        }),
+      }),
+    );
+    await page.goto(`/workflows/${workflowId}`);
+    await expect(page.locator('.record-context')).toHaveCount(0);
+    await expect(page.locator('.record-identity dt')).toHaveText([
+      'Contributor',
+      'ID',
+      'Organization',
+      'Submitted',
+    ]);
+    await expect(page.locator('.record-identity dd').first()).toHaveText(
+      workflow.contributorAlias,
+    );
     await checkPage(page);
   });
 

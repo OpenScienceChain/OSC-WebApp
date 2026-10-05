@@ -5,17 +5,29 @@
   color: #453b85;
 }
 
-.record-layout.is-identity-only {
+.record-layout {
   display: block;
+}
+
+.record-layout.is-identity-only {
   padding: 44px 0;
 }
 
-.is-identity-only .record-identity {
-  padding-left: 0;
-  border-left: 0;
+.record-layout .record-context {
+  margin-bottom: 44px;
 }
 
-.is-identity-only .detail-table {
+.record-layout .record-identity {
+  padding: 0;
+  border: 0;
+}
+
+.record-layout:not(.is-identity-only) .record-identity {
+  padding-top: 44px;
+  border-top: 1px solid #d8e0e3;
+}
+
+.identity-list {
   max-width: 720px;
 }
 
