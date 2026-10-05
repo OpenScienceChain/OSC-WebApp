@@ -167,6 +167,105 @@ async function checkPage(page: Page): Promise<void> {
 }
 
 test.describe('public views', () => {
+  test('artifact history pages through events and keeps snapshot navigation', async ({
+    page,
+  }) => {
+    await mockDemo(page);
+    const items = Array.from({ length: 8 }, (_, index) => ({
+      txId: `ledger-revision-${index + 1}`,
+      timestamp: date,
+      revision: index + 1,
+      snapshot: {
+        title: artifact.title,
+        description: artifact.description,
+        submissionState: 'SUCCESS',
+        keywords: ['microscopy'],
+        dois: ['10.1234/example'],
+        fundingAgencies: ['Research fund'],
+        submissionComment: `Revision ${index + 1} comment`,
+        acknowledgements: 'Research team',
+        links: ['https://example.org/source'],
+        manifest: artifact.manifest,
+        footprint: artifact.footprint,
+      },
+    }));
+    await page.route(
+      `**/api/v1/demo/public/artifacts/${artifactId}/history`,
+      (route) =>
+        route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ count: items.length, items }),
+        }),
+    );
+    await page.goto(`/artifacts/${artifactId}/history`);
+    await expect(page.locator('.history-card')).toHaveCount(6);
+    await expect(
+      page.getByText('Showing 8 public ledger events'),
+    ).toBeVisible();
+    await expect(page.getByText('Page 1 of 2')).toBeVisible();
+    await expect(page.locator('.history-card').first()).toContainText(
+      'Revision 1 comment',
+    );
+    await expect(page.locator('.history-card').first()).toContainText(
+      'https://example.org/source',
+    );
+    await checkPage(page);
+
+    await page.getByRole('button', { name: 'Next' }).click();
+    await expect(page.locator('.history-card')).toHaveCount(2);
+    await expect(page.locator('.history-card').first()).toContainText(
+      '7 of 8 returned',
+    );
+    await expect(page.getByRole('button', { name: 'Next' })).toBeDisabled();
+    await checkPage(page);
+
+    await page
+      .getByRole('link', { name: 'View snapshot for revision 7' })
+      .click();
+    await expect(page).toHaveURL(
+      new RegExp(`/artifacts/${artifactId}/history/ledger-revision-7$`),
+    );
+    await expect(page.getByText('ledger-revision-7').first()).toBeVisible();
+    await expect(page.locator('.snapshot-layout aside dt')).toHaveText([
+      'Contributor',
+      'ID',
+      'Timestamp',
+      'Revision',
+      'Keywords',
+      'Funding Agencies',
+      'DOIs',
+      'Comment',
+      'State',
+    ]);
+    await expect(
+      page.getByRole('link', { name: 'Go back to History' }),
+    ).toBeVisible();
+    await checkPage(page);
+    await page.getByRole('link', { name: 'Go back to History' }).click();
+    await expect(page.locator('.history-card')).toHaveCount(6);
+  });
+
+  test('workflow history uses the shared ledger event design', async ({
+    page,
+  }) => {
+    await mockDemo(page);
+    await page.goto(`/workflows/${workflowId}/history`);
+    await expect(page.locator('.history-card')).toHaveCount(1);
+    await expect(page.locator('.history-card')).toContainText(
+      'ledger-revision-1',
+    );
+    await expect(page.getByText('Showing 1 public ledger event')).toBeVisible();
+    await expect(
+      page.getByText('No additional metadata recorded for this event.'),
+    ).toBeVisible();
+    await expect(page.locator('.history-pagination')).toHaveCount(0);
+    await expect(
+      page.getByRole('link', { name: "See Workflow's Detail" }),
+    ).toHaveAttribute('href', `/workflows/${workflowId}`);
+    await checkPage(page);
+  });
+
   test('artifact identity stacks recorded details and shows committing peer', async ({
     page,
   }) => {
