@@ -68,7 +68,231 @@ import { safeExternalUrl } from '../shared/safe-external-url';
           No public history found.
         </div>
         <ng-container *ngIf="selectedItem as item">
-          <section class="snapshot-detail" *ngIf="!isLoading">
+          <section
+            class="artifact-snapshot"
+            *ngIf="!isLoading && type === 'artifact'"
+          >
+            <a class="back-link" [routerLink]="['/', plural, id, 'history']">
+              <i class="bi bi-arrow-left" aria-hidden="true"></i>Back to History
+            </a>
+            <header class="record-header">
+              <div class="record-kicker">
+                <span>Artifact Snapshot</span>
+                <span class="history-tag" [ngClass]="badgeClass(item)">{{
+                  badgeLabel(item)
+                }}</span>
+              </div>
+              <h1>{{ item.snapshot?.title || recordTitle }}</h1>
+              <h2 class="visually-hidden">Description</h2>
+              <p class="record-description pre-wrap">
+                {{ item.snapshot?.description || recordDescription }}
+              </p>
+            </header>
+            <section
+              class="ledger-confirmation"
+              aria-labelledby="snapshot-ledger-heading"
+            >
+              <i class="bi bi-shield-check" aria-hidden="true"></i>
+              <div class="ledger-summary">
+                <p class="section-label">Blockchain provenance</p>
+                <h2 id="snapshot-ledger-heading">
+                  Recorded on the OSC permissioned blockchain
+                </h2>
+                <p>
+                  This revision preserves the recorded metadata and file
+                  fingerprint in the artifact's ledger history.
+                </p>
+              </div>
+              <dl class="ledger-facts">
+                <div>
+                  <dt>Tx ID</dt>
+                  <dd>
+                    <code>{{ item.txId || item.transactionId }}</code>
+                  </dd>
+                </div>
+                <div>
+                  <dt>Timestamp</dt>
+                  <dd>{{ item.timestamp | date: 'medium' }}</dd>
+                </div>
+                <div *ngIf="item.revision">
+                  <dt>Revision</dt>
+                  <dd>{{ item.revision }}</dd>
+                </div>
+              </dl>
+            </section>
+            <div class="record-layout">
+              <section
+                class="record-context"
+                aria-labelledby="snapshot-context-heading"
+              >
+                <p class="section-label">Artifact metadata</p>
+                <h2 id="snapshot-context-heading">
+                  Metadata recorded in this revision
+                </h2>
+                <table class="detail-table">
+                  <tbody>
+                    <tr *ngIf="item.snapshot?.keywords?.length">
+                      <th scope="row">Keywords</th>
+                      <td>
+                        <span
+                          class="keyword-badge"
+                          *ngFor="let keyword of item.snapshot?.keywords"
+                          >{{ keyword }}</span
+                        >
+                      </td>
+                    </tr>
+                    <tr *ngIf="item.snapshot?.fundingAgencies?.length">
+                      <th scope="row">Funding Agencies</th>
+                      <td>{{ item.snapshot?.fundingAgencies?.join(', ') }}</td>
+                    </tr>
+                    <tr *ngIf="item.snapshot?.dois?.length">
+                      <th scope="row">DOIs</th>
+                      <td>{{ item.snapshot?.dois?.join(', ') }}</td>
+                    </tr>
+                    <tr *ngIf="item.snapshot?.submissionComment">
+                      <th scope="row">Comment</th>
+                      <td class="pre-wrap">
+                        {{ item.snapshot?.submissionComment }}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </section>
+              <aside
+                class="record-identity"
+                aria-labelledby="snapshot-identity-heading"
+              >
+                <p class="section-label">Record identity</p>
+                <h2 id="snapshot-identity-heading">
+                  Who registered this record
+                </h2>
+                <dl class="identity-list">
+                  <div *ngIf="recordContributor">
+                    <dt>Contributor</dt>
+                    <dd class="contributor-detail">
+                      <span class="contributor-name">{{
+                        recordContributor
+                      }}</span>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>ID</dt>
+                    <dd>
+                      <code>{{ id }}</code>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Timestamp</dt>
+                    <dd>{{ item.timestamp | date: 'medium' }}</dd>
+                  </div>
+                  <div *ngIf="item.revision">
+                    <dt>Revision</dt>
+                    <dd>{{ item.revision }}</dd>
+                  </div>
+                  <div>
+                    <dt>State</dt>
+                    <dd>
+                      <span
+                        class="history-tag"
+                        [ngClass]="submissionClass(item)"
+                        >{{ item.snapshot?.submissionState || 'SUCCESS' }}</span
+                      >
+                    </dd>
+                  </div>
+                </dl>
+              </aside>
+            </div>
+            <section
+              class="manifest-section"
+              aria-labelledby="snapshot-manifest-heading"
+            >
+              <div class="manifest-heading">
+                <h2 id="snapshot-manifest-heading">Manifest</h2>
+              </div>
+              <ng-container
+                *ngIf="
+                  item.snapshot?.manifest?.length;
+                  else manifestRestrictedArtifact
+                "
+              >
+                <p>
+                  {{ item.snapshot?.manifest?.length }}
+                  {{ item.snapshot?.manifest?.length === 1 ? 'file' : 'files' }}
+                  total. Generated names protect the original local paths.
+                </p>
+                <div
+                  class="table-responsive"
+                  tabindex="0"
+                  role="region"
+                  aria-label="Snapshot file manifest"
+                >
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Filename</th>
+                        <th scope="col">Hash</th>
+                        <th scope="col">Alg.</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr
+                        *ngFor="
+                          let file of item.snapshot?.manifest | slice: 0 : 10
+                        "
+                      >
+                        <td>{{ file.filename }}</td>
+                        <td>
+                          <code>{{ file.hash }}</code>
+                        </td>
+                        <td>{{ file.algorithm }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <p *ngIf="(item.snapshot?.manifest?.length ?? 0) > 10">
+                  and {{ (item.snapshot?.manifest?.length ?? 0) - 10 }} more
+                  files
+                </p>
+                <div class="footprint" *ngIf="item.snapshot?.footprint">
+                  <span>Footprint (SHA-256)</span
+                  ><code>{{ item.snapshot?.footprint }}</code>
+                </div>
+              </ng-container>
+              <ng-template #manifestRestrictedArtifact>
+                <p>No public manifest was recorded in this snapshot.</p>
+              </ng-template>
+            </section>
+            <div class="record-actions">
+              <button
+                *ngIf="item.snapshot?.manifest?.length"
+                type="button"
+                class="secondary-action"
+                (click)="printManifest()"
+              >
+                <i class="bi bi-printer" aria-hidden="true"></i>Print file
+                hashes
+              </button>
+              <a
+                class="primary-action"
+                [routerLink]="['/', plural, id, 'history']"
+                ><i class="bi bi-clock-history" aria-hidden="true"></i>Go back
+                to History</a
+              >
+              <a class="secondary-action" [routerLink]="['/', plural, id]"
+                >See Artifact's Detail</a
+              >
+              <a
+                *ngIf="canEdit"
+                class="primary-action"
+                [routerLink]="['/update-artifact', id]"
+                >Update this Artifact</a
+              >
+            </div>
+          </section>
+          <section
+            class="snapshot-detail"
+            *ngIf="!isLoading && workflowSnapshot"
+          >
             <div class="snapshot-intro">
               <p class="section-label">Ledger snapshot</p>
               <p>
@@ -489,6 +713,9 @@ export class GuestHistoryComponent implements OnInit {
   }
   get plural(): string {
     return `${this.type}s`;
+  }
+  get workflowSnapshot(): boolean {
+    return this.type === 'workflow';
   }
   get visibleItems(): DemoHistoryItem[] {
     return this.selectedTxId

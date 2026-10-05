@@ -227,17 +227,27 @@ test.describe('public views', () => {
       new RegExp(`/artifacts/${artifactId}/history/ledger-revision-7$`),
     );
     await expect(page.getByText('ledger-revision-7').first()).toBeVisible();
-    await expect(page.locator('.snapshot-layout aside dt')).toHaveText([
-      'Contributor',
-      'ID',
-      'Timestamp',
-      'Revision',
-      'Keywords',
-      'Funding Agencies',
-      'DOIs',
-      'Comment',
-      'State',
-    ]);
+    await expect(
+      page.getByRole('heading', {
+        name: 'Recorded on the OSC permissioned blockchain',
+      }),
+    ).toBeVisible();
+    await expect(
+      page.locator('.artifact-snapshot .record-identity dt'),
+    ).toHaveText(['Contributor', 'ID', 'Timestamp', 'Revision', 'State']);
+    await expect(
+      page.locator('.artifact-snapshot .detail-table th'),
+    ).toHaveText(['Keywords', 'Funding Agencies', 'DOIs', 'Comment']);
+    await expect(
+      page.getByRole('region', { name: 'Snapshot file manifest' }),
+    ).toContainText(artifact.manifest[0].hash);
+    await expect(page.getByText('Footprint (SHA-256)')).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: 'Print file hashes' }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('link', { name: "See Artifact's Detail" }),
+    ).toBeVisible();
     await expect(
       page.getByRole('link', { name: 'Go back to History' }),
     ).toBeVisible();
