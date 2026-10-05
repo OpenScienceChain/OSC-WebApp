@@ -18,6 +18,7 @@ const artifact = {
   submittedAt: date,
   lastUpdatedAt: date,
   blockchainTxId: 'a'.repeat(64),
+  peerId: 'peer0.nsg.osc.example',
   keywords: ['microscopy'],
   links: [],
   dois: [],
@@ -166,6 +167,63 @@ async function checkPage(page: Page): Promise<void> {
 }
 
 test.describe('public views', () => {
+  test('artifact identity stacks recorded details and shows committing peer', async ({
+    page,
+  }) => {
+    await mockDemo(page);
+    await page.goto(`/artifacts/${artifactId}`);
+
+    await expect(
+      page.getByRole('link', { name: 'Back to Artifacts' }),
+    ).toHaveAttribute('href', '/list-artifacts');
+    await expect(page.locator('.record-identity dt')).toHaveText([
+      'Contributor',
+      'ID',
+      'Organization',
+      'Submitted',
+      'Last Updated',
+    ]);
+    await expect(page.locator('.record-identity dd').first()).toHaveText(
+      artifact.contributorAlias,
+    );
+    const contributorLabel = await page
+      .locator('.record-identity dt')
+      .first()
+      .boundingBox();
+    const contributorValue = await page
+      .locator('.record-identity dd')
+      .first()
+      .boundingBox();
+    expect(contributorLabel).not.toBeNull();
+    expect(contributorValue).not.toBeNull();
+    expect(contributorValue!.y).toBeGreaterThan(
+      contributorLabel!.y + contributorLabel!.height,
+    );
+    await expect(page.locator('.ledger-facts')).toContainText(
+      'peer0.nsg.osc.example',
+    );
+    await checkPage(page);
+  });
+
+  test('artifact does not invent an unreported committing peer', async ({
+    page,
+  }) => {
+    await mockDemo(page);
+    await page.route(`**/api/v1/demo/public/artifacts/${artifactId}`, (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ ...artifact, peerId: null }),
+      }),
+    );
+    await page.goto(`/artifacts/${artifactId}`);
+    await expect(page.locator('.ledger-facts')).toContainText(
+      'Committing peer',
+    );
+    await expect(page.locator('.ledger-facts')).toContainText('Not recorded');
+    await checkPage(page);
+  });
+
   test('failed and pending records explain state and copying confirms success', async ({
     page,
   }) => {

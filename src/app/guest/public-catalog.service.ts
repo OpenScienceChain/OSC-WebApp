@@ -115,6 +115,7 @@ export class PublicCatalogService {
                 submittedAt: artifact.submittedAt,
                 lastUpdatedAt: artifact.updatedAt ?? undefined,
                 blockchainTxId: artifact.blockchainTxId,
+                peerId: artifact.peerId,
                 manifest: artifact.manifest,
                 footprint: artifact.footprint,
                 keywords: artifact.keywords,

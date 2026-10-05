@@ -13,6 +13,9 @@ import { safeExternalUrl } from '../shared/safe-external-url';
   template: `
     <main id="main-content" class="record-page">
       <div class="record-shell">
+        <a class="back-link" routerLink="/list-artifacts">
+          <i class="bi bi-arrow-left" aria-hidden="true"></i>Back to Artifacts
+        </a>
         <div *ngIf="isLoading" class="state-panel" role="status">
           Loading artifact record...
         </div>
@@ -109,6 +112,10 @@ import { safeExternalUrl } from '../shared/safe-external-url';
                   <code>{{ artifact.blockchainTxId }}</code>
                 </dd>
               </div>
+              <div *ngIf="confirmed">
+                <dt>Committing peer</dt>
+                <dd>{{ artifact.peerId || 'Not recorded' }}</dd>
+              </div>
               <div *ngIf="!confirmed">
                 <dt>Provenance</dt>
                 <dd>
@@ -183,67 +190,63 @@ import { safeExternalUrl } from '../shared/safe-external-url';
             >
               <p class="section-label">Record identity</p>
               <h2 id="artifact-details-heading">Who registered this record</h2>
-              <table class="detail-table">
-                <tbody>
-                  <tr>
-                    <th scope="row">ID</th>
-                    <td>
-                      <code>{{ artifact.id }}</code>
-                      <button
-                        type="button"
-                        class="copy-id"
-                        [class.is-copied]="copied"
-                        (click)="copyId()"
-                        [title]="
-                          copied ? 'Artifact ID copied' : 'Copy artifact ID'
-                        "
-                        [attr.aria-label]="
-                          copied ? 'Artifact ID copied' : 'Copy artifact ID'
-                        "
-                      >
-                        <i
-                          [class]="
-                            copied ? 'bi bi-check-lg' : 'bi bi-clipboard'
-                          "
-                          [class.copied]="copied"
-                          aria-hidden="true"
-                        ></i>
-                      </button>
-                      <span
-                        *ngIf="copyMessage"
-                        class="copy-feedback"
-                        [class.is-error]="!copied"
+              <dl class="identity-list">
+                <div>
+                  <dt>Contributor</dt>
+                  <dd>{{ artifact.contributorAlias }}</dd>
+                </div>
+                <div>
+                  <dt>ID</dt>
+                  <dd>
+                    <code>{{ artifact.id }}</code>
+                    <button
+                      type="button"
+                      class="copy-id"
+                      [class.is-copied]="copied"
+                      (click)="copyId()"
+                      [title]="
+                        copied ? 'Artifact ID copied' : 'Copy artifact ID'
+                      "
+                      [attr.aria-label]="
+                        copied ? 'Artifact ID copied' : 'Copy artifact ID'
+                      "
+                    >
+                      <i
+                        [class]="copied ? 'bi bi-check-lg' : 'bi bi-clipboard'"
+                        [class.copied]="copied"
                         aria-hidden="true"
-                      >
-                        <i *ngIf="copied" class="bi bi-check-circle-fill"></i>
-                        {{ copied ? 'Copied' : 'Could not copy ID' }}
-                      </span>
-                      <span
-                        class="visually-hidden"
-                        role="status"
-                        aria-live="polite"
-                        >{{ copyMessage }}</span
-                      >
-                    </td>
-                  </tr>
-                  <tr>
-                    <th scope="row">Organization</th>
-                    <td>{{ artifact.organization }}</td>
-                  </tr>
-                  <tr>
-                    <th scope="row">Submitted</th>
-                    <td>{{ artifact.submittedAt | date: 'medium' }}</td>
-                  </tr>
-                  <tr *ngIf="artifact.lastUpdatedAt">
-                    <th scope="row">Last Updated</th>
-                    <td>{{ artifact.lastUpdatedAt | date: 'medium' }}</td>
-                  </tr>
-                  <tr>
-                    <th scope="row">Contributor</th>
-                    <td>{{ artifact.contributorAlias }}</td>
-                  </tr>
-                </tbody>
-              </table>
+                      ></i>
+                    </button>
+                    <span
+                      *ngIf="copyMessage"
+                      class="copy-feedback"
+                      [class.is-error]="!copied"
+                      aria-hidden="true"
+                    >
+                      <i *ngIf="copied" class="bi bi-check-circle-fill"></i>
+                      {{ copied ? 'Copied' : 'Could not copy ID' }}
+                    </span>
+                    <span
+                      class="visually-hidden"
+                      role="status"
+                      aria-live="polite"
+                      >{{ copyMessage }}</span
+                    >
+                  </dd>
+                </div>
+                <div>
+                  <dt>Organization</dt>
+                  <dd>{{ artifact.organization }}</dd>
+                </div>
+                <div>
+                  <dt>Submitted</dt>
+                  <dd>{{ artifact.submittedAt | date: 'medium' }}</dd>
+                </div>
+                <div *ngIf="artifact.lastUpdatedAt">
+                  <dt>Last Updated</dt>
+                  <dd>{{ artifact.lastUpdatedAt | date: 'medium' }}</dd>
+                </div>
+              </dl>
             </aside>
           </div>
           <section class="manifest-section" aria-labelledby="manifest-heading">

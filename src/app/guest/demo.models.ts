@@ -159,6 +159,7 @@ export interface DemoCatalogArtifact extends DemoArtifactMetadata {
   submittedAt: string;
   lastUpdatedAt?: string;
   blockchainTxId?: string | null;
+  peerId?: string | null;
   manifest?: DemoManifestEntry[];
   footprint?: string;
 }

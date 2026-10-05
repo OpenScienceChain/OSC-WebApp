@@ -14,6 +14,22 @@
   margin: 0 auto;
 }
 
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 32px;
+  color: #0e665c;
+  font-weight: 750;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.back-link:focus-visible {
+  outline: 3px solid #0e8e82;
+  outline-offset: 3px;
+}
+
 .record-header {
   padding-bottom: 36px;
 }
@@ -231,10 +247,6 @@
   text-transform: uppercase;
 }
 
-.record-identity .detail-table th {
-  width: 36%;
-}
-
 .detail-table td {
   color: #334c58;
   line-height: 1.55;
@@ -249,6 +261,35 @@
 .detail-table code {
   color: #264d5d;
   font-size: 13px;
+}
+
+.identity-list {
+  margin: 28px 0 0;
+}
+
+.identity-list > div {
+  padding: 15px 0;
+  border-top: 1px solid #d8e0e3;
+}
+
+.identity-list dt {
+  color: #49616c;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.identity-list dd {
+  margin: 6px 0 0;
+  color: #334c58;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.identity-list code {
+  color: #264d5d;
+  font-size: 13px;
+  overflow-wrap: anywhere;
 }
 
 .keyword-badge {
