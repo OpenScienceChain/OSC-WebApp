@@ -1,11 +1,11 @@
-<main id="main-content" class="create-artifact-container">
+<main id="main-content" class="create-artifact-container provenance-form-view">
   <header class="header">
+    <p class="page-kicker">
+      {{ isEdit ? 'Artifact revision' : 'Scientific artifact' }}
+    </p>
     <h1>
-      {{
-        isEdit ? 'Manage Artifact' : "Add a New Artifact to your Org's Vault!"
-      }}
+      {{ isEdit ? 'Manage Artifact' : 'Submit an artifact' }}
     </h1>
-    <div class="header-divider"></div>
   </header>
 
   <section
@@ -24,7 +24,7 @@
   </section>
   <section
     *ngIf="isEdit && (!demo.session?.accountUsername || accessDenied)"
-    class="artifact-access-note"
+    class="artifact-access-note form-note account-required"
     role="status"
   >
     <i class="bi bi-lock" aria-hidden="true"></i>
@@ -54,7 +54,19 @@
     *ngIf="demo.session?.accountUsername && !accessDenied"
     class="contribution-context"
   >
-    <span>Organization</span><strong>{{ organizationName }}</strong>
+    <i
+      class="bi"
+      [class.bi-pencil-square]="isEdit"
+      [class.bi-file-earmark-plus]="!isEdit"
+      aria-hidden="true"
+    ></i>
+    <div>
+      <span>Organization</span><strong>{{ organizationName }}</strong>
+    </div>
+    <div class="contribution-account">
+      <span>Contributor</span
+      ><strong>{{ demo.session?.accountUsername }}</strong>
+    </div>
   </div>
   <p *ngIf="error && !accessDenied" class="form-note text-danger" role="alert">
     {{ error }}
@@ -62,7 +74,7 @@
 
   <form
     *ngIf="(!isEdit && !!demo.session?.accountUsername) || !!baseline"
-    class="artifact-form"
+    class="artifact-form provenance-form"
     (focusin)="formAnalytics.start()"
     (input)="formAnalytics.start()"
     (change)="formAnalytics.start()"
@@ -70,6 +82,10 @@
   >
     <div class="form-grid">
       <div class="left-column">
+        <div class="column-heading">
+          <p>Record details</p>
+          <h2>{{ isEdit ? 'Artifact metadata' : 'Describe the artifact' }}</h2>
+        </div>
         <div class="form-group">
           <label for="title" class="field-label">Title</label>
           <input
@@ -187,7 +203,9 @@
           </div>
         </div>
         <div class="form-group">
-          <label for="keywords" class="field-label">Key Words</label>
+          <label for="keywords" class="field-label">{{
+            isEdit ? 'Key Words' : 'Keywords'
+          }}</label>
           <input
             id="keywords"
             name="keywords"
@@ -282,6 +300,10 @@
       </div>
 
       <div class="right-column">
+        <div class="column-heading">
+          <p>Supporting information</p>
+          <h2>Funding and notes</h2>
+        </div>
         <div class="form-group">
           <span class="field-label" id="funding-label">Funding Agencies</span>
           <div class="checkbox-group" aria-labelledby="funding-label">

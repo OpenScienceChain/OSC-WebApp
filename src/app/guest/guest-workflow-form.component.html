@@ -1,7 +1,12 @@
-<main id="main-content" class="create-workflow-container">
+<main
+  id="main-content"
+  class="create-workflow-container provenance-form-view new-workflow-view"
+>
   <header class="header">
-    <h1>{{ isEdit ? 'Manage Workflow' : 'Contribute Workflow' }}</h1>
-    <div class="header-divider"></div>
+    <p class="page-kicker">
+      {{ isEdit ? 'Workflow revision' : 'Scientific workflow' }}
+    </p>
+    <h1>{{ isEdit ? 'Manage Workflow' : 'Submit a workflow' }}</h1>
   </header>
 
   <section
@@ -50,6 +55,21 @@
       </div>
     </div>
   </section>
+  <div
+    *ngIf="
+      demo.session?.accountUsername && (!isEdit || editReady) && !accessDenied
+    "
+    class="contribution-context"
+  >
+    <i class="bi bi-diagram-3" aria-hidden="true"></i>
+    <div>
+      <span>Organization</span><strong>{{ organizationName }}</strong>
+    </div>
+    <div>
+      <span>Contributor</span
+      ><strong>{{ demo.session?.accountUsername }}</strong>
+    </div>
+  </div>
   <p
     *ngIf="
       demo.session?.accountUsername && (!isEdit || editReady) && !accessDenied
@@ -69,7 +89,7 @@
 
   <form
     *ngIf="(!isEdit && !!demo.session?.accountUsername) || editReady"
-    class="workflow-form"
+    class="workflow-form provenance-form"
     (focusin)="formAnalytics.start()"
     (input)="formAnalytics.start()"
     (change)="formAnalytics.start()"
@@ -78,6 +98,10 @@
   >
     <div class="form-grid">
       <div class="left-column">
+        <div class="column-heading">
+          <p>Process details</p>
+          <h2>{{ isEdit ? 'Workflow metadata' : 'Describe the workflow' }}</h2>
+        </div>
         <div class="form-group">
           <label for="workflow-title" class="field-label">Title</label>
           <input
@@ -193,6 +217,10 @@
       </div>
 
       <div class="right-column">
+        <div class="column-heading">
+          <p>Connections</p>
+          <h2>Artifacts and repositories</h2>
+        </div>
         <div class="form-group artifact-picker">
           <label for="workflow-artifact-search" class="field-label"
             >Linked Artifacts <span class="required-marker">*</span></label
@@ -265,7 +293,7 @@
         </div>
 
         <div class="form-group">
-          <h2 class="field-label">GitHub Repositories</h2>
+          <h2 class="field-label repository-title">GitHub Repositories</h2>
           <div
             class="repo-entry"
             *ngFor="let repo of githubRepositories; let ri = index"
@@ -340,6 +368,9 @@
                   [name]="'content-name-' + ri + '-' + ci"
                   class="form-control"
                   placeholder="Filename"
+                  [attr.aria-label]="
+                    'Repository ' + (ri + 1) + ' file ' + (ci + 1) + ' filename'
+                  "
                   maxlength="160"
                   [(ngModel)]="content.filename"
                   (ngModelChange)="onChange()"
@@ -348,6 +379,13 @@
                   [name]="'content-hash-' + ri + '-' + ci"
                   class="form-control"
                   placeholder="Hash (optional)"
+                  [attr.aria-label]="
+                    'Repository ' +
+                    (ri + 1) +
+                    ' file ' +
+                    (ci + 1) +
+                    ' hash (optional)'
+                  "
                   maxlength="128"
                   [(ngModel)]="content.hash"
                   (ngModelChange)="onChange()"
