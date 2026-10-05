@@ -790,7 +790,7 @@ test.describe('owner views', () => {
     await page.goto(`/update-artifact/${artifactId}`);
     await expect(
       page.getByText(
-        'This artifact is not available to update from this account.',
+        'Only the contributing account can manage a confirmed artifact.',
       ),
     ).toBeVisible();
     await expect(
