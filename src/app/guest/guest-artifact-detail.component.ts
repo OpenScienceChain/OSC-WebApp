@@ -28,16 +28,20 @@ import { safeExternalUrl } from '../shared/safe-external-url';
         <ng-container *ngIf="!isLoading && artifact">
           <header class="record-header">
             <div class="record-kicker">
-              <span>Scientific Artifact</span
-              ><span
-                *ngIf="!confirmed"
+              <span>Scientific Artifact</span>
+              <span
                 class="record-state"
+                [class.is-confirmed]="confirmed"
                 [class.is-failed]="artifact.submissionState === 'FAILED'"
                 [class.is-pending]="artifact.submissionState === 'PENDING'"
                 >{{ artifact.submissionState }}</span
               >
             </div>
             <h1>{{ artifact.title }}</h1>
+            <h2 class="visually-hidden">Description</h2>
+            <p class="record-description pre-wrap">
+              {{ artifact.description }}
+            </p>
           </header>
           <div
             *ngIf="artifact.submissionState === 'FAILED'"
@@ -60,68 +64,69 @@ import { safeExternalUrl } from '../shared/safe-external-url';
             <strong>Blockchain confirmation pending</strong>
             <p>This submission is still awaiting a ledger transaction.</p>
           </div>
-          <div class="record-layout artifact-body">
-            <section
-              class="description-col"
-              aria-labelledby="artifact-description-heading"
-            >
-              <h2 id="artifact-description-heading">Description</h2>
-              <p class="pre-wrap">{{ artifact.description }}</p>
-            </section>
-            <aside
-              class="record-identity details-col"
-              aria-labelledby="artifact-details-heading"
-            >
-              <h2 id="artifact-details-heading">Details</h2>
-              <table class="table table-borderless detail-table">
+          <section
+            class="ledger-confirmation"
+            [class.is-pending]="artifact.submissionState === 'PENDING'"
+            [class.is-failed]="artifact.submissionState === 'FAILED'"
+            aria-labelledby="ledger-heading"
+          >
+            <i
+              class="bi"
+              [class.bi-shield-check]="confirmed"
+              [class.bi-hourglass-split]="
+                artifact.submissionState === 'PENDING'
+              "
+              [class.bi-exclamation-triangle]="
+                artifact.submissionState === 'FAILED'
+              "
+              aria-hidden="true"
+            ></i>
+            <div class="ledger-summary">
+              <p class="section-label">Blockchain provenance</p>
+              <h2 id="ledger-heading">
+                {{
+                  confirmed
+                    ? 'Recorded on the OSC permissioned blockchain'
+                    : artifact.submissionState === 'FAILED'
+                      ? 'No ledger confirmation was recorded'
+                      : 'Ledger confirmation in progress'
+                }}
+              </h2>
+              <p *ngIf="confirmed">
+                The transaction connects this metadata, file fingerprint,
+                contributor, organization, and revision to a tamper-evident
+                history.
+              </p>
+            </div>
+            <dl class="ledger-facts">
+              <div>
+                <dt>State</dt>
+                <dd>{{ artifact.submissionState }}</dd>
+              </div>
+              <div *ngIf="confirmed">
+                <dt>Blockchain TX</dt>
+                <dd>
+                  <code>{{ artifact.blockchainTxId }}</code>
+                </dd>
+              </div>
+              <div *ngIf="!confirmed">
+                <dt>Provenance</dt>
+                <dd>
+                  {{
+                    artifact.submissionState === 'FAILED'
+                      ? 'Not confirmed on the blockchain'
+                      : 'Awaiting blockchain confirmation'
+                  }}
+                </dd>
+              </div>
+            </dl>
+          </section>
+          <div class="record-layout">
+            <section class="record-context" aria-labelledby="context-heading">
+              <p class="section-label">Artifact metadata</p>
+              <h2 id="context-heading">Metadata kept with the output</h2>
+              <table class="detail-table">
                 <tbody>
-                  <tr>
-                    <th scope="row">ID</th>
-                    <td>
-                      <code>{{ artifact.id }}</code>
-                      <button
-                        type="button"
-                        class="copy-id"
-                        (click)="copyId()"
-                        [title]="
-                          copied ? 'Artifact ID copied' : 'Copy artifact ID'
-                        "
-                        [attr.aria-label]="
-                          copied ? 'Artifact ID copied' : 'Copy artifact ID'
-                        "
-                      >
-                        <i
-                          [class]="
-                            copied ? 'bi bi-check-lg' : 'bi bi-clipboard'
-                          "
-                          [class.copied]="copied"
-                          aria-hidden="true"
-                        ></i>
-                      </button>
-                      <span
-                        class="visually-hidden"
-                        role="status"
-                        aria-live="polite"
-                        >{{ copyMessage }}</span
-                      >
-                    </td>
-                  </tr>
-                  <tr>
-                    <th scope="row">Organization</th>
-                    <td>{{ artifact.organization }}</td>
-                  </tr>
-                  <tr>
-                    <th scope="row">Submitted</th>
-                    <td>{{ artifact.submittedAt | date: 'medium' }}</td>
-                  </tr>
-                  <tr *ngIf="artifact.lastUpdatedAt">
-                    <th scope="row">Last Updated</th>
-                    <td>{{ artifact.lastUpdatedAt | date: 'medium' }}</td>
-                  </tr>
-                  <tr>
-                    <th scope="row">Contributor</th>
-                    <td>{{ artifact.contributorAlias }}</td>
-                  </tr>
                   <tr *ngIf="artifact.keywords?.length">
                     <th scope="row">Keywords</th>
                     <td>
@@ -165,41 +170,77 @@ import { safeExternalUrl } from '../shared/safe-external-url';
                     <th scope="row">Comment</th>
                     <td class="pre-wrap">{{ artifact.submissionComment }}</td>
                   </tr>
-                  <tr>
-                    <th scope="row">State</th>
-                    <td>
-                      <span
-                        class="record-state"
-                        [class.is-confirmed]="confirmed"
-                        [class.is-failed]="
-                          artifact.submissionState === 'FAILED'
-                        "
-                        [class.is-pending]="
-                          artifact.submissionState === 'PENDING'
-                        "
-                        >{{ artifact.submissionState }}</span
-                      >
-                    </td>
-                  </tr>
-                  <tr *ngIf="confirmed">
-                    <th scope="row">Blockchain TX</th>
-                    <td>
-                      <code>{{ artifact.blockchainTxId }}</code>
-                    </td>
-                  </tr>
-                  <tr *ngIf="!confirmed">
-                    <th scope="row">Provenance</th>
-                    <td>
-                      {{
-                        artifact.submissionState === 'FAILED'
-                          ? 'Not confirmed on the blockchain'
-                          : 'Awaiting blockchain confirmation'
-                      }}
-                    </td>
-                  </tr>
                   <tr *ngIf="artifact.acknowledgements">
                     <th scope="row">Acknowledgements</th>
                     <td>{{ artifact.acknowledgements }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </section>
+            <aside
+              class="record-identity"
+              aria-labelledby="artifact-details-heading"
+            >
+              <p class="section-label">Record identity</p>
+              <h2 id="artifact-details-heading">Who registered this record</h2>
+              <table class="detail-table">
+                <tbody>
+                  <tr>
+                    <th scope="row">ID</th>
+                    <td>
+                      <code>{{ artifact.id }}</code>
+                      <button
+                        type="button"
+                        class="copy-id"
+                        [class.is-copied]="copied"
+                        (click)="copyId()"
+                        [title]="
+                          copied ? 'Artifact ID copied' : 'Copy artifact ID'
+                        "
+                        [attr.aria-label]="
+                          copied ? 'Artifact ID copied' : 'Copy artifact ID'
+                        "
+                      >
+                        <i
+                          [class]="
+                            copied ? 'bi bi-check-lg' : 'bi bi-clipboard'
+                          "
+                          [class.copied]="copied"
+                          aria-hidden="true"
+                        ></i>
+                      </button>
+                      <span
+                        *ngIf="copyMessage"
+                        class="copy-feedback"
+                        [class.is-error]="!copied"
+                        aria-hidden="true"
+                      >
+                        <i *ngIf="copied" class="bi bi-check-circle-fill"></i>
+                        {{ copied ? 'Copied' : 'Could not copy ID' }}
+                      </span>
+                      <span
+                        class="visually-hidden"
+                        role="status"
+                        aria-live="polite"
+                        >{{ copyMessage }}</span
+                      >
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Organization</th>
+                    <td>{{ artifact.organization }}</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Submitted</th>
+                    <td>{{ artifact.submittedAt | date: 'medium' }}</td>
+                  </tr>
+                  <tr *ngIf="artifact.lastUpdatedAt">
+                    <th scope="row">Last Updated</th>
+                    <td>{{ artifact.lastUpdatedAt | date: 'medium' }}</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Contributor</th>
+                    <td>{{ artifact.contributorAlias }}</td>
                   </tr>
                 </tbody>
               </table>
@@ -356,7 +397,7 @@ export class GuestArtifactDetailComponent implements OnInit {
       this.copyReset = setTimeout(() => {
         this.copied = false;
         this.copyMessage = '';
-      }, 2500);
+      }, 4000);
     } catch {
       this.copied = false;
       this.copyMessage = 'Could not copy artifact ID.';
