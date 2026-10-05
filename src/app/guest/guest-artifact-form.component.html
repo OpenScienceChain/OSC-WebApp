@@ -1,7 +1,7 @@
 <main
   id="main-content"
   class="create-artifact-container"
-  [class.new-artifact-view]="!isEdit"
+  [class.provenance-form-view]="!isEdit"
 >
   <header class="header">
     <p *ngIf="!isEdit" class="page-kicker">Scientific artifact</p>
@@ -69,7 +69,7 @@
 
   <form
     *ngIf="(!isEdit && !!demo.session?.accountUsername) || !!baseline"
-    class="artifact-form"
+    class="artifact-form provenance-form"
     (focusin)="formAnalytics.start()"
     (input)="formAnalytics.start()"
     (change)="formAnalytics.start()"

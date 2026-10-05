@@ -27,7 +27,11 @@ interface WorkflowRepository {
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule, ClampInputLengthDirective],
   templateUrl: './guest-workflow-form.component.html',
-  styleUrls: ['./guest-workflow-form.component.css'],
+  styleUrls: [
+    './guest-workflow-form.component.css',
+    './guest-provenance-form.component.css',
+    './guest-workflow-create.component.css',
+  ],
 })
 export class GuestWorkflowFormComponent implements OnInit, OnDestroy {
   readonly isEdit: boolean;
