@@ -224,6 +224,141 @@ test.describe('public views', () => {
     await checkPage(page);
   });
 
+  test('workflow detail paginates linked artifacts and confirms ID copy', async ({
+    page,
+  }) => {
+    await mockDemo(page);
+    await page
+      .context()
+      .grantPermissions(['clipboard-read', 'clipboard-write']);
+    const linkedIds = Array.from(
+      { length: 8 },
+      (_, index) =>
+        `dddddddd-dddd-4ddd-8ddd-${String(index + 1).padStart(12, '0')}`,
+    );
+    await page.route(`**/api/v1/demo/public/workflows/${workflowId}`, (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ ...workflow, artifactIds: linkedIds }),
+      }),
+    );
+    await page.route('**/api/v1/demo/public/artifacts/*', (route) => {
+      const id = new URL(route.request().url()).pathname.split('/').pop() || '';
+      const index = linkedIds.indexOf(id);
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          ...artifact,
+          id,
+          title: `Linked artifact ${index + 1}`,
+        }),
+      });
+    });
+    await page.goto(`/workflows/${workflowId}`);
+    await expect(
+      page.getByRole('heading', { name: workflow.title }),
+    ).toBeVisible();
+    await expect(page.locator('.linked-records li')).toHaveCount(6);
+    await expect(page.getByText('Page 1 of 2')).toBeVisible();
+    await expect(
+      page.getByRole('link', { name: 'Linked artifact 1' }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('link', { name: 'Linked artifact 7' }),
+    ).toHaveCount(0);
+    await checkPage(page);
+
+    await page.getByRole('button', { name: 'Next' }).click();
+    await expect(page.locator('.linked-records li')).toHaveCount(2);
+    await expect(page.getByText('Page 2 of 2')).toBeVisible();
+    await expect(
+      page.getByRole('link', { name: 'Linked artifact 7' }),
+    ).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Next' })).toBeDisabled();
+    await checkPage(page);
+
+    await page.getByRole('button', { name: 'Copy workflow ID' }).click();
+    await expect(page.getByText('Copied', { exact: true })).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: 'Workflow ID copied' }),
+    ).toBeVisible();
+    expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(
+      workflowId,
+    );
+
+    await page.getByRole('link', { name: 'Manage Workflow' }).click();
+    await expect(
+      page.getByText('Workflow updates are restricted'),
+    ).toBeVisible();
+    await checkPage(page);
+  });
+
+  test('workflow detail explains management restriction to another account', async ({
+    page,
+  }) => {
+    await mockDemo(page, true);
+    await page.route('**/api/v1/demo/mine/workflows', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: '[]',
+      }),
+    );
+    await page.goto(`/workflows/${workflowId}`);
+    await expect(
+      page.getByText('Only the contributing account can manage this workflow.'),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('link', { name: 'Manage Workflow' }),
+    ).toBeVisible();
+    await checkPage(page);
+    await page.getByRole('link', { name: 'Manage Workflow' }).click();
+    await expect(
+      page.getByText('Workflow updates are restricted'),
+    ).toBeVisible();
+  });
+
+  test('workflow detail distinguishes failed and pending ledger states', async ({
+    page,
+  }) => {
+    await mockDemo(page);
+    let state = 'FAILED';
+    await page.route(`**/api/v1/demo/public/workflows/${workflowId}`, (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          ...workflow,
+          submissionState: state,
+          blockchainTxId: null,
+          failureReason:
+            state === 'FAILED' ? 'Ledger submission was rejected.' : undefined,
+        }),
+      }),
+    );
+    await page.goto(`/workflows/${workflowId}`);
+    await expect(page.getByText('Blockchain submission failed')).toBeVisible();
+    await expect(
+      page.getByText('Ledger submission was rejected.'),
+    ).toBeVisible();
+    await expect(
+      page.getByText('Not confirmed on the blockchain'),
+    ).toBeVisible();
+    await checkPage(page);
+
+    state = 'PENDING';
+    await page.reload();
+    await expect(
+      page.getByText('Blockchain confirmation pending'),
+    ).toBeVisible();
+    await expect(
+      page.getByText('Awaiting blockchain confirmation'),
+    ).toBeVisible();
+    await checkPage(page);
+  });
+
   const paths = [
     '/',
     '/list-artifacts',
