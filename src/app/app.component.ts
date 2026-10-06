@@ -121,7 +121,9 @@ export class AppComponent implements OnInit {
   }
 
   acceptAnalytics(): void {
-    this.analytics.accept(() => this.trackRoute(this.router.url));
+    this.analytics.accept(() =>
+      this.trackRoute(this.location.path() || this.router.url),
+    );
   }
 
   private trackRoute(url: string): void {

@@ -71,6 +71,18 @@ describe('AppComponent', () => {
     expect(component).toBeTruthy();
   });
 
+  it('tracks the browser route when analytics is accepted before navigation settles', () => {
+    spyOn(location, 'path').and.returnValue('/feedback');
+    spyOn(component.analytics, 'accept').and.callFake((onAccepted) =>
+      onAccepted(),
+    );
+    const track = spyOn(component.analytics, 'track');
+
+    component.acceptAnalytics();
+
+    expect(track).toHaveBeenCalledWith('PAGE_VIEW', '/feedback');
+  });
+
   it('should have a navbar', () => {
     const compiled = fixture.nativeElement;
     expect(compiled.querySelector('nav')).toBeTruthy();
