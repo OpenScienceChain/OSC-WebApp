@@ -20,4 +20,4 @@ export DEMO_MODE="${DEMO_MODE:-false}"
 export WEBAPP_API_BASE_URL="${WEBAPP_API_BASE_URL:-/api/v1}"
 envsubst '${DEMO_MODE} ${WEBAPP_API_BASE_URL}' \
   < /opt/osc/runtime-config.json.template \
-  > /usr/share/nginx/html/assets/runtime-config.json
+  > /tmp/runtime-config.json
