@@ -12,7 +12,7 @@ RUN python3 scripts/security/check_npm_supply_chain.py --repo . --offline-review
 COPY . .
 RUN npm run build:production
 
-FROM nginx:1.29-alpine@sha256:5616878291a2eed594aee8db4dade5878cf7edcb475e59193904b198d9b830de AS runtime
+FROM nginx:1.31-alpine@sha256:df221db836e1754089190208cee7eeda94f233197056426eda74a43ab1abeac2 AS runtime
 
 RUN apk upgrade --no-cache
 
